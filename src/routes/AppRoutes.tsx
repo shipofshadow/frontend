@@ -1,30 +1,41 @@
 // routes/AppRoutes.tsx
 import React from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 
-import Login from '../pages/admin/Login';
+import Login from '../pages/Login';
 import AdminLayout from '../layouts/AdminLayout';
+import ApplicantLayout from '../layouts/ApplicantLayout';
 import Dashboard from '../pages/admin/Dashboard';
 import NotFound from '../pages/errors/NotFound';
+import ApplicantionForm from '../pages/applicant/ApplicantionForm';
+import App from '../pages/LandingPage';
+import ProtectedRoute from './ProtectedRoute';
+import Profile from '../pages/applicant/Profile';
+import { isLoggedIn } from '../utils/auth';
+
+export function AuthRedirect() {
+  return isLoggedIn() ? <Profile /> : <Login />;
+}
 
 const AppRoutes: React.FC = () => {
   return (
     <Routes>
-        {/* Public Routes */}
-      <Route path="/login" element={<Login />} />
-
-      {/* Admin routes */}
+      <Route path="/" element={isLoggedIn() ? <Navigate to="/applicant" replace /> : <App />} />
+      
       <Route path="/admin" element={<AdminLayout />}>
         <Route index element={<Dashboard />} />
         {/* <Route path="users" element={<AdminUsers />} /> */}
       </Route>
 
-
-      {/* Applicant routes */}
-      {/* <Route path="/applicant" element={<ApplicantLayout />}>
-        <Route index element={<ApplicantDashboard />} />
-        <Route path="profile" element={<ApplicantProfile />} />
-      </Route> */}
+      <Route path="/applicant" element={<ApplicantLayout />}>
+        <Route index element={<AuthRedirect />} />
+        <Route element={<ProtectedRoute />}>
+            <Route path="apply" element={<ApplicantionForm />} />
+          </Route>
+        <Route element={<ProtectedRoute />}>
+            <Route path="profile" element={<Profile />} />
+          </Route>
+        </Route>
 
       <Route path="*" element={<NotFound />} />
 
