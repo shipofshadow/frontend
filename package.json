@@ -17,6 +17,7 @@
     "feather-icons": "^4.29.2",
     "framer-motion": "^12.16.0",
     "lucide-react": "^0.513.0",
+    "notyf": "^3.10.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-feather": "^2.0.10"

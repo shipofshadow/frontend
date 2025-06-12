@@ -2,6 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { loginUser } from '../services/authService';
 import { saveAuthToken } from '../utils/auth';
+import { notyf } from '../utils/utils'; 
+import 'notyf/notyf.min.css'; // for React, Vue and Svelte
+
 
 const Login: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -39,7 +42,13 @@ const Login: React.FC = () => {
       }
       
       saveAuthToken(data.token, data.expires_in);
-      navigate('/applicant/profile');
+
+      notyf.success('Login successful!');
+
+      setTimeout(() => {
+        navigate('/applicant/profile');
+      }
+      , 3000);
 
     } catch (err) {
       setErrors(err instanceof Error ? err.message : 'Login failed');
@@ -50,7 +59,6 @@ const Login: React.FC = () => {
     const isChecked = e.target.checked;
     setRemember(isChecked);
     
-    // If unchecked, immediately remove remembered email
     if (!isChecked) {
       localStorage.removeItem('rememberedEmail');
     }
@@ -58,10 +66,7 @@ const Login: React.FC = () => {
   
   return (
     <>
-      <link 
-        href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" 
-        rel="stylesheet" 
-      />
+    
 
       <div className="min-vh-100 d-flex align-items-center justify-content-center bg-light position-relative overflow-hidden">
         <div
