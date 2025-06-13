@@ -154,14 +154,14 @@ const Login: React.FC = () => {
                     </div>
 
                     <div className="text-center small">
-                      <a href="/forgot-password" className="text-muted">Forgot password?</a>
+                      <a href="forgot-password" className="text-muted">Forgot password?</a>
                     </div>
                   </form>
                 </div>
 
                 <div className="card-footer text-center border-0 bg-white py-3">
                   <span className="text-muted small">Don't have an account?</span>{' '}
-                  <a href="/register" className="text-primary fw-semibold">Create one</a>
+                  <a href="register" className="text-primary fw-semibold">Create one</a>
                 </div>
               </div>
 

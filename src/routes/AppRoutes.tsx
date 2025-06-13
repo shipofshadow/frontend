@@ -11,11 +11,15 @@ import NotFound from '../pages/errors/NotFound';
 import ApplicantionForm from '../pages/applicant/ApplicantionForm';
 import ProtectedRoute from './ProtectedRoute';
 import Profile from '../pages/applicant/Profile';
+import Home from '../pages/applicant/Home';
 import { isLoggedIn } from '../utils/auth';
 import Register from '../pages/Register';
+import ForgotPassword from '../pages/applicant/ForgotPassword';
+import Settings from '../pages/applicant/Settings';
+import ManageStudents from '../pages/admin/ManageStudents';
 
 export function AuthRedirect() {
-  return isLoggedIn() ? <Profile /> : <Login />;
+  return isLoggedIn() ? <Home /> : <Login />;
 }
 
 const AppRoutes: React.FC = () => {
@@ -25,6 +29,7 @@ const AppRoutes: React.FC = () => {
 
       <Route path="/admin" element={<AdminLayout />}>
         <Route index element={<Dashboard />} />
+        <Route path="manage-students" element={<ManageStudents />} />
         {/* <Route path="users" element={<AdminUsers />} /> */}
       </Route>
 
@@ -32,11 +37,12 @@ const AppRoutes: React.FC = () => {
         <Route index element={<AuthRedirect />} />
         <Route path="login" element={<AuthRedirect />} />
         <Route path="register" element={<Register />} />
+        <Route path="forgot-password" element={<ForgotPassword />} />
         <Route element={<ProtectedRoute />}>
             <Route path="apply" element={<ApplicantionForm />} />
-          </Route>
-        <Route element={<ProtectedRoute />}>
+            <Route path="home" element={<Home />} />
             <Route path="profile" element={<Profile />} />
+            <Route path="settings" element={<Settings />} />
           </Route>
         </Route>
 

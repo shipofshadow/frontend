@@ -41,11 +41,9 @@ const Navbar: React.FC = () => {
         {/* Navigation Links */}
         <div className="collapse navbar-collapse" id="navbarNav">
           <ul className="navbar-nav ms-auto align-items-center">
+
             <li className="nav-item">
-              <Link to="/" className="nav-link">Home</Link>
-            </li>
-            <li className="nav-item">
-              <Link to="/about" className="nav-link">About</Link>
+              <Link to={isLoggedIn() ? "home" : "/"} className="nav-link">Home</Link>
             </li>
 
             {isLoggedIn() && (
@@ -62,10 +60,10 @@ const Navbar: React.FC = () => {
                 </a>
                 <ul className="dropdown-menu dropdown-menu-end" aria-labelledby="profileDropdown">
                   <li>
-                    <Link to="/profile" className="dropdown-item">My Profile</Link>
+                    <Link to="profile" className="dropdown-item">My Profile</Link>
                   </li>
                   <li>
-                    <Link to="/settings" className="dropdown-item">Settings</Link>
+                    <Link to="settings" className="dropdown-item">Settings</Link>
                   </li>
                   <li><hr className="dropdown-divider" /></li>
                   <li>
