@@ -98,7 +98,17 @@ const Sidebar : React.FC = () => {
                 <a className="nav-link" href="wizard.html">Wizard</a>
               </nav>
             </div>
-          </div>
+            <div className="sidenav-menu-heading">Plugins</div>
+                <a className="nav-link" href="manage-students">
+                    <div className="nav-link-icon"><i data-feather="bar-chart"></i></div>
+                    Manage Students
+                </a>
+                <a className="nav-link" href="tables.html">
+                    <div className="nav-link-icon"><i data-feather="filter"></i></div>
+                    Tables
+                </a>
+            </div>
+           
         </div>
         <div className="sidenav-footer">
           <div className="sidenav-footer-content">
