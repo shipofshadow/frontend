@@ -1,123 +1,103 @@
 import React, { useEffect } from 'react';
 import feather from 'feather-icons';
+import { Link } from 'react-router-dom';
 
-const Sidebar : React.FC = () => {
+const Sidebar: React.FC = () => {
   useEffect(() => {
     feather.replace();
   }, []);
 
   return (
-    <div id="layoutSidenav_nav">
-      <nav className="sidenav shadow-right sidenav-light">
-        <div className="sidenav-menu">
-          <div className="nav accordion" id="accordionSidenav">
-            <div className="sidenav-menu-heading d-sm-none">Account</div>
-            <a className="nav-link d-sm-none" href="#">
-              <div className="nav-link-icon">
-                <i data-feather="bell"></i>
-              </div>
-              Alerts
-              <span className="badge bg-warning-soft text-warning ms-auto">4 New!</span>
-            </a>
-            <a className="nav-link d-sm-none" href="#">
-              <div className="nav-link-icon">
-                <i data-feather="mail"></i>
-              </div>
-              Messages
-              <span className="badge bg-success-soft text-success ms-auto">2 New!</span>
-            </a>
+      <div id="layoutSidenav_nav">
+        <nav className="sidenav shadow-right sidenav-light">
+          <div className="sidenav-menu">
+            <div className="nav accordion" id="accordionSidenav">
 
-            <div className="sidenav-menu-heading">Core</div>
-            <a
-              className="nav-link collapsed"
-              href="#"
-              data-bs-toggle="collapse"
-              data-bs-target="#collapseDashboards"
-              aria-expanded="false"
-              aria-controls="collapseDashboards"
-            >
-              <div className="nav-link-icon">
-                <i data-feather="activity"></i>
-              </div>
-              Dashboards
-              <div className="sidenav-collapse-arrow">
-                <i className="fas fa-angle-down"></i>
-              </div>
-            </a>
-            <div className="collapse" id="collapseDashboards" data-bs-parent="#accordionSidenav">
-              <nav className="sidenav-menu-nested nav accordion">
-                <a className="nav-link" href="dashboard-1.html">
-                  Default
-                  <span className="badge bg-primary-soft text-primary ms-auto">Updated</span>
-                </a>
-                <a className="nav-link" href="dashboard-2.html">Multipurpose</a>
-                <a className="nav-link" href="dashboard-3.html">Affiliate</a>
-              </nav>
+              {/* Mobile Header */}
+              <div className="sidenav-menu-heading d-sm-none">Account</div>
+              <a className="nav-link d-sm-none" href="#">
+                <div className="nav-link-icon"><i data-feather="bell"></i></div>
+                Alerts <span className="badge bg-warning-soft text-warning ms-auto">4 New!</span>
+              </a>
+
+              {/* Home Section */}
+              <div className="sidenav-menu-heading">Home</div>
+              <Link className="nav-link" to="/admin/dashboard">
+                <div className="nav-link-icon"><i data-feather="activity"></i></div>
+                Dashboard
+              </Link>
+
+              {/* Scholarship Management */}
+              <div className="sidenav-menu-heading">Scholarship Management</div>
+              <Link className="nav-link" to="/admin/applicants">
+                <div className="nav-link-icon"><i data-feather="users"></i></div>
+                Applicants
+              </Link>
+              <Link className="nav-link" to="/admin/documents">
+                <div className="nav-link-icon"><i data-feather="file-text"></i></div>
+                Documents
+              </Link>
+              <Link className="nav-link" to="/admin/reports">
+                <div className="nav-link-icon"><i data-feather="file"></i></div>
+                Reports
+              </Link>
+
+              {/* Automation */}
+              <div className="sidenav-menu-heading">Automation & Rules</div>
+              <Link className="nav-link" to="/admin/evaluate-bulk">
+                <div className="nav-link-icon"><i data-feather="upload"></i></div>
+                Bulk Evaluation
+              </Link>
+              <Link className="nav-link" to="/admin/config/system">
+                <div className="nav-link-icon"><i data-feather="sliders"></i></div>
+                System Config
+              </Link>
+
+              {/* Academic Config */}
+              <div className="sidenav-menu-heading">Academic Config</div>
+              <Link className="nav-link" to="/admin/academic-years">
+                <div className="nav-link-icon"><i data-feather="calendar"></i></div>
+                Academic Years
+              </Link>
+              <Link className="nav-link" to="/admin/campuses">
+                <div className="nav-link-icon"><i data-feather="map"></i></div>
+                Campuses
+              </Link>
+              <Link className="nav-link" to="/admin/departments">
+                <div className="nav-link-icon"><i data-feather="grid"></i></div>
+                Departments
+              </Link>
+              <Link className="nav-link" to="/admin/courses">
+                <div className="nav-link-icon"><i data-feather="book-open"></i></div>
+                Courses
+              </Link>
+
+              {/* System */}
+              <div className="sidenav-menu-heading">System</div>
+              <Link className="nav-link" to="/admin/metrics">
+                <div className="nav-link-icon"><i data-feather="bar-chart-2"></i></div>
+                Metrics
+              </Link>
+              <Link className="nav-link" to="/admin/users">
+                <div className="nav-link-icon"><i data-feather="shield"></i></div>
+                Admin Accounts
+              </Link>
+              <Link className="nav-link" to="/logout">
+                <div className="nav-link-icon"><i data-feather="log-out"></i></div>
+                Logout
+              </Link>
+
             </div>
-
-            <div className="sidenav-menu-heading">Custom</div>
-            <a
-              className="nav-link collapsed"
-              href="#"
-              data-bs-toggle="collapse"
-              data-bs-target="#collapsePages"
-              aria-expanded="false"
-              aria-controls="collapsePages"
-            >
-              <div className="nav-link-icon">
-                <i data-feather="grid"></i>
-              </div>
-              Pages
-              <div className="sidenav-collapse-arrow">
-                <i className="fas fa-angle-down"></i>
-              </div>
-            </a>
-
-            {/* You can continue this same pattern for nested navs and collapsibles */}
-            {/* Consider refactoring the markup into map-based renders for cleaner React code */}
-
-            <a
-              className="nav-link collapsed"
-              href="#"
-              data-bs-toggle="collapse"
-              data-bs-target="#collapseFlows"
-              aria-expanded="false"
-              aria-controls="collapseFlows"
-            >
-              <div className="nav-link-icon">
-                <i data-feather="repeat"></i>
-              </div>
-              Flows
-              <div className="sidenav-collapse-arrow">
-                <i className="fas fa-angle-down"></i>
-              </div>
-            </a>
-            <div className="collapse" id="collapseFlows" data-bs-parent="#accordionSidenav">
-              <nav className="sidenav-menu-nested nav">
-                <a className="nav-link" href="multi-tenant-select.html">Multi-Tenant Registration</a>
-                <a className="nav-link" href="wizard.html">Wizard</a>
-              </nav>
-            </div>
-            <div className="sidenav-menu-heading">Plugins</div>
-                <a className="nav-link" href="manage-students">
-                    <div className="nav-link-icon"><i data-feather="bar-chart"></i></div>
-                    Manage Students
-                </a>
-                <a className="nav-link" href="tables.html">
-                    <div className="nav-link-icon"><i data-feather="filter"></i></div>
-                    Tables
-                </a>
-            </div>
-           
-        </div>
-        <div className="sidenav-footer">
-          <div className="sidenav-footer-content">
-            <div className="sidenav-footer-subtitle">Logged in as:</div>
-            <div className="sidenav-footer-title">Valerie Luna</div>
           </div>
-        </div>
-      </nav>
-    </div>
+
+          <div className="sidenav-footer">
+            <div className="sidenav-footer-content">
+              <div className="sidenav-footer-subtitle">Logged in as:</div>
+              <div className="sidenav-footer-title">Admin</div>
+            </div>
+          </div>
+        </nav>
+      </div>
   );
 };
 

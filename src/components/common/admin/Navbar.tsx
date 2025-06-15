@@ -31,7 +31,6 @@ const Navbar: React.FC = () => {
   };
 }, []);
 
-
   const handleLogout = () => {
     localStorage.removeItem('token');
     navigate('/login');
@@ -88,46 +87,6 @@ const Navbar: React.FC = () => {
             </span>
             <span className="dropdown-item dropdown-notifications-footer">
               View All Alerts
-            </span>
-          </div>
-        </li>
-
-        {/* Messages */}
-        <li className="nav-item dropdown d-none d-sm-block no-caret me-3 dropdown-notifications">
-          <button
-            className="btn btn-icon btn-transparent-dark dropdown-toggle"
-            id="navbarDropdownMessages"
-            data-bs-toggle="dropdown"
-            aria-haspopup="true"
-            aria-expanded="false"
-          >
-            <i data-feather="mail" />
-          </button>
-          <div
-            className="dropdown-menu dropdown-menu-end border-0 shadow animated--fade-in-up"
-            aria-labelledby="navbarDropdownMessages"
-          >
-            <h6 className="dropdown-header dropdown-notifications-header">
-              <i className="me-2" data-feather="mail" />
-              Message Center
-            </h6>
-            <div className="dropdown-item dropdown-notifications-item">
-              <img
-                className="dropdown-notifications-item-img"
-                src="/assets/img/illustrations/profiles/profile-2.png"
-                alt="Profile"
-              />
-              <div className="dropdown-notifications-item-content">
-                <div className="dropdown-notifications-item-content-text">
-                  New message received.
-                </div>
-                <div className="dropdown-notifications-item-content-details">
-                  John Doe · 1m ago
-                </div>
-              </div>
-            </div>
-            <span className="dropdown-item dropdown-notifications-footer">
-              Read All Messages
             </span>
           </div>
         </li>

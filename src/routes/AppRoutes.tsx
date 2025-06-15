@@ -35,6 +35,7 @@ const AppRoutes: React.FC = () => {
 
       <Route path="/applicant" element={<ApplicantLayout />}>
         <Route index element={<AuthRedirect />} />
+        <Route path="dashboard" element={<AuthRedirect />} />
         <Route path="login" element={<AuthRedirect />} />
         <Route path="register" element={<Register />} />
         <Route path="forgot-password" element={<ForgotPassword />} />

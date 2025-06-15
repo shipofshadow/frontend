@@ -68,7 +68,7 @@ const LandingPage: React.FC = () => {
       title: 'Apply',
       description: 'Submit your scholarship prequalification application quickly and easily with our streamlined process.',
       btnText: 'APPLY',
-      path: '/applicant/apply',
+      path: '/applicant/register',
       color: '#10B981',
       bgGradient: 'linear-gradient(135deg, #10B981 0%, #059669 100%)'
     },
