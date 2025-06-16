@@ -1,7 +1,7 @@
 const ManageStudents = () => {
     return (
         <>
-            ManageStudents
+            Manage Students
         </>
     );
 }
