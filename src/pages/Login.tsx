@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link  } from 'react-router-dom';
 import { loginUser } from '../services/authService';
 import { saveAuthToken } from '../utils/auth';
 import { notyf } from '../utils/utils'; 
@@ -13,7 +13,6 @@ const Login: React.FC = () => {
   const [errors, setErrors] = useState<string | null>(null);
   const navigate = useNavigate();
 
-  // Load remembered email on component mount
   useEffect(() => {
     const rememberedEmail = localStorage.getItem('rememberedEmail');
     if (rememberedEmail) {
@@ -34,7 +33,6 @@ const Login: React.FC = () => {
       setErrors(null);
       const data = await loginUser(email, password);
       
-      // Handle remember me functionality
       if (remember) {
         localStorage.setItem('rememberedEmail', email);
       } else {
@@ -69,27 +67,6 @@ const Login: React.FC = () => {
     
 
       <div className="min-vh-100 d-flex align-items-center justify-content-center bg-light position-relative overflow-hidden">
-        <div
-          className="position-absolute top-0 start-0 w-100 h-100 overflow-hidden"
-          style={{ pointerEvents: 'none', zIndex: 1 }}
-        >
-          {[...Array(15)].map((_, i) => (
-            <div
-              key={i}
-              className="position-absolute rounded-circle"
-              style={{
-                width: Math.random() * 4 + 2 + 'px',
-                height: Math.random() * 4 + 2 + 'px',
-                backgroundColor: 'rgba(59, 130, 246, 0.15)',
-                left: Math.random() * 100 + '%',
-                top: Math.random() * 100 + '%',
-                animation: `float${i % 3} ${8 + Math.random() * 4}s infinite ease-in-out`,
-                animationDelay: Math.random() * 5 + 's'
-              }}
-            />
-          ))}
-        </div>
-
         <div className="container" style={{ zIndex: 2 }}>
           <div className="row justify-content-center">
             <div className="col-md-6 col-lg-5 col-xl-4">
@@ -154,14 +131,14 @@ const Login: React.FC = () => {
                     </div>
 
                     <div className="text-center small">
-                      <a href="forgot-password" className="text-muted">Forgot password?</a>
+                      <Link to="forgot-password" className="text-muted">Forgot password?</Link>
                     </div>
                   </form>
                 </div>
 
                 <div className="card-footer text-center border-0 bg-white py-3">
                   <span className="text-muted small">Don't have an account?</span>{' '}
-                  <a href="register" className="text-primary fw-semibold">Create one</a>
+                  <Link to="/applicant/register" className="text-primary fw-semibold">Create one</Link>
                 </div>
               </div>
 

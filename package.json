@@ -16,6 +16,7 @@
     "dotenv": "^16.5.0",
     "feather-icons": "^4.29.2",
     "framer-motion": "^12.16.0",
+    "js-sha256": "^0.11.1",
     "lucide-react": "^0.513.0",
     "notyf": "^3.10.0",
     "react": "^19.1.0",
