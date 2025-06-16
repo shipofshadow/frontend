@@ -1,7 +1,7 @@
 const ArchivedApplicants = () => {
     return (
         <>
-            ArchivedApplicants
+            Archived Applicants
         </>
     );
 }

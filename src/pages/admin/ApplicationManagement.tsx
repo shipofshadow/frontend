@@ -1,7 +1,7 @@
 const ApplicationManagement = () => {
     return (
         <>
-            ApplicationManagement
+            Application Management
         </>
     );
 }

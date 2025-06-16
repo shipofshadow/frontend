@@ -25,6 +25,8 @@ import DocumentVerification from '../pages/admin/DocumentVerification';
 import ActivityLogs from '../pages/admin/ActivityLogs';
 import ArchivedApplicants from '../pages/admin/ArchivedApplicants';
 import ReportsAndAnalytics from '../pages/admin/ReportsAndAnalytics';
+import CampusDepartmentConfiguration from '../pages/admin/CampusDepartmentConfiguration';
+import BulkUploadImport from '../pages/admin/BulkUploadImport';
 
 
 export function AuthRedirect() {
@@ -47,6 +49,20 @@ const AppRoutes: React.FC = () => {
         <Route path="activity-logs" element={<ActivityLogs />} />
         <Route path="archived-applicants" element={<ArchivedApplicants />} />
         <Route path="reports-and-analytics" element={<ReportsAndAnalytics />} />
+        <Route path="campus-department-configuration" element={<CampusDepartmentConfiguration />} />
+        <Route path="bulk-upload-import" element={<BulkUploadImport />} />
+        
+        {/* Uncomment the following line if you have an AdminDashboard component */}
+        {/* <Route path="dashboard" element={<AdminDashboard />} /> */}
+        
+        {/* Uncomment the following line if you have an AdminActivityLogs component */}
+        {/* <Route path="activity-logs" element={<AdminActivityLogs />} /> */}
+        
+        {/* Uncomment the following line if you have an AdminDashboard component */}
+        {/* <Route path="dashboard" element={<AdminDashboard />} /> */}
+        
+        {/* Uncomment the following line if you have an AdminApplicationManagement component */}
+        {/* <Route path="application-management" element={<AdminApplicationManagement />} /> */}
         
         {/* Uncomment the following line if you have an AdminDashboard component */}
         {/* <Route path="dashboard" element={<AdminDashboard />} /> */}

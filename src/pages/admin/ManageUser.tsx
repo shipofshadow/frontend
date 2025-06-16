@@ -1,7 +1,7 @@
 const ManageUser = () => {
     return (
         <>
-            ManageUser
+            Manage User
         </>
     );
 }

@@ -1,7 +1,7 @@
 const SystemSetting= () => {
     return (
         <>
-            SystemSetting
+            System Setting
         </>
     );
 }

@@ -1,7 +1,7 @@
 const ScholarshipManagement= () => {
     return (
         <>
-            ScholarshipManagement
+            Scholarship Management
         </>
     );
 }

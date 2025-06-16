@@ -1,7 +1,7 @@
 const DocumentVerification = () => {
     return (
         <>
-            DocumentVerification
+            Document Verification
         </>
     );
 }

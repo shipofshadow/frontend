@@ -1,7 +1,7 @@
 const ReportsAndAnalytics= () => {
     return (
         <>
-            ReportsAndAnalytics
+            Reports and Analytics
         </>
     );
 }

@@ -1,7 +1,7 @@
 const ActivityLogs = () => {
     return (
         <>
-            ActivityLogs
+            Activity Logs
         </>
     );
 }
