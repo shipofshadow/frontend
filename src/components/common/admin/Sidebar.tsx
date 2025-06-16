@@ -44,7 +44,7 @@ const Sidebar: React.FC = () => {
 
               {/* Automation */}
               <div className="sidenav-menu-heading">Automation & Rules</div>
-              <Link className="nav-link" to="/admin/evaluate-bulk">
+              <Link className="nav-link" to="/admin/bulk-evaluation">
                 <div className="nav-link-icon"><i data-feather="upload"></i></div>
                 Bulk Evaluation
               </Link>

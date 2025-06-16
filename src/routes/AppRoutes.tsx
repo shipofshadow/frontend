@@ -17,16 +17,22 @@ import Register from '../pages/Register';
 import ForgotPassword from '../pages/applicant/ForgotPassword';
 import Settings from '../pages/applicant/Settings';
 import ManageStudents from '../pages/admin/ManageStudents';
-import ApplicationManagement from '../pages/admin/ApplicationManagement';
-import ManageUser from '../pages/admin/ManageUser';
+import Applicants from '../pages/admin/Applicants';
+import Users from '../pages/admin/Users';
 import ScholarshipManagement from '../pages/admin/ScholarshipManagement';
 import SystemSetting from '../pages/admin/SystemSetting';
-import DocumentVerification from '../pages/admin/DocumentVerification';
+import Document from '../pages/admin/Document';
 import ActivityLogs from '../pages/admin/ActivityLogs';
 import ArchivedApplicants from '../pages/admin/ArchivedApplicants';
-import ReportsAndAnalytics from '../pages/admin/ReportsAndAnalytics';
-import CampusDepartmentConfiguration from '../pages/admin/CampusDepartmentConfiguration';
-import BulkUploadImport from '../pages/admin/BulkUploadImport';
+import Reports from '../pages/admin/Reports';
+import Campuses from '../pages/admin/Campuses';
+import BulkEvaluation from '../pages/admin/BulkEvaluation';
+import Metrics from '../pages/admin/Metrics';
+import Departments from '../pages/admin/Departments';
+import AcademicYears from '../pages/admin/AcademicYears';
+import Courses from '../pages/admin/Courses';
+
+
 
 
 export function AuthRedirect() {
@@ -41,16 +47,47 @@ const AppRoutes: React.FC = () => {
       <Route path="/admin" element={<AdminLayout />}>
         <Route index element={<Dashboard />} />
         <Route path="manage-students" element={<ManageStudents />} />
-        <Route path="application-management" element={<ApplicationManagement />} />
-        <Route path="manage-user" element={<ManageUser />} />
+        <Route path="Applicants" element={<Applicants />} />
+        <Route path="users" element={<Users />} />
         <Route path="scholarship-management" element={<ScholarshipManagement />} />
-        <Route path="system-setting" element={<SystemSetting />} />
-        <Route path="document-verification" element={<DocumentVerification />} />
+        <Route path="system" element={<SystemSetting />} />
+        <Route path="documents" element={<Document />} />
         <Route path="activity-logs" element={<ActivityLogs />} />
         <Route path="archived-applicants" element={<ArchivedApplicants />} />
-        <Route path="reports-and-analytics" element={<ReportsAndAnalytics />} />
-        <Route path="campus-department-configuration" element={<CampusDepartmentConfiguration />} />
-        <Route path="bulk-upload-import" element={<BulkUploadImport />} />
+        <Route path="reports" element={<Reports />} />
+        <Route path="campuses" element={<Campuses />} />
+        <Route path="bulk-evaluation" element={<BulkEvaluation />} />
+        <Route path="metrics" element={<Metrics />} />
+        <Route path="departments" element={<Departments />} />
+        <Route path="academic-years" element={<AcademicYears />} />
+        <Route path="courses" element={<Courses />} />
+        
+        {/* Uncomment the following line if you have an AdminDashboard component */}
+        {/* <Route path="dashboard" element={<AdminDashboard />} /> */}
+        
+        {/* Uncomment the following line if you have an AdminActivityLogs component */}
+        {/* <Route path="activity-logs" element={<AdminActivityLogs />} /> */}
+        
+        {/* Uncomment the following line if you have an AdminApplicationManagement component */}
+        {/* <Route path="application-management" element={<AdminApplicationManagement />} /> */}
+        
+        {/* Uncomment the following line if you have an AdminDashboard component */}
+        {/* <Route path="dashboard" element={<AdminDashboard />} /> */}
+        
+        {/* Uncomment the following line if you have an AdminActivityLogs component */}
+        {/* <Route path="activity-logs" element={<AdminActivityLogs />} /> */}
+        
+        {/* Uncomment the following line if you have an AdminApplicationManagement component */}
+        {/* <Route path="application-management" element={<AdminApplicationManagement />} /> */}
+        
+        {/* Uncomment the following line if you have an AdminDashboard component */}
+        {/* <Route path="dashboard" element={<AdminDashboard />} /> */}
+        
+        {/* Uncomment the following line if you have an AdminActivityLogs component */}
+        {/* <Route path="activity-logs" element={<AdminActivityLogs />} /> */}
+        
+        {/* Uncomment the following line if you have an AdminApplicationManagement component */}
+        {/* <Route path="application-management" element={<AdminApplicationManagement />} /> */}
         
         {/* Uncomment the following line if you have an AdminDashboard component */}
         {/* <Route path="dashboard" element={<AdminDashboard />} /> */}

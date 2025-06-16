@@ -1,14 +1,14 @@
-const ArchivedApplicants = () => {
+const Courses= () => {
     return (
         <>
-             <header className="page-header page-header-compact page-header-light border-bottom bg-white mb-4">
+            <header className="page-header page-header-compact page-header-light border-bottom bg-white mb-4">
             <div className="container-fluid px-4">
                 <div className="page-header-content">
                     <div className="row align-items-center justify-content-between pt-3">
                         <div className="col-auto mb-3">
                             <h1 className="page-header-title">
                                 <div className="page-header-icon"><i data-feather="user"></i></div>
-                                Archived Applicants
+                               Courses 
                             </h1>
                         </div>
                     </div>
@@ -23,4 +23,4 @@ const ArchivedApplicants = () => {
     );
 }
 
-export default ArchivedApplicants;
+export default Courses;
