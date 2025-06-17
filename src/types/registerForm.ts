@@ -5,6 +5,7 @@ export interface RegisterForm {
     last_name: string;
     extension_name?: string;
     gender: string;
+    username: string;
     email: string;
     contact_number: string;
     password: string;
@@ -12,4 +13,6 @@ export interface RegisterForm {
     department: string;
     course: string;
     year: string;
+    birth_date: string;
+    total_units: number;
 }

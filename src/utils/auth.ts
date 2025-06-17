@@ -15,13 +15,13 @@ export function isLoggedIn(): boolean {
   const token = localStorage.getItem(TOKEN_KEY);
   const expiry = localStorage.getItem(EXPIRY_KEY);
 
-  if (!token || !expiry) return true;
+  if (!token || !expiry) return false;
 
   const expiryTime = parseInt(expiry, 10);
   if (Date.now() > expiryTime) {
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(EXPIRY_KEY);
-    return true;
+    return false;
   }
 
   return true;

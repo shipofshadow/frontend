@@ -7,16 +7,16 @@ import 'notyf/notyf.min.css'; // for React, Vue and Svelte
 
 
 const Login: React.FC = () => {
-  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [remember, setRemember] = useState(false);
   const [errors, setErrors] = useState<string | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
-    const rememberedEmail = localStorage.getItem('rememberedEmail');
-    if (rememberedEmail) {
-      setEmail(rememberedEmail);
+    const rememberedUsername = localStorage.getItem('rememberedUsername');
+    if (rememberedUsername) {
+      setUsername(rememberedUsername);
       setRemember(true);
     }
   }, []);
@@ -24,21 +24,21 @@ const Login: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    if (!email || !password) {
-      setErrors('Email and password are required.');
+    if (!username || !password) {
+      setErrors('Username and password are required.');
       return;
     }
 
     try {
       setErrors(null);
-      const data = await loginUser(email, password);
-      
+      const data = await loginUser(username, password);
+
       if (remember) {
-        localStorage.setItem('rememberedEmail', email);
+        localStorage.setItem('rememberedUsername', username);
       } else {
-        localStorage.removeItem('rememberedEmail');
+        localStorage.removeItem('rememberedUsername');
       }
-      
+
       saveAuthToken(data.token, data.expires_in);
 
       notyf.success('Login successful!');
@@ -56,15 +56,15 @@ const Login: React.FC = () => {
   const handleRememberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const isChecked = e.target.checked;
     setRemember(isChecked);
-    
+
     if (!isChecked) {
       localStorage.removeItem('rememberedEmail');
     }
   };
-  
+
   return (
     <>
-    
+
 
       <div className="min-vh-100 d-flex align-items-center justify-content-center bg-light position-relative overflow-hidden">
         <div className="container" style={{ zIndex: 2 }}>
@@ -87,13 +87,13 @@ const Login: React.FC = () => {
 
                   <form onSubmit={handleSubmit} noValidate autoComplete="off">
                     <div className="mb-3">
-                      <label htmlFor="email" className="form-label text-muted">Email</label>
+                      <label htmlFor="username" className="form-label text-muted">Username</label>
                       <input
-                        id="email"
-                        type="email"
+                        id="username"
+                        type="text"
                         className="form-control"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
+                        value={username}
+                        onChange={(e) => setUsername(e.target.value)}
                         required
                         autoFocus
                       />

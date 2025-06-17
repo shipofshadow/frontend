@@ -1,23 +1,20 @@
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { notyf } from '../utils/utils';
-import CampusSelect from '../components/selects/CampusSelect';
-import DepartmentSelect from '../components/selects/DepartmentSelect';
-import CourseSelect from '../components/selects/CourseSelect';
-import type {RegisterForm} from '../types/registerForm';
-import { sha256 } from 'js-sha256';
-import {registerUser} from "../services/authService";
+import CampusSelect from "../components/selects/CampusSelect.tsx";
+import DepartmentSelect from "../components/selects/DepartmentSelect.tsx";
+import CourseSelect from "../components/selects/CourseSelect.tsx";
+import {notyf} from "../utils/utils.ts";
+import {registerUser} from "../services/authService.tsx";
+import {sha256} from "js-sha256";
 
-const Register: React.FC = () => {
-  const navigate = useNavigate();
-
-  const [form, setForm] = useState<RegisterForm>({
+const Register = () => {
+  const [form, setForm] = useState({
     student_id: '',
     first_name: '',
     middle_name: '',
     last_name: '',
     extension_name: '',
     gender: '',
+    username: '',
     email: '',
     contact_number: '',
     password: '',
@@ -25,25 +22,52 @@ const Register: React.FC = () => {
     department: '',
     course: '',
     year: '',
+    birth_date: '',
+    total_units: 0,
   });
 
-  const [errors, setErrors] = useState<string | null>(null);
+  const isFormValid = () => {
+    const requiredFields = [
+      'student_id', 'first_name', 'last_name', 'gender', 'username',
+      'email', 'contact_number', 'password', 'campus', 'department',
+      'course', 'year', 'birth_date'
+    ];
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    for (const field of requiredFields) {
+      if (!form[field as keyof typeof form]) {
+        return false;
+      }
+    }
+
+    if (form.total_units <= 0) {
+      return false;
+    }
+
+    return true;
+  };
+
+
+  const [showPassword, setShowPassword] = useState(false);
+
+  const handleChange = (e) => {
     const { name, value } = e.target;
     setForm(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
+    if (!isFormValid()) {
+      notyf.error('Please fill in all required fields.');
+      return;
+    }
+
     if (!form.student_id.match(/^E\d{2}-\d{5}$/)) {
-      setErrors('Student ID must be in the format E25-00123');
+      notyf.error('Student ID must be in the format E25-00123');
       return;
     }
 
     try {
-      setErrors(null);
 
       const hashedPassword = sha256(form.password);
       await registerUser({
@@ -51,101 +75,265 @@ const Register: React.FC = () => {
         password: hashedPassword
       })
 
+      console.log('Registration data:', form);
+      notyf.success('Registration successful!');
     } catch (err) {
-      setErrors(err instanceof Error ? err.message : 'Registration failed');
+      notyf.error(err instanceof Error ? err.message : 'Registration failed');
     }
-
-    notyf.success('Registration successful!');
-    setTimeout(() => navigate('/applicant/profile'), 3000);
   };
 
   return (
-      <div className="min-vh-100 d-flex align-items-center justify-content-center bg-light">
-        <div className="container" style={{ zIndex: 2 }}>
+      <div className="min-vh-100  d-flex align-items-center py-5">
+        <div className="container">
           <div className="row justify-content-center">
-            <div className="col-md-8 col-lg-7 col-xl-6">
-              <div className="text-center mb-4">
-                <img src="https://ispsctagudin.info/home/assets/img/ispsc_logo.png" alt="ISPSC Logo" width={80} height={80} />
+            <div className="col-12 col-lg-10 col-xl-8">
+              {/* Header Section */}
+              <div className="text-center mb-5">
+                <div className="mb-4">
+                  <img
+                      src="https://ispsctagudin.info/home/assets/img/ispsc_logo.png"
+                      alt="ISPSC Logo"
+                      width={100}
+                      height={100}
+                      className="rounded-circle shadow-lg bg-white p-2"
+                  />
+                </div>
+                <h1 className="display-6 fw-bold  mb-2">iScholar Registration</h1>
+                <p className="lead">Create your account to get started</p>
               </div>
 
-              <div className="card shadow-lg border-0 rounded-4">
-                <div className="card-body p-4">
-                  <h1 className="fs-3 fw-bold text-primary mb-4 text-center">Create your iScholar account</h1>
+              {/* Main Form Card */}
+              <div className="card border-0 shadow-lg rounded-4 overflow-hidden">
+                <div className="card-header bg-white border-0 py-4">
+                  <h2 className="h4 fw-bold text-center mb-0 text-primary">
+                    Personal Information
+                  </h2>
+                </div>
 
-                  {errors && <div className="alert alert-danger">{errors}</div>}
-
-                  <form onSubmit={handleSubmit} noValidate autoComplete="off">
-                    <div className="mb-3">
-                      <label className="form-label">Student ID</label>
-                      <input type="text" name="studentId" className="form-control" placeholder="E25-00123" value={form.student_id} onChange={handleChange} required />
+                <div className="card-body p-4 p-md-5">
+                  <div onSubmit={handleSubmit}>
+                    {/* Student ID */}
+                    <div className="mb-4">
+                      <label className="form-label fw-semibold">
+                        <i className="bi bi-card-text me-2 text-primary"></i>
+                        Student ID <span className="text-danger">*</span>
+                      </label>
+                      <input
+                          type="text"
+                          name="student_id"
+                          className="form-control form-control-lg border-2 rounded-3"
+                          placeholder="E25-00123"
+                          value={form.student_id}
+                          onChange={handleChange}
+                          required
+                      />
+                      <div className="form-text">Format: E25-00123</div>
                     </div>
 
-                    <div className="row mb-3">
-                      <div className="col">
-                        <label className="form-label">First Name</label>
-                        <input type="text" name="firstName" className="form-control" value={form.first_name} onChange={handleChange} required />
-                      </div>
-                      <div className="col">
-                        <label className="form-label">Middle Name</label>
-                        <input type="text" name="middleName" className="form-control" value={form.middle_name} onChange={handleChange} />
-                      </div>
-                    </div>
-
-                    <div className="row mb-3">
-                      <div className="col">
-                        <label className="form-label">Last Name</label>
-                        <input type="text" name="lastName" className="form-control" value={form.last_name} onChange={handleChange} required />
-                      </div>
-                      <div className="col">
-                        <label className="form-label">Extension</label>
-                        <input type="text" name="extensionName" className="form-control" placeholder="Jr., III, etc." value={form.extension_name} onChange={handleChange} />
-                      </div>
-                    </div>
-
-                    <div className="mb-3">
-                      <label className="form-label">Gender</label>
-                      <select name="gender" className="form-select" value={form.gender} onChange={handleChange} required>
-                        <option value="">Select Gender</option>
-                        <option value="Male">Male</option>
-                        <option value="Female">Female</option>
-                      </select>
-                    </div>
-
-                    <div className="mb-3">
-                      <label className="form-label">Email</label>
-                      <input type="email" name="email" className="form-control" value={form.email} onChange={handleChange} required />
-                    </div>
-
-                    <div className="mb-3">
-                      <label className="form-label">Contact Number</label>
-                      <input type="text" name="contactNumber" className="form-control" value={form.contact_number} onChange={handleChange} required />
-                    </div>
-
-                    <div className="mb-3">
-                      <label className="form-label">Password</label>
-                      <input type="text" name="password" className="form-control" value={form.password} onChange={handleChange} required />
-                    </div>
-
-                    <div className="row mb-3">
+                    {/* Name Section */}
+                    <div className="row g-3 mb-4">
                       <div className="col-md-6">
-                        <label className="form-label">Campus</label>
-                        <CampusSelect value={form.campus} onChange={handleChange} />
+                        <label className="form-label fw-semibold">
+                          First Name <span className="text-danger">*</span>
+                        </label>
+                        <input
+                            type="text"
+                            name="first_name"
+                            className="form-control form-control-lg border-2 rounded-3"
+                            value={form.first_name}
+                            onChange={handleChange}
+                            required
+                        />
                       </div>
                       <div className="col-md-6">
-                        <label className="form-label">Department</label>
-                        <DepartmentSelect campusId={form.campus} value={form.department} onChange={handleChange} />
+                        <label className="form-label fw-semibold">Middle Name</label>
+                        <input
+                            type="text"
+                            name="middle_name"
+                            className="form-control form-control-lg border-2 rounded-3"
+                            value={form.middle_name}
+                            onChange={handleChange}
+                        />
                       </div>
                     </div>
 
-                    <div className="row mb-3">
+                    <div className="row g-3 mb-4">
                       <div className="col-md-6">
-                        <label className="form-label">Course</label>
-                        <CourseSelect departmentId={form.department} value={form.course} onChange={handleChange} />
+                        <label className="form-label fw-semibold">
+                          Last Name <span className="text-danger">*</span>
+                        </label>
+                        <input
+                            type="text"
+                            name="last_name"
+                            className="form-control form-control-lg border-2 rounded-3"
+                            value={form.last_name}
+                            onChange={handleChange}
+                            required
+                        />
                       </div>
                       <div className="col-md-6">
-                        <label className="form-label">Year</label>
-                        <select className="form-control" name="year" value={form.year} onChange={handleChange} required>
-                          <option value="" disabled>Select Year</option>
+                        <label className="form-label fw-semibold">Extension</label>
+                        <input
+                            type="text"
+                            name="extension_name"
+                            className="form-control form-control-lg border-2 rounded-3"
+                            placeholder="Jr., III, etc."
+                            value={form.extension_name}
+                            onChange={handleChange}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Personal Details */}
+                    <div className="row g-3 mb-4">
+                      <div className="col-md-6">
+                        <label className="form-label fw-semibold">
+                          Birth Date <span className="text-danger">*</span>
+                        </label>
+                        <input
+                            type="date"
+                            name="birth_date"
+                            className="form-control form-control-lg border-2 rounded-3"
+                            value={form.birth_date}
+                            onChange={handleChange}
+                            required
+                        />
+                      </div>
+                      <div className="col-md-6">
+                        <label className="form-label fw-semibold">
+                          Gender <span className="text-danger">*</span>
+                        </label>
+                        <select
+                            name="gender"
+                            className="form-select form-select-lg border-2 rounded-3"
+                            value={form.gender}
+                            onChange={handleChange}
+                            required
+                        >
+                          <option value="">Choose gender...</option>
+                          <option value="Male">Male</option>
+                          <option value="Female">Female</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    {/* Account Information */}
+                    <hr className="my-5 border-2 opacity-25" />
+                    <h3 className="h5 fw-bold text-primary mb-4">Account Information</h3>
+
+                    <div className="row g-3 mb-4">
+                      <div className="col-md-6">
+                        <label className="form-label fw-semibold">
+                          <i className="far fa-user me-2 text-primary"></i>
+                          Username <span className="text-danger">*</span>
+                        </label>
+                        <input
+                            type="text"
+                            name="username"
+                            placeholder="Choose your username"
+                            className="form-control form-control-lg border-2 rounded-3"
+                            value={form.username}
+                            onChange={handleChange}
+                            required
+                        />
+                      </div>
+                      <div className="col-md-6">
+                        <label className="form-label fw-semibold">
+                          <i className="far fa-envelope me-2 text-primary"></i>
+                          Email <span className="text-danger">*</span>
+                        </label>
+                        <input
+                            type="email"
+                            name="email"
+                            placeholder="Please enter your email"
+                            className="form-control form-control-lg border-2 rounded-3"
+                            value={form.email}
+                            onChange={handleChange}
+                            required
+                        />
+                      </div>
+                    </div>
+
+                    <div className="row g-3 mb-4">
+                      <div className="col-md-6">
+                        <label className="form-label fw-semibold">
+                          <i className="far fa-phone me-2 text-primary"></i>
+                          Contact Number <span className="text-danger">*</span>
+                        </label>
+                        <input
+                            type="tel"
+                            name="contact_number"
+                            className="form-control form-control-lg border-2 rounded-3"
+                            placeholder="+63 912 345 6789"
+                            value={form.contact_number}
+                            onChange={handleChange}
+                            required
+                        />
+                      </div>
+                      <div className="col-md-6">
+                        <label className="form-label fw-semibold">
+                          <i className="far fa-lock me-2 text-primary"></i>
+                          Password <span className="text-danger">*</span>
+                        </label>
+                        <div className="input-group">
+                          <input
+                              type={showPassword ? "text" : "password"}
+                              name="password"
+                              placeholder="Choose your password"
+                              className="form-control form-control-lg border-2 rounded-start-3"
+                              value={form.password}
+                              onChange={handleChange}
+                              required
+                          />
+                          <button
+                              className="btn btn-outline-secondary border-2 rounded-end-3"
+                              type="button"
+                              onClick={() => setShowPassword(!showPassword)}
+                          >
+                            <i className={`fa ${showPassword ? 'fa-eye' : 'fa-eye-slash'}`}></i>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Academic Information */}
+                    <hr className="my-5 border-2 opacity-25" />
+                    <h3 className="h5 fw-bold text-primary mb-4">Academic Information</h3>
+
+                    <div className="row g-3 mb-4">
+                      <div className="col-md-6">
+                        <label className="form-label fw-semibold">
+                          Campus <span className="text-danger">*</span>
+                        </label>
+                       <CampusSelect value={form.campus} onChange={handleChange}  />
+                      </div>
+                      <div className="col-md-6">
+                        <label className="form-label fw-semibold">
+                          Department <span className="text-danger">*</span>
+                        </label>
+                        <DepartmentSelect campusId={form.campus} value={form.department} onChange={handleChange}/>
+                      </div>
+                    </div>
+
+                    <div className="row g-3 mb-4">
+                      <div className="col-md-6">
+                        <label className="form-label fw-semibold">
+                          Course <span className="text-danger">*</span>
+                        </label>
+                          <CourseSelect departmentId={form.department} value={form.course} onChange={handleChange} />
+                      </div>
+                      <div className="col-md-6">
+                        <label className="form-label fw-semibold">
+                          Year Level <span className="text-danger">*</span>
+                        </label>
+                        <select
+                            name="year"
+                            className="form-select form-select-lg border-2 rounded-3"
+                            value={form.year}
+                            onChange={handleChange}
+                            required
+                        >
+                          <option value="">Select year...</option>
                           <option value="1st Year">1st Year</option>
                           <option value="2nd Year">2nd Year</option>
                           <option value="3rd Year">3rd Year</option>
@@ -154,26 +342,95 @@ const Register: React.FC = () => {
                       </div>
                     </div>
 
+                    <div className="mb-5">
+                      <label className="form-label fw-semibold">
+                        Total Units <span className="text-danger">*</span>
+                      </label>
+                      <input
+                          type="number"
+                          name="total_units"
+                          className="form-control form-control-lg border-2 rounded-3"
+                          placeholder="Enter total units (e.g., 24)"
+                          value={form.total_units}
+                          onChange={handleChange}
+                          min="1"
+                          max="30"
+                          required
+                      />
+                      <div className="form-text">Enter the total number of units you're enrolled in</div>
+                    </div>
+
+                    {/* Submit Button */}
                     <div className="d-grid">
-                      <button type="submit" className="btn btn-primary btn-lg shadow-sm">
-                        Register
+                      <button
+                          type="button"
+                          onClick={handleSubmit}
+                          className="btn btn-primary btn-lg py-3 rounded-3 shadow-sm fw-semibold"
+                          style={{background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', border: 'none'}}
+                      >
+                        <i className="bi bi-person-plus me-2"></i>
+                        Create Account
                       </button>
                     </div>
-                  </form>
-                </div>
-
-                <div className="card-footer text-center border-0 bg-white py-3">
-                  <span className="text-muted small">Already have an account?</span>{' '}
-                  <Link to="/applicant/login" className="text-primary fw-semibold">Login here</Link>
+                  </div>
                 </div>
               </div>
 
-              <div className="text-center mt-4 text-muted small">
-                &copy; {new Date().getFullYear()} iScholar — Ilocos Sur Polytechnic State College
+              {/* Footer */}
+              <div className="card border-0 shadow-sm mt-4 rounded-3">
+                <div className="card-body text-center py-4">
+                  <p className="mb-0 text-muted">
+                    Already have an account?{' '}
+                    <a
+                        href="/applicant/login"
+                        className="text-decoration-none fw-semibold"
+                        style={{color: '#667eea'}}
+                    >
+                      Sign in here <i className="bi bi-arrow-right ms-1"></i>
+                    </a>
+                  </p>
+                </div>
+              </div>
+
+              <div className="text-center mt-4">
+                <p className="small mb-0">
+                  &copy; {new Date().getFullYear()} iScholar — Ilocos Sur Polytechnic State College
+                </p>
               </div>
             </div>
           </div>
         </div>
+
+        <style jsx>{`
+        .bg-gradient-primary {
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .form-control:focus,
+        .form-select:focus {
+          border-color: #667eea;
+          box-shadow: 0 0 0 0.25rem rgba(102, 126, 234, 0.25);
+        }
+        
+        .card {
+          backdrop-filter: blur(10px);
+        }
+        
+        .btn:hover {
+          transform: translateY(-2px);
+          transition: all 0.3s ease;
+        }
+        
+        .form-control,
+        .form-select {
+          transition: all 0.3s ease;
+        }
+        
+        .form-control:hover:not(:focus),
+        .form-select:hover:not(:focus) {
+          border-color: #9ca3af;
+        }
+      `}</style>
       </div>
   );
 };
