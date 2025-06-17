@@ -5,9 +5,10 @@ import CourseSelect from "../components/selects/CourseSelect.tsx";
 import {notyf} from "../utils/utils.ts";
 import {registerUser} from "../services/authService.tsx";
 import {sha256} from "js-sha256";
+import type {RegisterForm} from "../types/registerForm.ts";
 
 const Register = () => {
-  const [form, setForm] = useState({
+  const [form, setForm] = useState<RegisterForm>({
     student_id: '',
     first_name: '',
     middle_name: '',
@@ -18,19 +19,13 @@ const Register = () => {
     email: '',
     contact_number: '',
     password: '',
-    campus: '',
-    department: '',
-    course: '',
-    year: '',
     birth_date: '',
-    total_units: 0,
   });
 
   const isFormValid = () => {
     const requiredFields = [
       'student_id', 'first_name', 'last_name', 'gender', 'username',
-      'email', 'contact_number', 'password', 'campus', 'department',
-      'course', 'year', 'birth_date'
+      'email', 'contact_number', 'password', 'birth_date'
     ];
 
     for (const field of requiredFields) {
@@ -104,13 +99,10 @@ const Register = () => {
 
               {/* Main Form Card */}
               <div className="card border-0 shadow-lg rounded-4 overflow-hidden">
-                <div className="card-header bg-white border-0 py-4">
-                  <h2 className="h4 fw-bold text-center mb-0 text-primary">
-                    Personal Information
-                  </h2>
-                </div>
+
 
                 <div className="card-body p-4 p-md-5">
+                  <h3 className="h5 fw-bold text-primary mb-4">Personal Information</h3>
                   <div onSubmit={handleSubmit}>
                     {/* Student ID */}
                     <div className="mb-4">
@@ -296,69 +288,6 @@ const Register = () => {
                       </div>
                     </div>
 
-                    {/* Academic Information */}
-                    <hr className="my-5 border-2 opacity-25" />
-                    <h3 className="h5 fw-bold text-primary mb-4">Academic Information</h3>
-
-                    <div className="row g-3 mb-4">
-                      <div className="col-md-6">
-                        <label className="form-label fw-semibold">
-                          Campus <span className="text-danger">*</span>
-                        </label>
-                       <CampusSelect value={form.campus} onChange={handleChange}  />
-                      </div>
-                      <div className="col-md-6">
-                        <label className="form-label fw-semibold">
-                          Department <span className="text-danger">*</span>
-                        </label>
-                        <DepartmentSelect campusId={form.campus} value={form.department} onChange={handleChange}/>
-                      </div>
-                    </div>
-
-                    <div className="row g-3 mb-4">
-                      <div className="col-md-6">
-                        <label className="form-label fw-semibold">
-                          Course <span className="text-danger">*</span>
-                        </label>
-                          <CourseSelect departmentId={form.department} value={form.course} onChange={handleChange} />
-                      </div>
-                      <div className="col-md-6">
-                        <label className="form-label fw-semibold">
-                          Year Level <span className="text-danger">*</span>
-                        </label>
-                        <select
-                            name="year"
-                            className="form-select form-select-lg border-2 rounded-3"
-                            value={form.year}
-                            onChange={handleChange}
-                            required
-                        >
-                          <option value="">Select year...</option>
-                          <option value="1st Year">1st Year</option>
-                          <option value="2nd Year">2nd Year</option>
-                          <option value="3rd Year">3rd Year</option>
-                          <option value="4th Year">4th Year</option>
-                        </select>
-                      </div>
-                    </div>
-
-                    <div className="mb-5">
-                      <label className="form-label fw-semibold">
-                        Total Units <span className="text-danger">*</span>
-                      </label>
-                      <input
-                          type="number"
-                          name="total_units"
-                          className="form-control form-control-lg border-2 rounded-3"
-                          placeholder="Enter total units (e.g., 24)"
-                          value={form.total_units}
-                          onChange={handleChange}
-                          min="1"
-                          max="30"
-                          required
-                      />
-                      <div className="form-text">Enter the total number of units you're enrolled in</div>
-                    </div>
 
                     {/* Submit Button */}
                     <div className="d-grid">

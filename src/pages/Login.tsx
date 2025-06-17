@@ -1,17 +1,25 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, Link  } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { loginUser } from '../services/authService';
-import { saveAuthToken } from '../utils/auth';
-import { notyf } from '../utils/utils'; 
-import 'notyf/notyf.min.css'; // for React, Vue and Svelte
-
+import { useAuth } from '../context/AuthContext';
+import { notyf } from '../utils/utils';
+import 'notyf/notyf.min.css';
 
 const Login: React.FC = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [remember, setRemember] = useState(false);
   const [errors, setErrors] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+  const { login, isAuthenticated } = useAuth();
+
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/applicant/home');
+    }
+  }, [isAuthenticated, navigate]);
 
   useEffect(() => {
     const rememberedUsername = localStorage.getItem('rememberedUsername');
@@ -30,8 +38,12 @@ const Login: React.FC = () => {
     }
 
     try {
+      setIsLoading(true);
       setErrors(null);
-      const data = await loginUser(username, password);
+
+      const response = await loginUser(username, password);
+      const { user, token } = response;
+      console.log('Login response:', response);
 
       if (remember) {
         localStorage.setItem('rememberedUsername', username);
@@ -39,17 +51,18 @@ const Login: React.FC = () => {
         localStorage.removeItem('rememberedUsername');
       }
 
-      saveAuthToken(data.token, data.expires_in);
+      login(user, token);
+      console.log("Is Authenticated After Login?", isAuthenticated);
 
       notyf.success('Login successful!');
 
-      setTimeout(() => {
-        navigate('/applicant/profile');
-      }
-      , 3000);
+      // Navigate immediately since we're now authenticated
+      navigate('/applicant/home');
 
     } catch (err) {
       setErrors(err instanceof Error ? err.message : 'Login failed');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -58,24 +71,21 @@ const Login: React.FC = () => {
     setRemember(isChecked);
 
     if (!isChecked) {
-      localStorage.removeItem('rememberedEmail');
+      localStorage.removeItem('rememberedUsername');
     }
   };
 
   return (
-    <>
-
-
       <div className="min-vh-100 d-flex align-items-center justify-content-center bg-light position-relative overflow-hidden">
         <div className="container" style={{ zIndex: 2 }}>
           <div className="row justify-content-center">
             <div className="col-md-6 col-lg-5 col-xl-4">
               <div className="text-center mb-4">
                 <img
-                  src="https://ispsctagudin.info/home/assets/img/ispsc_logo.png"
-                  alt="ISPSC Logo"
-                  width={80}
-                  height={80}
+                    src="https://ispsctagudin.info/home/assets/img/ispsc_logo.png"
+                    alt="ISPSC Logo"
+                    width={80}
+                    height={80}
                 />
               </div>
 
@@ -89,35 +99,38 @@ const Login: React.FC = () => {
                     <div className="mb-3">
                       <label htmlFor="username" className="form-label text-muted">Username</label>
                       <input
-                        id="username"
-                        type="text"
-                        className="form-control"
-                        value={username}
-                        onChange={(e) => setUsername(e.target.value)}
-                        required
-                        autoFocus
+                          id="username"
+                          type="text"
+                          className="form-control"
+                          value={username}
+                          onChange={(e) => setUsername(e.target.value)}
+                          required
+                          autoFocus
+                          disabled={isLoading}
                       />
                     </div>
 
                     <div className="mb-3">
                       <label htmlFor="password" className="form-label text-muted">Password</label>
                       <input
-                        id="password"
-                        type="password"
-                        className="form-control"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        required
+                          id="password"
+                          type="password"
+                          className="form-control"
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
+                          required
+                          disabled={isLoading}
                       />
                     </div>
 
                     <div className="form-check mb-3">
                       <input
-                        className="form-check-input"
-                        type="checkbox"
-                        id="remember"
-                        checked={remember}
-                        onChange={handleRememberChange}
+                          className="form-check-input"
+                          type="checkbox"
+                          id="remember"
+                          checked={remember}
+                          onChange={handleRememberChange}
+                          disabled={isLoading}
                       />
                       <label className="form-check-label" htmlFor="remember">
                         Remember me
@@ -125,8 +138,19 @@ const Login: React.FC = () => {
                     </div>
 
                     <div className="d-grid mb-3">
-                      <button type="submit" className="btn btn-primary btn-lg shadow-sm">
-                        Login
+                      <button
+                          type="submit"
+                          className="btn btn-primary btn-lg shadow-sm"
+                          disabled={isLoading}
+                      >
+                        {isLoading ? (
+                            <>
+                              <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                              Logging in...
+                            </>
+                        ) : (
+                            'Login'
+                        )}
                       </button>
                     </div>
 
@@ -151,23 +175,22 @@ const Login: React.FC = () => {
 
         <style>
           {`
-            @keyframes float0 {
-              0%, 100% { transform: translateY(0); opacity: 0.3; }
-              50% { transform: translateY(-10px); opacity: 0.6; }
-            }
-            @keyframes float1 {
-              0%, 100% { transform: translateX(0); opacity: 0.2; }
-              50% { transform: translateX(10px); opacity: 0.5; }
-            }
-            @keyframes float2 {
-              0%, 100% { transform: translate(0, 0) rotate(0deg); opacity: 0.3; }
-              33% { transform: translate(5px, -5px) rotate(120deg); opacity: 0.6; }
-              66% { transform: translate(-5px, 5px) rotate(240deg); opacity: 0.4; }
-            }
-          `}
+          @keyframes float0 {
+            0%, 100% { transform: translateY(0); opacity: 0.3; }
+            50% { transform: translateY(-10px); opacity: 0.6; }
+          }
+          @keyframes float1 {
+            0%, 100% { transform: translateX(0); opacity: 0.2; }
+            50% { transform: translateX(10px); opacity: 0.5; }
+          }
+          @keyframes float2 {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); opacity: 0.3; }
+            33% { transform: translate(5px, -5px) rotate(120deg); opacity: 0.6; }
+            66% { transform: translate(-5px, 5px) rotate(240deg); opacity: 0.4; }
+          }
+        `}
         </style>
       </div>
-    </>
   );
 };
 

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     FileText,
     CheckCircle,
@@ -7,73 +7,37 @@ import {
     User,
     Award,
     Pencil,
-    Calendar,
-    TrendingUp,
     Clock,
-    AlertCircle,
-    Download,
-    Upload,
-    Star,
     ChevronRight,
-    Target,
-    BookOpen,
     DollarSign,
     GraduationCap,
     Brain,
     Zap,
     Settings
 } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext.tsx';
+import { hasApplied } from '../../services/applicationService';
 
 const Home: React.FC = () => {
-    const [hasApplication, setHasApplication] = useState(true); // Toggle this to see both views
+    const [hasApplication, setHasApplication] = useState(false); // Toggle this to see both views
+    const { user, token } = useAuth();
+
+    useEffect(() => {
+        hasApplied(token).then(setHasApplication);
+    }, [token]);
+
+
 
     const NotAppliedView = () => (
         <div className="bg-light min-vh-100">
             <div className="container py-5">
                 {/* Welcome Header */}
                 <div className="text-center mb-5">
-                    <h1 className="display-4 fw-bold text-primary mb-3">Welcome to iScholar, Cyanne! 🎓</h1>
+                    <h1 className="display-4 fw-bold text-primary mb-3">Welcome to iScholar, {user?.username}! 🎓</h1>
                     <p className="lead text-muted fs-5">An Intelligent Scholarship Prequalification System Using Fuzzy Logic and Prescriptive Analytics</p>
                     <small className="text-muted">For Ilocos Sur Polytechnic State College</small>
                 </div>
 
-                {/* System Intelligence Features */}
-                <div className="row justify-content-center mb-5">
-                    <div className="col-lg-10">
-                        <div className="card bg-gradient-primary text-white border-0 shadow-lg rounded-4">
-                            <div className="card-body p-4">
-                                <div className="text-center mb-4">
-                                    <Brain size={48} className="mb-3" />
-                                    <h3 className="fw-bold mb-2">Intelligent Evaluation System</h3>
-                                    <p className="opacity-75 mb-0">Our advanced system uses fuzzy logic and prescriptive analytics to provide fair and accurate scholarship assessments</p>
-                                </div>
-                                <div className="row g-3">
-                                    <div className="col-md-4">
-                                        <div className="text-center">
-                                            <Target size={32} className="mb-2" />
-                                            <h6 className="fw-semibold">Smart Data Modeling</h6>
-                                            <small className="opacity-75">Advanced algorithms analyze your academic and financial data</small>
-                                        </div>
-                                    </div>
-                                    <div className="col-md-4">
-                                        <div className="text-center">
-                                            <Zap size={32} className="mb-2" />
-                                            <h6 className="fw-semibold">Real-Time Results</h6>
-                                            <small className="opacity-75">Get instant prequalification feedback upon submission</small>
-                                        </div>
-                                    </div>
-                                    <div className="col-md-4">
-                                        <div className="text-center">
-                                            <Settings size={32} className="mb-2" />
-                                            <h6 className="fw-semibold">User-Friendly Design</h6>
-                                            <small className="opacity-75">Intuitive interface tested for optimal user experience</small>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
 
                 {/* Main Application Card */}
                 <div className="row justify-content-center mb-5">
@@ -99,9 +63,9 @@ const Home: React.FC = () => {
                                             <h5 className="fw-bold mb-2">Academic Requirements</h5>
                                             <p className="small text-muted mb-2">Submit your official grades/transcript</p>
                                             <ul className="list-unstyled small text-muted">
-                                                <li>• Minimum GPA requirement</li>
-                                                <li>• Official academic records</li>
-                                                <li>• Current enrollment status</li>
+                                                <li>Minimum GPA requirement</li>
+                                                <li>Official academic records</li>
+                                                <li>Current enrollment status</li>
                                             </ul>
                                         </div>
                                     </div>
@@ -111,9 +75,9 @@ const Home: React.FC = () => {
                                             <h5 className="fw-bold mb-2">Financial Requirements</h5>
                                             <p className="small text-muted mb-2">Provide family income documentation</p>
                                             <ul className="list-unstyled small text-muted">
-                                                <li>• Income Tax Return (ITR)</li>
-                                                <li>• Certificate of Income</li>
-                                                <li>• Supporting financial documents</li>
+                                                <li>Income Tax Return (ITR)</li>
+                                                <li>Certificate of Income</li>
+                                                <li>Supporting financial documents</li>
                                             </ul>
                                         </div>
                                     </div>
@@ -135,41 +99,6 @@ const Home: React.FC = () => {
                     </div>
                 </div>
 
-                {/* Information Cards */}
-                <div className="row g-4">
-                    <div className="col-lg-6">
-                        <div className="card h-100 border-0 shadow-sm rounded-4">
-                            <div className="card-body p-4">
-                                <div className="d-flex align-items-center mb-3">
-                                    <div className="bg-info bg-opacity-10 rounded-circle p-2 me-3">
-                                        <BookOpen size={24} className="text-info" />
-                                    </div>
-                                    <h5 className="fw-bold mb-0">Scholarship Details</h5>
-                                </div>
-                                <p className="text-muted mb-3">Learn about the scholarship amount, duration, and eligibility criteria.</p>
-                                <button className="btn btn-outline-info btn-sm">
-                                    View Details <ChevronRight size={16} className="ms-1" />
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                    <div className="col-lg-6">
-                        <div className="card h-100 border-0 shadow-sm rounded-4">
-                            <div className="card-body p-4">
-                                <div className="d-flex align-items-center mb-3">
-                                    <div className="bg-success bg-opacity-10 rounded-circle p-2 me-3">
-                                        <Info size={24} className="text-success" />
-                                    </div>
-                                    <h5 className="fw-bold mb-0">Application Guide</h5>
-                                </div>
-                                <p className="text-muted mb-3">Step-by-step guide on preparing your documents and completing your application.</p>
-                                <button className="btn btn-outline-success btn-sm">
-                                    Get Help <ChevronRight size={16} className="ms-1" />
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
             </div>
         </div>
     );

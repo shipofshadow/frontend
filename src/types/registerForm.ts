@@ -9,10 +9,5 @@ export interface RegisterForm {
     email: string;
     contact_number: string;
     password: string;
-    campus: string;
-    department: string;
-    course: string;
-    year: string;
     birth_date: string;
-    total_units: number;
 }

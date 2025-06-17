@@ -1,9 +1,10 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { logout, isLoggedIn } from '../../../utils/auth';
+import { useAuth } from '../../../context/AuthContext';
 
 const Navbar: React.FC = () => {
   const navigate = useNavigate();
+  const { isAuthenticated, logout, user } = useAuth();
 
   const handleLogout = () => {
     logout();
@@ -46,12 +47,11 @@ const Navbar: React.FC = () => {
           {/* Nav Links */}
           <div className="collapse navbar-collapse" id="navbarNav">
             <ul className="navbar-nav ms-auto align-items-lg-center">
-
               <li className="nav-item">
                 <Link to="/applicant/dashboard" className="nav-link">Home</Link>
               </li>
 
-              {isLoggedIn() && (
+              {isAuthenticated && (
                   <>
                     <li className="nav-item">
                       <Link to="/applicant/documents" className="nav-link">My Documents</Link>
@@ -68,7 +68,7 @@ const Navbar: React.FC = () => {
                     {/* 📱 Mobile: direct notif page */}
                     <li className="nav-item d-lg-none">
                       <Link to="/applicant/notifications" className="nav-link">
-                         Notifications
+                        Notifications
                       </Link>
                     </li>
 
@@ -117,7 +117,10 @@ const Navbar: React.FC = () => {
                           data-bs-toggle="dropdown"
                           aria-expanded="false"
                       >
-                        <i className="bi bi-person-circle me-1"></i> <span className="d-lg-inline">Profile</span>
+                        <i className="bi bi-person-circle me-1"></i>
+                        <span className="d-lg-inline">
+                      {user?.name || 'Profile'}
+                    </span>
                       </a>
                       <ul className="dropdown-menu dropdown-menu-end" aria-labelledby="profileDropdown">
                         <li><Link to="/applicant/profile" className="dropdown-item">My Profile</Link></li>

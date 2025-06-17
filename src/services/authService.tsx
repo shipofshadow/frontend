@@ -25,27 +25,21 @@ export interface RegisterPayload {
 
 
 export async function loginUser(username: string, password: string) {
+  const hashed_password = sha256(password)
+  const res = await fetch(`${API_BASE_URL}/api/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username, password: hashed_password }),
+  });
 
-  try {
-    const hashed_password = sha256(password)
-    const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ username: username, password: hashed_password }),
-    });
+  const json = await res.json();
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || 'Login failed');
-    }
-
-    const data: LoginResponse = await response.json();
-    return data;
-  } catch (error) {
-    throw new Error((error as Error).message || 'An unexpected error occurred');
+  if (!res.ok) {
+    throw new Error(json.message || 'Login failed');
   }
+
+  // Return only the inner data
+  return json.data;
 }
 
 export async function registerUser(data: RegisterPayload) {
