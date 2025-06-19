@@ -1,4 +1,4 @@
-/// <reference types="vite/client" />
+/// <reference interfaces="vite/client" />
 declare let process: {
   env: {
     REACT_APP_NAME: string;

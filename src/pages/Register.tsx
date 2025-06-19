@@ -1,13 +1,15 @@
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
 import React, { useState } from 'react';
-import CampusSelect from "../components/selects/CampusSelect.tsx";
-import DepartmentSelect from "../components/selects/DepartmentSelect.tsx";
-import CourseSelect from "../components/selects/CourseSelect.tsx";
 import {notyf} from "../utils/utils.ts";
 import {registerUser} from "../services/authService.tsx";
 import {sha256} from "js-sha256";
-import type {RegisterForm} from "../types/registerForm.ts";
+import type {RegisterForm} from "../interfaces/registerForm.ts";
+import {useNavigate} from "react-router-dom";
 
 const Register = () => {
+
+  const navigate = useNavigate();
   const [form, setForm] = useState<RegisterForm>({
     student_id: '',
     first_name: '',
@@ -34,21 +36,20 @@ const Register = () => {
       }
     }
 
-    if (form.total_units <= 0) {
-      return false;
-    }
-
     return true;
   };
 
 
   const [showPassword, setShowPassword] = useState(false);
 
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-expect-error
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm(prev => ({ ...prev, [name]: value }));
   };
-
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -72,6 +73,10 @@ const Register = () => {
 
       console.log('Registration data:', form);
       notyf.success('Registration successful!');
+
+      navigate('/applicant/login');
+
+
     } catch (err) {
       notyf.error(err instanceof Error ? err.message : 'Registration failed');
     }
@@ -330,7 +335,7 @@ const Register = () => {
           </div>
         </div>
 
-        <style jsx>{`
+        <style>{`
         .bg-gradient-primary {
           background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         }

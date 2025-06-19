@@ -54,14 +54,6 @@ const Navbar: React.FC = () => {
               {isAuthenticated && (
                   <>
                     <li className="nav-item">
-                      <Link to="/applicant/documents" className="nav-link">My Documents</Link>
-                    </li>
-
-                    <li className="nav-item">
-                      <Link to="/applicant/apply" className="nav-link">Apply</Link>
-                    </li>
-
-                    <li className="nav-item">
                       <Link to="/applicant/status" className="nav-link">Application Status</Link>
                     </li>
 
@@ -119,7 +111,9 @@ const Navbar: React.FC = () => {
                       >
                         <i className="bi bi-person-circle me-1"></i>
                         <span className="d-lg-inline">
-                      {user?.name || 'Profile'}
+                          {user?.profile
+                              ? `${user.profile.first_name} ${user.profile.last_name}`
+                              : 'Profile'}
                     </span>
                       </a>
                       <ul className="dropdown-menu dropdown-menu-end" aria-labelledby="profileDropdown">

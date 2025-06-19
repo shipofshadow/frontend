@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import type {Course} from '../../types/meta';
+import type {Course} from '../../interfaces/meta';
 import { API_BASE_URL } from "../../config.ts";
 
 interface Props {
@@ -22,7 +22,7 @@ const CourseSelect: React.FC<Props> = ({ departmentId, value, onChange }) => {
     }, [departmentId]);
 
     return (
-        <select name="course" className="form-select form-select-lg border-2 rounded-3" value={value} onChange={onChange} required>
+        <select name="course" className="form-select" value={value} onChange={onChange} required>
             <option value="">Select Course</option>
             {courses.map(course => (
                 <option key={course.id} value={course.id}>

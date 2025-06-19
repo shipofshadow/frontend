@@ -3,7 +3,9 @@ import { useNavigate, Link } from 'react-router-dom';
 import { loginUser } from '../services/authService';
 import { useAuth } from '../context/AuthContext';
 import { notyf } from '../utils/utils';
-import 'notyf/notyf.min.css';
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-expect-error
+import "notyf/notyf.min.css";
 
 const Login: React.FC = () => {
   const [username, setUsername] = useState('');
@@ -42,7 +44,7 @@ const Login: React.FC = () => {
       setErrors(null);
 
       const response = await loginUser(username, password);
-      const { user, token } = response;
+      const { user, token, refresh_token } = response;
       console.log('Login response:', response);
 
       if (remember) {
@@ -51,7 +53,7 @@ const Login: React.FC = () => {
         localStorage.removeItem('rememberedUsername');
       }
 
-      login(user, token);
+      login(user, token, refresh_token);
       console.log("Is Authenticated After Login?", isAuthenticated);
 
       notyf.success('Login successful!');

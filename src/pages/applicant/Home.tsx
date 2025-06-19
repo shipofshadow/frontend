@@ -17,9 +17,10 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext.tsx';
 import { hasApplied } from '../../services/applicationService';
+import {Link} from "react-router-dom";
 
 const Home: React.FC = () => {
-    const [hasApplication, setHasApplication] = useState(false); // Toggle this to see both views
+    const [hasApplication, setHasApplication] = useState(false);
     const { user, token } = useAuth();
 
     useEffect(() => {
@@ -85,14 +86,12 @@ const Home: React.FC = () => {
 
                                 {/* CTA Button */}
                                 <div className="text-center">
-                                    <button
-                                        className="btn btn-primary btn-lg px-5 py-3 rounded-pill fw-semibold"
-                                        onClick={() => setHasApplication(true)}
-                                    >
+                                    <Link to="/applicant/apply"
+                                        className="btn btn-primary btn-lg px-5 py-3 rounded-pill fw-semibold" >
                                         <Pencil size={20} className="me-2" />
                                         Start Your Application
                                         <ChevronRight size={20} className="ms-2" />
-                                    </button>
+                                    </Link>
                                 </div>
                             </div>
                         </div>

@@ -1,4 +1,4 @@
-export async function hasApplied(token: string): Promise<boolean> {
+export async function hasApplied(token: string | null): Promise<boolean> {
     const response = await fetch('/api/applications/status', {
         headers: {
             'Authorization': `Bearer ${token}`

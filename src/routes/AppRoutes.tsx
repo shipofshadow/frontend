@@ -9,11 +9,10 @@ import AdminLayout from '../layouts/AdminLayout';
 import ApplicantLayout from '../layouts/ApplicantLayout';
 import Dashboard from '../pages/admin/Dashboard';
 import NotFound from '../pages/errors/NotFound';
-import ApplicantionForm from '../pages/applicant/ApplicantionForm';
+import Apply from '../pages/applicant/Apply.tsx';
 import ProtectedRoute from './ProtectedRoute';
 import Profile from '../pages/applicant/Profile';
 import Home from '../pages/applicant/Home';
-// Remove this unused import: import { isLoggedIn } from '../utils/auth';
 import Register from '../pages/Register';
 import ForgotPassword from '../pages/applicant/ForgotPassword';
 import Settings from '../pages/applicant/Settings';
@@ -32,6 +31,7 @@ import Metrics from '../pages/admin/Metrics';
 import Departments from '../pages/admin/Departments';
 import AcademicYears from '../pages/admin/AcademicYears';
 import Courses from '../pages/admin/Courses';
+import Applications from "../pages/Applications.tsx";
 
 export function AuthRedirect() {
     const { isAuthenticated } = useAuth();
@@ -71,13 +71,13 @@ const AppRoutes: React.FC = () => {
                 <Route path="register" element={<Register />} />
                 <Route path="forgot-password" element={<ForgotPassword />} />
                 <Route element={<ProtectedRoute />}>
-                    <Route path="apply" element={<ApplicantionForm />} />
+                    <Route path="apply" element={<Apply />} />
+                    <Route path="status" element={<Applications />} />
                     <Route path="home" element={<Home />} />
                     <Route path="profile" element={<Profile />} />
                     <Route path="settings" element={<Settings />} />
                 </Route>
             </Route>
-
             <Route path="*" element={<NotFound />} />
         </Routes>
     );

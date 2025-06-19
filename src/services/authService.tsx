@@ -17,10 +17,6 @@ export interface RegisterPayload {
   email: string;
   contact_number: string;
   password: string;
-  campus: string;
-  department: string;
-  course: string;
-  year: string;
 }
 
 
@@ -37,8 +33,6 @@ export async function loginUser(username: string, password: string) {
   if (!res.ok) {
     throw new Error(json.message || 'Login failed');
   }
-
-  // Return only the inner data
   return json.data;
 }
 
