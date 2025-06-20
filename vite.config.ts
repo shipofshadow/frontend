@@ -1,4 +1,5 @@
 import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
 // https://vite.dev/config/
 export default defineConfig({
   server: {
@@ -6,5 +7,7 @@ export default defineConfig({
     port: 5173,
     allowedHosts: ['ischolar.byteress.xyz'],
     strictPort: true
-  }
+  },
+  plugins: [react()],
+  base: '/',
 });

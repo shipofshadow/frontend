@@ -1,9 +1,9 @@
-import {useEffect, useState} from "react";
+import React, {useEffect, useState} from "react";
 import psgc from "@dropdowns/psgc";
 import DepartmentSelect from "../../components/selects/DepartmentSelect.tsx";
 import CampusSelect from "../../components/selects/CampusSelect.tsx";
 import CourseSelect from "../../components/selects/CourseSelect.tsx";
- import { useAcademicTerm } from "../../hooks/useAcademicTerm.ts";
+import { useAcademicTerm } from "../../hooks/useAcademicTerm.ts";
 import type {ApplicationForm} from "../../interfaces/ApplicationForm.ts";
 import {useAuth} from "../../context/AuthContext.tsx";
 
@@ -12,43 +12,33 @@ const Apply = () => {
   const { term } = useAcademicTerm();
   const { user } = useAuth();
 
-  const [formData, setFormData] = useState<ApplicationForm>({
-    // Applicant Details
-    firstName: "",
-    lastName: "",
-    email: "",
-    phone: "",
-    dateOfBirth: "",
-    address: "",
-    nationality: "",
-    guardianName: "",
-    guardianContact: "",
-    householdIncome: "",
+  interface Region {
+    reg_code: string;
+    name: string;
+  }
 
-    // Academic Details
-    currentInstitution: "",
-    program: "",
-    yearLevel: "",
-    currentGPA: "",
-    expectedGraduation: "",
-    academicAchievements: "",
+  interface Province {
+    prv_code: string;
+    name: string;
+    reg_code: string;
+  }
 
-    // Scholarship Information
-    scholarshipName: "",
-    financialNeed: "",
-    careerGoals: "",
+  interface Municipality {
+    mun_code: string;
+    name: string;
+    prv_code: string;
+  }
 
-    // Notifications
-    applicationUpdates: true,
-    deadlineReminders: true,
-    scholarshipNews: true,
-    generalNotifications: false
-  });
+  interface Barangay {
+    bgy_code: string;
+    name: string;
+    mun_code: string;
+  }
 
-  const [regions, setRegions] = useState([]);
-  const [provinces, setProvinces] = useState([]);
-  const [municipalities, setMunicipalities] = useState([]);
-  const [barangays, setBarangays] = useState([]);
+  const [regions, setRegions] = useState<Region[]>([]);
+  const [provinces, setProvinces] = useState<Province[]>([]);
+  const [municipalities, setMunicipalities] = useState<Municipality[]>([]);
+  const [barangays, setBarangays] = useState<Barangay[]>([]);
 
   const [selectedRegion, setSelectedRegion] = useState('');
   const [selectedProvince, setSelectedProvince] = useState('');
@@ -59,17 +49,85 @@ const Apply = () => {
   const [departmentId, setDepartmentId] = useState("");
   const [courseId, setCourseId] = useState("");
 
-
-
   useEffect(() => {
     setRegions(psgc.getAllRegions());
   }, []);
 
-  // @ts-ignore
-  const handleRegionChange = (e) => {
-    const code = e.target.value;
-    setSelectedRegion(code);
-    setProvinces(psgc.getProvincesByRegion(code));
+  const [formData, setFormData] = useState<ApplicationForm>({
+    firstName: '',
+    middleName: '',
+    lastName: '',
+    nameExtension: '',
+    email: '',
+    phone: '',
+    birthDate: '',
+    street: '',
+    regionCode: '',
+    regionName: '',
+    provinceCode: '',
+    provinceName: '',
+    municipalityCode: '',
+    municipalityName: '',
+    barangayCode: '',
+    barangayName: '',
+    father: {
+      lastName: '',
+      firstName: '',
+      middleName: '',
+      extension: '',
+      occupation: '',
+      income: 0,
+    },
+    mother: {
+      lastName: '',
+      firstName: '',
+      middleName: '',
+      occupation: '',
+      income: 0,
+    },
+    emergencyContactName: '',
+    emergencyContactNumber: '',
+    householdNumber: 0,
+    siblings: 0,
+    siblingsStudying: 0,
+    ipAffiliation: '',
+    dswdProgram: '',
+    studentId: user?.profile?.student_id || '',
+    campus: 0,
+    department: 0,
+    course: 0,
+    academicYearId: term?.academic_year_id || 0,
+    semesterId: term?.semester_id || 0,
+    enrollmentStatus: '',
+    total_units: 0,
+    scholarshipName: '',
+    otherScholarship: '',
+    scholarshipAmount: 0,
+    itr: null,
+    grades: null,
+  });
+
+  const handleRegionChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const selectedCode = e.target.value;
+    const selectedRegionObj = regions.find((r) => r.reg_code === selectedCode);
+
+    if (selectedRegionObj) {
+      setSelectedRegion(selectedCode);
+      setFormData((prev) => ({
+        ...prev,
+        regionCode: selectedRegionObj.reg_code,
+        regionName: selectedRegionObj.name,
+      }));
+    } else {
+      setSelectedRegion('');
+      setFormData((prev) => ({
+        ...prev,
+        regionCode: '',
+        regionName: '',
+      }));
+    }
+
+    setProvinces(psgc.getProvincesByRegion(selectedCode));
     setMunicipalities([]);
     setBarangays([]);
     setSelectedProvince('');
@@ -77,32 +135,102 @@ const Apply = () => {
     setSelectedBarangay('');
   };
 
-  const handleProvinceChange = (e) => {
+  const handleProvinceChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const code = e.target.value;
+    const selectedProvinceObj = provinces.find((p) => p.prv_code === code);
+
     setSelectedProvince(code);
+    setFormData((prev) => ({
+      ...prev,
+      provinceCode: code,
+      provinceName: selectedProvinceObj?.name || '',
+    }));
+
     setMunicipalities(psgc.getMunicipalitiesByProvince(code));
     setBarangays([]);
     setSelectedMunicipality('');
     setSelectedBarangay('');
   };
 
-  const handleMunicipalityChange = (e) => {
+  const handleMunicipalityChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const code = e.target.value;
+    const selectedMunicipalityObj = municipalities.find((m) => m.mun_code === code);
+
     setSelectedMunicipality(code);
+    setFormData((prev) => ({
+      ...prev,
+      municipalityCode: code,
+      municipalityName: selectedMunicipalityObj?.name || '',
+    }));
+
     setBarangays(psgc.getBarangaysByMunicipality(code));
     setSelectedBarangay('');
   };
 
-  const handleBarangayChange = (e) => {
-    setSelectedBarangay(e.target.value);
-  };
+  const handleBarangayChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const code = e.target.value;
+    const selectedBarangayObj = barangays.find((b) => b.bgy_code === code);
 
-  const handleInputChange = (field, value) => {
-    setFormData(prev => ({
+    setSelectedBarangay(code);
+    setFormData((prev) => ({
       ...prev,
-      [field]: value
+      barangayCode: code,
+      barangayName: selectedBarangayObj?.name || '',
     }));
   };
+
+  const handleInputChange = (field: keyof ApplicationForm, value: any) => {
+    setFormData((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+  };
+
+  const handleNestedInputChange = (
+      parent: 'father' | 'mother',
+      field: string,
+      value: any
+  ) => {
+    setFormData((prev) => ({
+      ...prev,
+      [parent]: {
+        ...prev[parent],
+        [field]: value,
+      },
+    }));
+  };
+
+  const handleFileUpload = (field: 'itr' | 'grades', file: File | undefined) => {
+    if (file && file.size > 5 * 1024 * 1024) {
+      alert('File size exceeds 5MB');
+      return;
+    }
+    setFormData((prev) => ({
+      ...prev,
+      [field]: file || null,
+    }));
+  };
+
+  useEffect(() => {
+    setFormData((prev) => ({
+      ...prev,
+      campus: parseInt(campusId) || 0,
+    }));
+  }, [campusId]);
+
+  useEffect(() => {
+    setFormData((prev) => ({
+      ...prev,
+      department: parseInt(departmentId) || 0,
+    }));
+  }, [departmentId]);
+
+  useEffect(() => {
+    setFormData((prev) => ({
+      ...prev,
+      course: parseInt(courseId) || 0,
+    }));
+  }, [courseId]);
 
   return (
       <div className="container p-2">
@@ -165,17 +293,17 @@ const Apply = () => {
                             type="text"
                             placeholder="Enter your first name"
                             value={formData.firstName}
-                            onChange={(e) => handleInputChange('firstName', e.target.value)}
+                            onChange={(e)=> handleInputChange('firstName', e.target.value)}
                         />
                       </div>
                       <div className="mb-3 col-md-3">
-                        <label>Middle Name *</label>
+                        <label>Middle Name</label>
                         <input
                             className="form-control"
                             type="text"
-                            placeholder="Enter your last name"
-                            value={formData.lastName}
-                            onChange={(e) => handleInputChange('lastName', e.target.value)}
+                            placeholder="Enter your middle name"
+                            value={formData.middleName || ''}
+                            onChange={(e)=> handleInputChange('middleName', e.target.value)}
                         />
                       </div>
 
@@ -186,18 +314,18 @@ const Apply = () => {
                             type="text"
                             placeholder="Enter your last name"
                             value={formData.lastName}
-                            onChange={(e) => handleInputChange('lastName', e.target.value)}
+                            onChange={(e)=> handleInputChange('lastName', e.target.value)}
                         />
                       </div>
 
                       <div className="mb-3 col-md-2">
-                        <label>Ext. Name *</label>
+                        <label>Ext. Name</label>
                         <input
                             className="form-control"
                             type="text"
-                            placeholder="Enter your last name"
-                            value={formData.lastName}
-                            onChange={(e) => handleInputChange('lastName', e.target.value)}
+                            placeholder="Jr., Sr., etc."
+                            value={formData.nameExtension || ''}
+                            onChange={(e)=> handleInputChange('nameExtension', e.target.value)}
                         />
                       </div>
                     </div>
@@ -208,7 +336,7 @@ const Apply = () => {
                           type="email"
                           placeholder="Enter your email address"
                           value={formData.email}
-                          onChange={(e) => handleInputChange('email', e.target.value)}
+                          onChange={(e)=> handleInputChange('email', e.target.value)}
                       />
                     </div>
                     <div className="row gx-3">
@@ -219,7 +347,7 @@ const Apply = () => {
                             type="tel"
                             placeholder="Enter your phone number"
                             value={formData.phone}
-                            onChange={(e) => handleInputChange('phone', e.target.value)}
+                            onChange={(e)=> handleInputChange('phone', e.target.value)}
                         />
                       </div>
                       <div className="mb-3 col-md-6">
@@ -227,14 +355,16 @@ const Apply = () => {
                         <input
                             className="form-control"
                             type="date"
-                            value={formData.dateOfBirth}
-                            onChange={(e) => handleInputChange('dateOfBirth', e.target.value)}
+                            value={formData.birthDate}
+                            onChange={(e)=> handleInputChange('birthDate', e.target.value)}
                         />
                       </div>
                     </div>
                     <div className="form-group">
                       <label htmlFor="street">Street, House No., etc.</label>
-                      <input type="text" className="form-control mb-3" id="street" placeholder="Enter street, house number, etc." />
+                      <input type="text" className="form-control mb-3" value={formData.street}
+                             onChange={(e)=> handleInputChange('street', e.target.value)}
+                             placeholder="Enter street, house number, etc." />
 
                       <div className="row">
                         <div className="col-md-3">
@@ -265,7 +395,7 @@ const Apply = () => {
                                 <option key={m.mun_code} value={m.mun_code}>{m.name}</option>
                             ))}
                           </select>
-                      </div>
+                        </div>
 
                         <div className="col-md-3">
                           <label>Barangay</label>
@@ -276,7 +406,7 @@ const Apply = () => {
                             ))}
                           </select>
                         </div>
-                    </div>
+                      </div>
                     </div>
 
                     <h6 className="mt-4 mb-3 text-secondary">Family Information</h6>
@@ -290,43 +420,43 @@ const Apply = () => {
                       <div className="mb-3 col-md-3">
                         <label>Last Name</label>
                         <input className="form-control" type="text" placeholder="Last Name"
-                               value={formData.father_last_name}
-                               onChange={(e) => handleInputChange('father_last_name', e.target.value)}
+                               value={formData.father.lastName}
+                               onChange={(e)=> handleNestedInputChange('father', 'lastName', e.target.value)}
                         />
                       </div>
                       <div className="mb-3 col-md-3">
                         <label>First Name</label>
                         <input className="form-control" type="text" placeholder="First Name"
-                               value={formData.father_first_name}
-                               onChange={(e) => handleInputChange('father_first_name', e.target.value)}
+                               value={formData.father.firstName}
+                               onChange={(e)=> handleNestedInputChange('father', 'firstName', e.target.value)}
                         />
                       </div>
                       <div className="mb-3 col-md-3">
                         <label>Middle Name</label>
                         <input className="form-control" type="text" placeholder="Middle Name"
-                               value={formData.father_middle_name}
-                               onChange={(e) => handleInputChange('father_middle_name', e.target.value)}
+                               value={formData.father.middleName || ''}
+                               onChange={(e)=> handleNestedInputChange('father', 'middleName', e.target.value)}
                         />
                       </div>
                       <div className="mb-3 col-md-3">
                         <label>Extension</label>
                         <input className="form-control" type="text" placeholder="e.g., Jr."
-                               value={formData.father_extension}
-                               onChange={(e) => handleInputChange('father_extension', e.target.value)}
+                               value={formData.father.extension || ''}
+                               onChange={(e)=> handleNestedInputChange('father', 'extension', e.target.value)}
                         />
                       </div>
                       <div className="mb-3 col-md-6">
                         <label>Occupation</label>
                         <input className="form-control" type="text" placeholder="Occupation"
-                               value={formData.father_occupation}
-                               onChange={(e) => handleInputChange('father_occupation', e.target.value)}
+                               value={formData.father.occupation}
+                               onChange={(e)=> handleNestedInputChange('father', 'occupation', e.target.value)}
                         />
                       </div>
                       <div className="mb-3 col-md-6">
                         <label>Monthly Income</label>
                         <input className="form-control" type="number" placeholder="₱"
-                               value={formData.father_income}
-                               onChange={(e) => handleInputChange('father_income', e.target.value)}
+                               value={formData.father.income}
+                               onChange={(e)=> handleNestedInputChange('father', 'income', parseFloat(e.target.value) || 0)}
                         />
                       </div>
 
@@ -338,41 +468,39 @@ const Apply = () => {
                       <div className="mb-3 col-md-4">
                         <label>Mother's Maiden Last Name</label>
                         <input className="form-control" type="text"
-                               value={formData.mother_last_name}
-                               onChange={(e) => handleInputChange('mother_last_name', e.target.value)}
+                               value={formData.mother.lastName}
+                               onChange={(e)=> handleNestedInputChange('mother', 'lastName', e.target.value)}
                         />
                       </div>
                       <div className="mb-3 col-md-4">
                         <label>Mother's First Name</label>
                         <input className="form-control" type="text"
-                               value={formData.mother_first_name}
-                               onChange={(e) => handleInputChange('mother_first_name', e.target.value)}
+                               value={formData.mother.firstName}
+                               onChange={(e)=> handleNestedInputChange('mother', 'firstName', e.target.value)}
                         />
                       </div>
                       <div className="mb-3 col-md-4">
                         <label>Mother's Maiden Middle Name</label>
                         <input className="form-control" type="text"
-                               value={formData.mother_middle_name}
-                               onChange={(e) => handleInputChange('mother_middle_name', e.target.value)}
+                               value={formData.mother.middleName || ''}
+                               onChange={(e)=> handleNestedInputChange('mother', 'middleName', e.target.value)}
                         />
                       </div>
 
                       <div className="mb-3 col-md-6">
                         <label>Occupation</label>
                         <input className="form-control" type="text"
-                               value={formData.mother_occupation}
-                               onChange={(e) => handleInputChange('mother_occupation', e.target.value)}
+                               value={formData.mother.occupation}
+                               onChange={(e)=> handleNestedInputChange('mother', 'occupation', e.target.value)}
                         />
                       </div>
                       <div className="mb-3 col-md-6">
                         <label>Monthly Income</label>
                         <input className="form-control" type="number" placeholder="₱"
-                               value={formData.mother_income}
-                               onChange={(e) => handleInputChange('mother_income', e.target.value)}
+                               value={formData.mother.income}
+                               onChange={(e)=> handleNestedInputChange('mother', 'income', parseFloat(e.target.value) || 0)}
                         />
                       </div>
-
-
 
                       <div className="col-12">
                         <h5>Emergency Information</h5>
@@ -380,20 +508,19 @@ const Apply = () => {
 
                       <div className="mb-3 col-md-6">
                         <label>Emergency Contact Name</label>
-                        <input className="form-control" type="number"
-                               value={formData.siblings_studying}
-                               onChange={(e) => handleInputChange('siblings_studying', e.target.value)}
+                        <input className="form-control" type="text"
+                               value={formData.emergencyContactName}
+                               onChange={(e)=> handleInputChange('emergencyContactName', e.target.value)}
                         />
                       </div>
 
                       <div className="mb-3 col-md-6">
                         <label>Emergency Contact Number</label>
-                        <input className="form-control" type="number"
-                               value={formData.siblings_studying}
-                               onChange={(e) => handleInputChange('siblings_studying', e.target.value)}
+                        <input className="form-control" type="tel"
+                               value={formData.emergencyContactNumber}
+                               onChange={(e)=> handleInputChange('emergencyContactNumber', e.target.value)}
                         />
                       </div>
-
 
                       {/* Household Info */}
                       <div className="col-12">
@@ -403,46 +530,43 @@ const Apply = () => {
                       <div className="mb-3 col-md-4">
                         <label>Household Members</label>
                         <input className="form-control" type="number"
-                               value={formData.household_number}
-                               onChange={(e) => handleInputChange('household_number', e.target.value)}
+                               value={formData.householdNumber}
+                               onChange={(e)=> handleInputChange('householdNumber', parseInt(e.target.value) || 0)}
                         />
                       </div>
                       <div className="mb-3 col-md-4">
                         <label>Number of Siblings</label>
                         <input className="form-control" type="number"
                                value={formData.siblings}
-                               onChange={(e) => handleInputChange('siblings', e.target.value)}
+                               onChange={(e)=> handleInputChange('siblings', parseInt(e.target.value) || 0)}
                         />
                       </div>
                       <div className="mb-3 col-md-4">
                         <label>Siblings Currently Studying</label>
                         <input className="form-control" type="number"
-                               value={formData.siblings_studying}
-                               onChange={(e) => handleInputChange('siblings_studying', e.target.value)}
+                               value={formData.siblingsStudying}
+                               onChange={(e)=> handleInputChange('siblingsStudying', parseInt(e.target.value) || 0)}
                         />
                       </div>
                       <div className="mb-3 col-md-6">
                         <label>IP Affiliation</label>
                         <input className="form-control" type="text"
-                               value={formData.ip_affiliation}
-                               onChange={(e) => handleInputChange('ip_affiliation', e.target.value)}
+                               value={formData.ipAffiliation || ''}
+                               onChange={(e)=> handleInputChange('ipAffiliation', e.target.value)}
                         />
                       </div>
                       <div className="mb-3 col-md-6">
                         <label>Are you a recipient of any DSWD Program?</label>
                         <select className="form-control"
-                                value={formData.is_4ps_member}
-                                onChange={(e) => handleInputChange('is_4ps_member', e.target.value)}
+                                value={formData.dswdProgram || ''}
+                                onChange={(e)=> handleInputChange('dswdProgram', e.target.value)}
                         >
-                          <option disabled selected>Select DSWD Program</option>
+                          <option value="">Select DSWD Program</option>
                           <option value="Listahan">Listahan</option>
                           <option value="4Ps">4Ps</option>
                         </select>
                       </div>
-
-
                     </div>
-
 
                     <div className="d-flex justify-content-between mt-4">
                       <button className="btn btn-light disabled" disabled>Previous</button>
@@ -461,16 +585,21 @@ const Apply = () => {
 
                       <div className="mb-3 col-md-4">
                         <label htmlFor="student_id" className="form-label">Student ID</label>
-                        <input type="text" name="student_id" value={user.profile.student_id} className="form-control"/>
+                        <input
+                            type="text"
+                            name="student_id"
+                            value={formData.studentId}
+                            className="form-control"
+                            onChange={(e)=> handleInputChange('studentId', e.target.value)}
+                        />
                       </div>
 
                       <div className="mb-3 col-md-4">
                         <label htmlFor="campus" className="form-label">Campus</label>
                         <CampusSelect
                             value={campusId}
-                            onChange={(e) => setCampusId(e.target.value)}
+                            onChange={(e)=> setCampusId(e.target.value)}
                         />
-
                       </div>
 
                       <div className="mb-3 col-md-4">
@@ -478,9 +607,8 @@ const Apply = () => {
                         <DepartmentSelect
                             campusId={campusId}
                             value={departmentId}
-                            onChange={(e) => setDepartmentId(e.target.value)}
+                            onChange={(e)=> setDepartmentId(e.target.value)}
                         />
-
                       </div>
 
                       <div className="mb-3 col-md-4">
@@ -488,41 +616,39 @@ const Apply = () => {
                         <CourseSelect
                             departmentId={departmentId}
                             value={courseId}
-                            onChange={(e) => setCourseId(e.target.value)}
+                            onChange={(e)=> setCourseId(e.target.value)}
                         />
                       </div>
 
                       <div className="mb-3 col-md-4">
-                      <label className="form-label">Academic Term</label>
-                      <input
-                          type="text"
-                          className="form-control"
-                          value={term?.formatted || ''}
-                          readOnly
-                      />
-                    </div>
-
-                    {/* Hidden fields to submit IDs */}
-                    <input type="hidden" name="academic_year_id" value={term?.academic_year_id} />
-                    <input type="hidden" name="semester_id" value={term?.semester_id} />
-
-                    <div className="mb-3 col-md-4">
-                      <label className="form-label">Total Units Enrolled</label>
-                        <input type="number" className="form-control" placeholder="Enter the total units"/>
+                        <label className="form-label">Academic Term</label>
+                        <input
+                            type="text"
+                            className="form-control"
+                            value={term?.formatted || ''}
+                            readOnly
+                        />
                       </div>
 
                       <div className="mb-3 col-md-4">
                         <label className="form-label">Enrollment Status</label>
-                        <select className="form-control">
-                          <option selected disabled>Select Enrollment Status</option>
+                        <select className="form-control"
+                                value={formData.enrollmentStatus}
+                                onChange={(e)=> handleInputChange('enrollmentStatus', e.target.value)}>
+                          <option value="">Select Enrollment Status</option>
                           <option value="Enrolled">Enrolled</option>
                           <option value="Not Enrolled">Not Enrolled</option>
                           <option value="Dropped">Dropped</option>
                         </select>
                       </div>
 
+                      <div className="mb-3 col-md-4">
+                        <label className="form-label">Total Units Enrolled</label>
+                        <input className="form-control"
+                                value={formData.total_units}
+                                onChange={(e)=> handleInputChange('total_units', e.target.value)} />
+                      </div>
                     </div>
-
 
                     <h6 className="mt-4 mb-3 text-secondary">Scholarship Information</h6>
 
@@ -534,10 +660,10 @@ const Apply = () => {
                             name="scholarshipName"
                             className="form-select"
                             value={formData.scholarshipName}
-                            onChange={(e) => handleInputChange('scholarshipName', e.target.value)}
+                            onChange={(e)=> handleInputChange('scholarshipName', e.target.value)}
                             required
                         >
-                          <option selected disabled>Select Scholarship</option>
+                          <option value="">Select Scholarship</option>
                           <option value="NONE">NONE</option>
                           <option value="ATI-CAR EDUCATIONAL ASSISTANCE FOR THE YOUTH IN AGRICULTURE (EASY-AGRI)">ATI-CAR EDUCATIONAL ASSISTANCE FOR THE YOUTH IN AGRICULTURE (EASY-AGRI)</option>
                           <option value="ANSWERING THE CRY OF THE P0OR (ANCOP)">ANSWERING THE CRY OF THE P0OR (ANCOP)</option>
@@ -574,8 +700,8 @@ const Apply = () => {
                           <option value="MUNICIPAL SCHOLARS">MUNICIPAL SCHOLARS</option>
                           <option value="NATIONAL COMMISSION IN INDIGENOUS PEOPLE (NCIP)">NATIONAL COMMISSION IN INDIGENOUS PEOPLE (NCIP)</option>
                           <option value="NATIONAL TOBACCO ADMINISTRATION (NTA)">NATIONAL TOBACCO ADMINISTRATION (NTA)</option>
-                          <option value="ONE TIME EDUC ATIONAL ASSISTANCE PROGRAM (OTAP)">ONE TIME EDUCATIONAL ASSISTANCE PROGRAM (OTAP)</option>
-                          <option value="OVERSEAS WORKERS WELFARE ADMINISTRATION (OWWA)">OVERSEAS WORKERS WELFARE ADMINISTRATION (OWWA)</option>
+                          <option value="ONE TIME EDUC ATIONAL ASSISTANCE PROGRAM (OTAP)">ONE TIME EDUCATIONAL ASSISTANCE PROGRAM (OTAP)  </option>
+                            <option value="OVERSEAS WORKERS WELFARE ADMINISTRATION (OWWA)">OVERSEAS WORKERS WELFARE ADMINISTRATION (OWWA)</option>
                           <option value="PHILIPPINE CHARITY SWEEPSTAKE OFFICE STUDENT PROGRAM">PHILIPPINE CHARITY SWEEPSTAKE OFFICE STUDENT PROGRAM</option>
                           <option value="PRIVATE/INDIVIDUAL SCHOLARSHIP">PRIVATE/INDIVIDUAL SCHOLARSHIP</option>
                           <option value="PROVINCIAL GOVERNMENT OF LA UNION (PGLU)">PROVINCIAL GOVERNMENT OF LA UNION (PGLU)</option>
@@ -592,32 +718,32 @@ const Apply = () => {
 
                       {formData.scholarshipName === 'OTHERS' && (
                           <div className="col-md-4">
-                            <label htmlFor="otherScholarship" className="form-label">Other Scholarship(s)</label>
+                            <label htmlFor="other_scholarship" className="form-label">Other Scholarship(s)</label>
                             <input
                                 type="text"
-                                id="otherScholarship"
-                                name="otherScholarship"
+                                id="other_scholarship"
+                                name="other_scholarship"
                                 className="form-control"
                                 placeholder="e.g., DOST, CHED"
                                 value={formData.otherScholarship}
-                                onChange={(e) => handleInputChange('otherScholarship', e.target.value)}
+                                onChange={(e)=> handleInputChange('scholarshipName', e.target.value)}
                             />
                           </div>
                       )}
 
 
                       <div className="col-md-4">
-                        <label htmlFor="otherScholarshipAmount" className="form-label">Amount (₱)</label>
+                        <label htmlFor="scholarshipAmount" className="form-label">Amount (₱)</label>
                         <input
                             type="number"
-                            id="otherScholarshipAmount"
-                            name="otherScholarshipAmount"
+                            id="scholarshipAmount"
+                            name="scholarshipAmount"
                             className="form-control"
                             placeholder="e.g., 15000"
                             min="0"
                             step="0.01"
-                            value={formData.otherScholarshipAmount}
-                            onChange={(e) => handleInputChange('otherScholarshipAmount', e.target.value)}
+                            value={formData.scholarshipAmount}
+                            onChange={(e)=> handleInputChange('scholarshipAmount', e.target.value)}
                         />
                       </div>
                     </div>
@@ -635,82 +761,44 @@ const Apply = () => {
                 <div>
                   <h3 className="text-primary">Step 3: Supporting Documents</h3>
                   <h5 className="card-title mb-4">Upload required documents</h5>
-                  <div>
-                    <div className="mb-4">
-                      <label>Resume/CV *</label>
-                      <input className="form-control" type="file" accept=".pdf,.doc,.docx" />
-                      <small className="form-text text-muted">Upload your current resume or CV (PDF, DOC, or DOCX)</small>
-                    </div>
-                    <div className="mb-4">
-                      <label>Academic Transcript *</label>
-                      <input className="form-control" type="file" accept=".pdf" />
-                      <small className="form-text text-muted">Upload official academic transcript (PDF only)</small>
-                    </div>
-                    <div className="mb-4">
-                      <label>Letter of Recommendation</label>
-                      <input className="form-control" type="file" accept=".pdf,.doc,.docx" />
-                      <small className="form-text text-muted">Upload letter of recommendation (optional)</small>
-                    </div>
-                    <div className="mb-4">
-                      <label>Personal Statement</label>
-                      <input className="form-control" type="file" accept=".pdf,.doc,.docx" />
-                      <small className="form-text text-muted">Upload your personal statement or cover letter (optional)</small>
-                    </div>
-                    <div className="alert alert-info">
-                      <strong>Document Requirements:</strong>
-                      <ul className="mb-0 mt-2">
-                        <li>All documents must be in PDF, DOC, or DOCX format</li>
-                        <li>Maximum file size: 5MB per document</li>
-                        <li>Documents must be clearly readable and in English</li>
-                      </ul>
-                    </div>
-                    <h6 className="mt-4 mb-3">Notification Preferences</h6>
-                    <div className="form-check mb-2">
-                      <input
-                          className="form-check-input"
-                          type="checkbox"
-                          id="accountChanges"
-                          checked={formData.accountChanges}
-                          onChange={(e) => handleInputChange('accountChanges', e.target.checked)}
-                      />
-                      <label className="form-check-label" htmlFor="accountChanges">Account changes and updates</label>
-                    </div>
-                    <div className="form-check mb-2">
-                      <input
-                          className="form-check-input"
-                          type="checkbox"
-                          id="applicationUpdates"
-                          checked={formData.applicationUpdates}
-                          onChange={(e) => handleInputChange('applicationUpdates', e.target.checked)}
-                      />
-                      <label className="form-check-label" htmlFor="applicationUpdates">Application status updates</label>
-                    </div>
-                    <div className="form-check mb-2">
-                      <input
-                          className="form-check-input"
-                          type="checkbox"
-                          id="deadlineReminders"
-                          checked={formData.deadlineReminders}
-                          onChange={(e) => handleInputChange('deadlineReminders', e.target.checked)}
-                      />
-                      <label className="form-check-label" htmlFor="deadlineReminders">Deadline reminders</label>
-                    </div>
-                    <div className="form-check mb-2">
-                      <input
-                          className="form-check-input"
-                          type="checkbox"
-                          id="generalNotifications"
-                          checked={formData.generalNotifications}
-                          onChange={(e) => handleInputChange('generalNotifications', e.target.checked)}
-                      />
-                      <label className="form-check-label" htmlFor="generalNotifications">General notifications and news</label>
-                    </div>
-                    <div className="d-flex justify-content-between mt-4">
-                      <button className="btn btn-light" type="button" onClick={() => setStep("step2")}>Previous</button>
-                      <button className="btn btn-primary" type="button" onClick={() => setStep("step4")}>Next</button>
-                    </div>
+
+                  <div className="mb-4">
+                    <label>Latest ITR (Income Tax Return) *</label>
+                    <input
+                        className="form-control"
+                        type="file"
+                        accept=".pdf"
+                        onChange={(e)=> handleFileUpload('itr', e.target.files?.[0])}
+                    />
+                    <small className="form-text text-muted">Upload parent or guardian's ITR in PDF format (max 5MB)</small>
+                  </div>
+
+                  <div className="mb-4">
+                    <label>Recent Grades / Transcript *</label>
+                    <input
+                        className="form-control"
+                        type="file"
+                        accept=".pdf,.doc,.docx"
+                        onChange={(e)=> handleFileUpload('grades', e.target.files?.[0])}
+                    />
+                    <small className="form-text text-muted">Upload official transcript or report card (PDF, JPEG, JPG, PNG)</small>
+                  </div>
+
+                  <div className="alert alert-info">
+                    <strong>Document Requirements:</strong>
+                    <ul className="mb-0 mt-2">
+                      <li>Accepted formats: PDF, JPEG, JPG, PNG</li>
+                      <li>Maximum file size: 5MB per document</li>
+                      <li>Ensure clarity and readability</li>
+                    </ul>
+                  </div>
+
+                  <div className="d-flex justify-content-between mt-4">
+                    <button className="btn btn-light" type="button" onClick={() => setStep("step2")}>Previous</button>
+                    <button className="btn btn-primary" type="button" onClick={() => setStep("step4")}>Next</button>
                   </div>
                 </div>
+
             )}
 
             {step === "step4" && (
@@ -718,14 +806,13 @@ const Apply = () => {
                   <h3 className="text-primary">Step 4: Review & Submit</h3>
                   <h5 className="card-title mb-4">Review your application details</h5>
 
+                  {/* Applicant Info */}
                   <div className="card mb-4">
-                    <div className="card-header">
-                      <h6 className="mb-0">Applicant Details</h6>
-                    </div>
+                    <div className="card-header"><h6 className="mb-0">Applicant Details</h6></div>
                     <div className="card-body">
                       <div className="row small mb-2">
-                        <div className="col-sm-3 text-muted">Name:</div>
-                        <div className="col">{formData.firstName} {formData.lastName}</div>
+                        <div className="col-sm-3 text-muted">Full Name:</div>
+                        <div className="col">{formData.firstName} {formData.middleName} {formData.lastName} {formData.nameExtension}</div>
                       </div>
                       <div className="row small mb-2">
                         <div className="col-sm-3 text-muted">Email:</div>
@@ -737,71 +824,76 @@ const Apply = () => {
                       </div>
                       <div className="row small mb-2">
                         <div className="col-sm-3 text-muted">Date of Birth:</div>
-                        <div className="col">{formData.dateOfBirth}</div>
+                        <div className="col">{formData.birthDate}</div>
                       </div>
                       <div className="row small mb-2">
                         <div className="col-sm-3 text-muted">Address:</div>
-                        <div className="col">{formData.address}</div>
-                      </div>
-                      <div className="row small mb-2">
-                        <div className="col-sm-3 text-muted">Nationality:</div>
-                        <div className="col">{formData.nationality}</div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="card mb-4">
-                    <div className="card-header">
-                      <h6 className="mb-0">Academic Details</h6>
-                    </div>
-                    <div className="card-body">
-                      <div className="row small mb-2">
-                        <div className="col-sm-3 text-muted">Institution:</div>
-                        <div className="col">{formData.institution}</div>
-                      </div>
-                      <div className="row small mb-2">
-                        <div className="col-sm-3 text-muted">Degree:</div>
-                        <div className="col">{formData.degree}</div>
-                      </div>
-                      <div className="row small mb-2">
-                        <div className="col-sm-3 text-muted">Field of Study:</div>
-                        <div className="col">{formData.fieldOfStudy}</div>
-                      </div>
-                      <div className="row small mb-2">
-                        <div className="col-sm-3 text-muted">Graduation Year:</div>
-                        <div className="col">{formData.graduationYear}</div>
-                      </div>
-                      <div className="row small mb-2">
-                        <div className="col-sm-3 text-muted">GPA:</div>
-                        <div className="col">{formData.gpa}</div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="card mb-4">
-                    <div className="card-header">
-                      <h6 className="mb-0">Documents & Preferences</h6>
-                    </div>
-                    <div className="card-body">
-                      <div className="row small mb-2">
-                        <div className="col-sm-3 text-muted">Resume/CV:</div>
                         <div className="col">
-                          <span className="badge bg-success">Uploaded</span>
+                          {formData.street}, {formData.barangayName}, {formData.municipalityName}, {formData.provinceName}, {formData.regionName}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Academic Info */}
+                  <div className="card mb-4">
+                    <div className="card-header"><h6 className="mb-0">Academic Details</h6></div>
+                    <div className="card-body">
+                      <div className="row small mb-2">
+                        <div className="col-sm-3 text-muted">Student ID:</div>
+                        <div className="col">{formData.studentId}</div>
+                      </div>
+                      <div className="row small mb-2">
+                        <div className="col-sm-3 text-muted">Campus/Department/Course:</div>
+                        <div className="col">{formData.campus} / {formData.department} / {formData.course}</div>
+                      </div>
+                      <div className="row small mb-2">
+                        <div className="col-sm-3 text-muted">Academic Year & Semester:</div>
+                        <div className="col">{formData.academicYearId} - Semester {formData.semesterId}</div>
+                      </div>
+                      <div className="row small mb-2">
+                        <div className="col-sm-3 text-muted">Enrollment Status:</div>
+                        <div className="col">{formData.enrollmentStatus}</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Scholarship Info */}
+                  <div className="card mb-4">
+                    <div className="card-header"><h6 className="mb-0">Scholarship</h6></div>
+                    <div className="card-body">
+                      <div className="row small mb-2">
+                        <div className="col-sm-3 text-muted">Scholarship Type:</div>
+                        <div className="col">
+                          {formData.scholarshipName === 'others' ? formData.otherScholarship : formData.scholarshipName}
                         </div>
                       </div>
                       <div className="row small mb-2">
-                        <div className="col-sm-3 text-muted">Academic Transcript:</div>
+                        <div className="col-sm-3 text-muted">Scholarship Amount:</div>
+                        <div className="col">₱{formData.scholarshipAmount.toLocaleString()}</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Documents */}
+                  <div className="card mb-4">
+                    <div className="card-header"><h6 className="mb-0">Documents & Preferences</h6></div>
+                    <div className="card-body">
+                      <div className="row small mb-2">
+                        <div className="col-sm-3 text-muted">ITR (Income Tax Return):</div>
                         <div className="col">
-                          <span className="badge bg-success">Uploaded</span>
+                          {formData.itr ? <span className="badge bg-success">Uploaded</span> : <span className="badge bg-danger">Not Uploaded</span>}
+                        </div>
+                      </div>
+                      <div className="row small mb-2">
+                        <div className="col-sm-3 text-muted">Grades / Transcript:</div>
+                        <div className="col">
+                          {formData.grades ? <span className="badge bg-success">Uploaded</span> : <span className="badge bg-danger">Not Uploaded</span>}
                         </div>
                       </div>
                       <div className="row small mb-2">
                         <div className="col-sm-3 text-muted">Notifications:</div>
                         <div className="col">
-                          {formData.accountChanges && <span className="badge bg-info me-1">Account Updates</span>}
-                          {formData.applicationUpdates && <span className="badge bg-info me-1">Application Status</span>}
-                          {formData.deadlineReminders && <span className="badge bg-info me-1">Deadlines</span>}
-                          {formData.generalNotifications && <span className="badge bg-info me-1">General</span>}
                         </div>
                       </div>
                     </div>

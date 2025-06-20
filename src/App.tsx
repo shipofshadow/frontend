@@ -1,7 +1,5 @@
 import React from 'react';
 import { BrowserRouter as Router } from 'react-router-dom';
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-expect-error
 import 'bootstrap/dist/js/bootstrap.bundle.min';
 import AppRoutes from './routes/AppRoutes';
 

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import type {Department} from '../../interfaces/meta';
-import { API_BASE_URL } from "../../config.ts";
+import type { Department } from '../../interfaces/meta';
+import { API_BASE_URL } from '../../config.ts';
 
 interface Props {
     campusId: string;
@@ -14,18 +14,30 @@ const DepartmentSelect: React.FC<Props> = ({ campusId, value, onChange }) => {
 
     useEffect(() => {
         if (campusId) {
-            axios.get(`${API_BASE_URL}/api/departments`, { params: { campus_id: campusId } })
-                .then(res => setDepartments(res.data));
+            axios
+                .get<Department[]>(`${API_BASE_URL}/api/departments`, {
+                    params: { campus_id: campusId },
+                })
+                .then((res) => setDepartments(res.data))
+                .catch((err) => console.error('Failed to load departments', err));
         } else {
             setDepartments([]);
         }
     }, [campusId]);
 
     return (
-        <select name="department" className="form-select" value={value} onChange={onChange} required>
+        <select
+            name="department"
+            className="form-select"
+            value={value}
+            onChange={onChange}
+            required
+        >
             <option value="">Select Department</option>
-            {departments.map(dept => (
-                <option key={dept.id} value={dept.id}>{dept.name}</option>
+            {departments.map((dept) => (
+                <option key={dept.id} value={dept.id.toString()}>
+                    {dept.name}
+                </option>
             ))}
         </select>
     );

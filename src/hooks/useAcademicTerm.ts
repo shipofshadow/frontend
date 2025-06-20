@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import axios from 'axios';
 import { API_BASE_URL } from '../config';
 
-interface AcademicTerm {
+export interface AcademicTerm {
     academic_year_id: number;
     academic_year: number;
     semester_id: number;
@@ -12,14 +12,17 @@ interface AcademicTerm {
 
 export const useAcademicTerm = () => {
     const [term, setTerm] = useState<AcademicTerm | null>(null);
+    const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        axios.get(`${API_BASE_URL}/api/active-academic-term`)
-            .then(res => {
-                return setTerm(res.data);
+        axios
+            .get<AcademicTerm>(`${API_BASE_URL}/api/active-academic-term`)
+            .then((res) => setTerm(res.data))
+            .catch((err) => {
+                console.error('Failed to fetch academic term:', err);
+                setError('Failed to load academic term');
             })
-            .catch(err => console.error('Failed to fetch academic term:', err))
     }, []);
 
-    return { term };
+    return { term, error };
 };

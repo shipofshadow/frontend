@@ -6,6 +6,7 @@ import { isTokenExpiredSoon } from "../utils/jwt";
 interface Profile {
     first_name: string;
     last_name: string;
+    student_id: string;
 }
 interface User {
     id: number;
