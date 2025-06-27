@@ -194,3 +194,12 @@ export const citizenship = [
     "Zambian",
     "Zimbabwean"
 ];
+
+export const civilStatus = [
+    "Single",
+    "Married",
+    "Widowed",
+    "Divorced",
+    "Separated",
+    "Annulled",
+];

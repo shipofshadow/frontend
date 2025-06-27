@@ -6,7 +6,14 @@ import { isTokenExpiredSoon } from "../utils/jwt";
 interface Profile {
     first_name: string;
     last_name: string;
+    middle_name: string;
     student_id: string;
+    extension_name: string;
+
+    email: string;
+    contact_number: string;
+
+    birth_date: string;
 }
 interface User {
     id: number;
@@ -24,7 +31,10 @@ interface AuthData {
     login: (user: User, token: string, refreshToken: string) => void;
     logout: () => void;
     refreshUser: () => Promise<void>;
+    isAdmin: boolean;
+    isStudent: boolean;
 }
+
 
 const AuthContext = createContext<AuthData | undefined>(undefined);
 
@@ -34,7 +44,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const [isLoading, setIsLoading] = useState<boolean>(!!token);
     const [sessionExpired, setSessionExpired] = useState<boolean>(false);
 
-
+    const isAdmin = user?.role === "admin";
+    const isStudent = user?.role === "student";
 
     const logout = useCallback(() => {
         setUser(null);
@@ -130,6 +141,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         login,
         logout,
         refreshUser,
+        isAdmin,
+        isStudent
     };
 
     return (

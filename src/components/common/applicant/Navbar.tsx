@@ -8,7 +8,7 @@ const Navbar: React.FC = () => {
 
   const handleLogout = () => {
     logout();
-    navigate('/applicant');
+    navigate('/login');
   };
 
   const notifications = [

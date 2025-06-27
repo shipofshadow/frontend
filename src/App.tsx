@@ -7,9 +7,7 @@ import ApiStatusGuard from "./components/ApiStatusGuard.tsx";
 const App: React.FC = () => {
   return (
     <Router>
-        <ApiStatusGuard>
-            <AppRoutes />
-        </ApiStatusGuard>
+        <AppRoutes />
     </Router>
   );
 };

@@ -1,9 +1,11 @@
 import React, { useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import feather from 'feather-icons';
+import {useAuth} from "../../../context/AuthContext.tsx";
 
 const Navbar: React.FC = () => {
   const navigate = useNavigate();
+  const { isAuthenticated, logout, user } = useAuth();
 
   useEffect(() => {
   feather.replace();
@@ -32,7 +34,7 @@ const Navbar: React.FC = () => {
 }, []);
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
+    logout();
     navigate('/login');
   };
 

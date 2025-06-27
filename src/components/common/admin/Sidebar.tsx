@@ -1,11 +1,13 @@
 import React, { useEffect } from 'react';
 import feather from 'feather-icons';
-import { Link } from 'react-router-dom';
+import {Link, useLocation} from 'react-router-dom';
 
 const Sidebar: React.FC = () => {
+  const location = useLocation();
+
   useEffect(() => {
     feather.replace();
-  }, []);
+  }, [location]);
 
   return (
       <div id="layoutSidenav_nav">
@@ -41,6 +43,13 @@ const Sidebar: React.FC = () => {
                 <div className="nav-link-icon"><i data-feather="file"></i></div>
                 Reports
               </Link>
+              <Link className="nav-link" to="/admin/archived-applicants">
+                <div className="nav-link-icon">
+                  <i className="far fa-box-archive"></i>
+                </div>
+                Archived Applications
+              </Link>
+
 
               {/* Automation */}
               <div className="sidenav-menu-heading">Automation & Rules</div>
@@ -52,6 +61,11 @@ const Sidebar: React.FC = () => {
                 <div className="nav-link-icon"><i data-feather="sliders"></i></div>
                 System Config
               </Link>
+              <Link className="nav-link" to="/admin/evaluation-rules">
+                <div className="nav-link-icon"><i className="far fa-balance-scale"></i></div>
+                Evaluation Rules
+              </Link>
+
 
               {/* Academic Config */}
               <div className="sidenav-menu-heading">Academic Config</div>
@@ -71,6 +85,18 @@ const Sidebar: React.FC = () => {
                 <div className="nav-link-icon"><i data-feather="book-open"></i></div>
                 Courses
               </Link>
+
+              <div className="sidenav-menu-heading">Student Communication</div>
+              <Link className="nav-link" to="/admin/notices">
+                <div className="nav-link-icon"><i className="far fa-bell"></i></div>
+                Notices
+              </Link>
+
+              <Link className="nav-link" to="/admin/messaging">
+                <div className="nav-link-icon"><i className="far fa-envelope"></i></div>
+                Messaging
+              </Link>
+
 
               {/* System */}
               <div className="sidenav-menu-heading">System</div>

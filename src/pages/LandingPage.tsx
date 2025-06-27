@@ -59,7 +59,7 @@ const LandingPage: React.FC = () => {
       title: 'Login',
       description: 'Access your account securely to manage your scholar profile and application status with advanced security features.',
       btnText: 'LOGIN',
-      path: '/applicant/',
+      path: '/login',
       color: '#3B82F6',
       bgGradient: 'linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%)'
     },
@@ -68,7 +68,7 @@ const LandingPage: React.FC = () => {
       title: 'Apply',
       description: 'Submit your scholarship prequalification application quickly and easily with our streamlined process.',
       btnText: 'APPLY',
-      path: '/applicant/register',
+      path: '/register',
       color: '#10B981',
       bgGradient: 'linear-gradient(135deg, #10B981 0%, #059669 100%)'
     },

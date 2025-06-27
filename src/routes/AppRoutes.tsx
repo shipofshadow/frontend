@@ -34,9 +34,16 @@ import Courses from '../pages/admin/Courses';
 import Applications from "../pages/Applications.tsx";
 
 export function AuthRedirect() {
-    const { isAuthenticated } = useAuth();
-    return isAuthenticated ? <Home /> : <Login />;
+    const { isAuthenticated, isAdmin, isStudent } = useAuth();
+
+    if (!isAuthenticated) return <Navigate to="/applicant/login" replace />;
+
+    if (isAdmin) return <Navigate to="/admin" replace />;
+    if (isStudent) return <Navigate to="/applicant/home" replace />;
+
+    return <Navigate to="/" replace />;
 }
+
 
 const AppRoutes: React.FC = () => {
     const { isAuthenticated } = useAuth();
@@ -45,32 +52,34 @@ const AppRoutes: React.FC = () => {
         <Routes>
             <Route path="/" element={isAuthenticated ? <Navigate to="/applicant" replace /> : <App />} />
 
-            <Route path="/admin" element={<AdminLayout />}>
-                <Route index element={<Dashboard />} />
-                <Route path="manage-students" element={<ManageStudents />} />
-                <Route path="Applicants" element={<Applicants />} />
-                <Route path="users" element={<Users />} />
-                <Route path="scholarship-management" element={<ScholarshipManagement />} />
-                <Route path="system" element={<SystemSetting />} />
-                <Route path="documents" element={<Document />} />
-                <Route path="activity-logs" element={<ActivityLogs />} />
-                <Route path="archived-applicants" element={<ArchivedApplicants />} />
-                <Route path="reports" element={<Reports />} />
-                <Route path="campuses" element={<Campuses />} />
-                <Route path="bulk-evaluation" element={<BulkEvaluation />} />
-                <Route path="metrics" element={<Metrics />} />
-                <Route path="departments" element={<Departments />} />
-                <Route path="academic-years" element={<AcademicYears />} />
-                <Route path="courses" element={<Courses />} />
+            <Route element={<ProtectedRoute allowedRoles={["admin"]} />}>
+                <Route path="/admin" element={<AdminLayout />}>
+                    <Route index element={<Dashboard />} />
+                    <Route path="dashboard" element={<Dashboard />} />
+                    <Route path="manage-students" element={<ManageStudents />} />
+                    <Route path="Applicants" element={<Applicants />} />
+                    <Route path="users" element={<Users />} />
+                    <Route path="scholarship-management" element={<ScholarshipManagement />} />
+                    <Route path="system" element={<SystemSetting />} />
+                    <Route path="documents" element={<Document />} />
+                    <Route path="activity-logs" element={<ActivityLogs />} />
+                    <Route path="archived-applicants" element={<ArchivedApplicants />} />
+                    <Route path="reports" element={<Reports />} />
+                    <Route path="campuses" element={<Campuses />} />
+                    <Route path="bulk-evaluation" element={<BulkEvaluation />} />
+                    <Route path="metrics" element={<Metrics />} />
+                    <Route path="departments" element={<Departments />} />
+                    <Route path="academic-years" element={<AcademicYears />} />
+                    <Route path="courses" element={<Courses />} />
+                </Route>
             </Route>
+
 
             <Route path="/applicant" element={<ApplicantLayout />}>
                 <Route index element={<AuthRedirect />} />
-                <Route path="dashboard" element={<AuthRedirect />} />
-                <Route path="login" element={<AuthRedirect />} />
-                <Route path="register" element={<Register />} />
-                <Route path="forgot-password" element={<ForgotPassword />} />
-                <Route element={<ProtectedRoute />}>
+                <Route element={<ProtectedRoute allowedRoles={["student"]} />}>
+                    <Route index element={<AuthRedirect />} />
+                    <Route path="dashboard" element={<AuthRedirect />} />
                     <Route path="apply" element={<Apply />} />
                     <Route path="status" element={<Applications />} />
                     <Route path="home" element={<Home />} />
@@ -78,6 +87,11 @@ const AppRoutes: React.FC = () => {
                     <Route path="settings" element={<Settings />} />
                 </Route>
             </Route>
+
+            <Route path="login" element={<Login />} />
+            <Route path="register" element={<Register />} />
+            <Route path="forgot-password" element={<ForgotPassword />} />
+
             <Route path="*" element={<NotFound />} />
         </Routes>
     );
