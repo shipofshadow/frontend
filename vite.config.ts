@@ -10,4 +10,8 @@ export default defineConfig({
   },
   plugins: [react()],
   base: '/',
+  define: {
+    __APP_VERSION__: JSON.stringify('1.0.0'),
+  }
+
 });

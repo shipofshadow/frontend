@@ -52,7 +52,6 @@ const Login: React.FC = () => {
 
       const response = await loginUser(username, password);
       const { user, token, refresh_token } = response;
-      console.log('Login response:', response);
 
       if (remember) {
         localStorage.setItem('rememberedUsername', username);
@@ -61,7 +60,6 @@ const Login: React.FC = () => {
       }
 
       login(user, token, refresh_token);
-      console.log("Is Authenticated After Login?", isAuthenticated);
 
       notyf.success('Login successful!');
 

@@ -19,7 +19,6 @@ export interface RegisterPayload {
   password: string;
 }
 
-
 export async function loginUser(username: string, password: string) {
   const hashed_password = sha256(password)
   const res = await fetch(`${API_BASE_URL}/api/auth/login`, {

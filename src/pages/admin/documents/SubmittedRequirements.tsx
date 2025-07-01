@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react';
 import { DataTable } from 'simple-datatables';
 import "simple-datatables/dist/style.css";
 
-const ArchivedApplicants = () => {
+const SubmittedRequirements = () => {
     const tableRef = useRef(null);
 
     useEffect(() => {
@@ -23,8 +23,8 @@ const ArchivedApplicants = () => {
                         <div className="row align-items-center justify-content-between pt-3">
                             <div className="col-auto mb-3">
                                 <h1 className="page-header-title">
-                                    <div className="page-header-icon"><i className="far fa-archive"></i></div>
-                                    Archived Applicants
+                                    <div className="page-header-icon"><i className="far fa-file"></i></div>
+                                    Submitted Requirements
                                 </h1>
                             </div>
 
@@ -101,4 +101,4 @@ const ArchivedApplicants = () => {
     );
 };
 
-export default ArchivedApplicants;
+export default SubmittedRequirements;

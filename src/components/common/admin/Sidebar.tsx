@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import feather from 'feather-icons';
-import {Link, useLocation} from 'react-router-dom';
+import { NavLink, useLocation } from 'react-router-dom';
+import SidebarCollapse from './SidebarCollapse';
 
 const Sidebar: React.FC = () => {
   const location = useLocation();
@@ -22,96 +23,160 @@ const Sidebar: React.FC = () => {
                 Alerts <span className="badge bg-warning-soft text-warning ms-auto">4 New!</span>
               </a>
 
-              {/* Home Section */}
+              {/* Home */}
               <div className="sidenav-menu-heading">Home</div>
-              <Link className="nav-link" to="/admin/dashboard">
+              <NavLink
+                  to="/admin/dashboard"
+                  className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
+              >
                 <div className="nav-link-icon"><i data-feather="activity"></i></div>
                 Dashboard
-              </Link>
+              </NavLink>
 
               {/* Scholarship Management */}
               <div className="sidenav-menu-heading">Scholarship Management</div>
-              <Link className="nav-link" to="/admin/applicants">
-                <div className="nav-link-icon"><i data-feather="users"></i></div>
-                Applicants
-              </Link>
-              <Link className="nav-link" to="/admin/documents">
-                <div className="nav-link-icon"><i data-feather="file-text"></i></div>
-                Documents
-              </Link>
-              <Link className="nav-link" to="/admin/reports">
-                <div className="nav-link-icon"><i data-feather="file"></i></div>
-                Reports
-              </Link>
-              <Link className="nav-link" to="/admin/archived-applicants">
-                <div className="nav-link-icon">
-                  <i className="far fa-box-archive"></i>
-                </div>
-                Archived Applications
-              </Link>
+              <SidebarCollapse
+                  id="collapseApplicants"
+                  parentId="accordionSidenav"
+                  title="Applicants"
+                  icon="far fa-users"
+                  links={[
+                    {
+                      to: '/admin/applicants/manage',
+                      label: 'Manage Applicants',
+                      icon: 'far fa-user-check',
+                    },
+                    {
+                      to: '/admin/applicants/qualified',
+                      label: 'Qualified Applicants',
+                      icon: 'far fa-check-circle',
+                    },
+                    {
+                      to: '/admin/applicants/archived',
+                      label: 'Archived Applications',
+                      icon: 'far fa-box-archive',
+                    },
+                  ]}
+              />
 
+              <SidebarCollapse
+                  id="collapseReports"
+                  parentId="accordionSidenav"
+                  title="Reports"
+                  icon="far fa-folder-open"
+                  links={[
+                    {
+                      to: '/admin/reports/applicants',
+                      label: 'Applicants Report',
+                      icon: 'far fa-file-alt',
+                    },
+                    {
+                      to: '/admin/reports/scholarship-summary',
+                      label: 'Scholarship Summary',
+                      icon: 'far fa-medal',
+                    },
+                    {
+                      to: '/admin/reports/department',
+                      label: 'Campus Report',
+                      icon: 'far fa-building-columns',
+                    }
+                  ]}
+              />
+
+              <div className="sidenav-menu-heading">Documents</div>
+
+              <SidebarCollapse
+                  id="collapseDocuments"
+                  parentId="accordionSidenav"
+                  title="Documents"
+                  icon="far fa-folder-open"
+                  links={[
+                    {
+                      to: '/admin/documents/requirements',
+                      label: 'Submitted Requirements',
+                      icon: 'far fa-file-alt',
+                    },
+                    {
+                      to: '/admin/documents/archives',
+                      label: 'Archived Files',
+                      icon: 'far fa-box-archive',
+                    }
+                  ]}
+              />
 
               {/* Automation */}
               <div className="sidenav-menu-heading">Automation & Rules</div>
-              <Link className="nav-link" to="/admin/bulk-evaluation">
+
+              <NavLink to="/admin/bulk-evaluation" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
                 <div className="nav-link-icon"><i data-feather="upload"></i></div>
                 Bulk Evaluation
-              </Link>
-              <Link className="nav-link" to="/admin/config/system">
-                <div className="nav-link-icon"><i data-feather="sliders"></i></div>
-                System Config
-              </Link>
-              <Link className="nav-link" to="/admin/evaluation-rules">
+              </NavLink>
+
+              <NavLink to="/admin/evaluation-rules" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
                 <div className="nav-link-icon"><i className="far fa-balance-scale"></i></div>
                 Evaluation Rules
-              </Link>
+              </NavLink>
+
+              <NavLink to="/admin/import-students" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
+                <div className="nav-link-icon"><i data-feather="upload-cloud"></i></div>
+                Import Student List
+              </NavLink>
+
+              <NavLink to="/admin/fuzzy-logic" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
+                <div className="nav-link-icon"><i className="far fa-brain"></i></div>
+                Fuzzy Logic Settings
+              </NavLink>
 
 
               {/* Academic Config */}
               <div className="sidenav-menu-heading">Academic Config</div>
-              <Link className="nav-link" to="/admin/academic-years">
+              <NavLink to="/admin/academic-years" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
                 <div className="nav-link-icon"><i data-feather="calendar"></i></div>
                 Academic Years
-              </Link>
-              <Link className="nav-link" to="/admin/campuses">
+              </NavLink>
+              <NavLink to="/admin/campuses" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
                 <div className="nav-link-icon"><i data-feather="map"></i></div>
                 Campuses
-              </Link>
-              <Link className="nav-link" to="/admin/departments">
+              </NavLink>
+              <NavLink to="/admin/departments" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
                 <div className="nav-link-icon"><i data-feather="grid"></i></div>
                 Departments
-              </Link>
-              <Link className="nav-link" to="/admin/courses">
+              </NavLink>
+              <NavLink to="/admin/courses" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
                 <div className="nav-link-icon"><i data-feather="book-open"></i></div>
                 Courses
-              </Link>
+              </NavLink>
 
+              {/* Student Communication */}
               <div className="sidenav-menu-heading">Student Communication</div>
-              <Link className="nav-link" to="/admin/notices">
+              <NavLink to="/admin/notices" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
                 <div className="nav-link-icon"><i className="far fa-bell"></i></div>
                 Notices
-              </Link>
-
-              <Link className="nav-link" to="/admin/messaging">
+              </NavLink>
+              <NavLink to="/admin/messaging" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
                 <div className="nav-link-icon"><i className="far fa-envelope"></i></div>
                 Messaging
-              </Link>
-
+              </NavLink>
 
               {/* System */}
               <div className="sidenav-menu-heading">System</div>
-              <Link className="nav-link" to="/admin/metrics">
-                <div className="nav-link-icon"><i data-feather="bar-chart-2"></i></div>
-                Metrics
-              </Link>
-              <Link className="nav-link" to="/admin/users">
+              <NavLink to="/admin/system" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
+                <div className="nav-link-icon"><i data-feather="sliders"></i></div>
+                Configuration
+              </NavLink>
+              <NavLink to="/admin/users" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
                 <div className="nav-link-icon"><i data-feather="shield"></i></div>
-                Admin Accounts
-              </Link>
-              <Link className="nav-link" to="/logout">
-                <div className="nav-link-icon"><i data-feather="log-out"></i></div>
-                Logout
-              </Link>
+                Manage Accounts
+              </NavLink>
+              <NavLink to="/admin/system/logs" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
+                <div className="nav-link-icon"><i data-feather="file-text"></i></div>
+                System Logs
+              </NavLink>
+              <NavLink to="/admin/system/backups" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
+                <div className="nav-link-icon"><i data-feather="database"></i></div>
+                Backup & Restore
+              </NavLink>
+
 
             </div>
           </div>

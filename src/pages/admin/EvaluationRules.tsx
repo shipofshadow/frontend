@@ -1,4 +1,4 @@
-const ScholarshipManagement= () => {
+const EvaluationRules= () => {
     return (
         <>
             <header className="page-header page-header-compact page-header-light border-bottom bg-white mb-4">
@@ -8,7 +8,7 @@ const ScholarshipManagement= () => {
                         <div className="col-auto mb-3">
                             <h1 className="page-header-title">
                                 <div className="page-header-icon"><i data-feather="user"></i></div>
-                                Scholarship Management
+                                Evaluation Rules
                             </h1>
                         </div>
                     </div>
@@ -23,4 +23,4 @@ const ScholarshipManagement= () => {
     );
 }
 
-export default ScholarshipManagement;
+export default EvaluationRules;

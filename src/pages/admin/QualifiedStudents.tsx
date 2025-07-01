@@ -1,8 +1,8 @@
-import { useEffect, useRef } from 'react';
-import { DataTable } from 'simple-datatables';
+import {useEffect, useRef} from "react";
+import {DataTable} from "simple-datatables";
 import "simple-datatables/dist/style.css";
 
-const ArchivedApplicants = () => {
+const QualifiedStudents= () => {
     const tableRef = useRef(null);
 
     useEffect(() => {
@@ -14,24 +14,23 @@ const ArchivedApplicants = () => {
             });
         }
     }, []);
-
     return (
-        <div>
+        <>
             <header className="page-header page-header-compact page-header-light border-bottom bg-white mb-4">
                 <div className="container-fluid px-4">
                     <div className="page-header-content">
                         <div className="row align-items-center justify-content-between pt-3">
                             <div className="col-auto mb-3">
                                 <h1 className="page-header-title">
-                                    <div className="page-header-icon"><i className="far fa-archive"></i></div>
-                                    Archived Applicants
+                                    <div className="page-header-icon"><i data-feather="user"></i></div>
+                                    Qualified Students
                                 </h1>
                             </div>
-
                         </div>
                     </div>
                 </div>
             </header>
+
             <div className="container-xl">
                 <div className="card mb-4">
                     <div className="card-header">
@@ -49,7 +48,7 @@ const ArchivedApplicants = () => {
                                 <th>Birth Date</th>
                                 <th>Address</th>
                                 <th>Date Applied</th>
-                                <th>Date Archived</th>
+                                <th>Eligibility Score</th>
                                 <th>Status</th>
                                 <th>Actions</th>
                             </tr>
@@ -62,7 +61,7 @@ const ArchivedApplicants = () => {
                                 <th>Birth Date</th>
                                 <th>Address</th>
                                 <th>Date Applied</th>
-                                <th>Date Archived</th>
+                                <th>Eligibility Score</th>
                                 <th>Status</th>
                                 <th>Actions</th>
                             </tr>
@@ -75,7 +74,7 @@ const ArchivedApplicants = () => {
                                 <td>63</td>
                                 <td>2011/07/25</td>
                                 <td>2011/07/25</td>
-                                <td>2011/07/25</td>
+                                <td>1</td>
                                 <td>
                                     <div className="badge bg-warning rounded-pill">Pending</div>
                                 </td>
@@ -97,8 +96,8 @@ const ArchivedApplicants = () => {
                     </div>
                 </div>
             </div>
-        </div>
+        </>
     );
-};
+}
 
-export default ArchivedApplicants;
+export default QualifiedStudents;
