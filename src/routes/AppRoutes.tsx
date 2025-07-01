@@ -25,12 +25,12 @@ import Document from '../pages/admin/Document';
 import ActivityLogs from '../pages/admin/ActivityLogs';
 import ArchivedApplicants from '../pages/admin/ArchivedApplicants';
 import Reports from '../pages/admin/Reports';
-import Campuses from '../pages/admin/Campuses';
+import Campuses from '../pages/admin/ManageCampuses.tsx';
 import BulkEvaluation from '../pages/admin/BulkEvaluation';
 import Metrics from '../pages/admin/Metrics';
-import Departments from '../pages/admin/Departments';
+import Departments from '../pages/admin/ManageDepartments.tsx';
 import AcademicYears from '../pages/admin/AcademicYears';
-import Courses from '../pages/admin/Courses';
+import Courses from '../pages/admin/ManageCourses.tsx';
 import Applications from "../pages/applicant/Applications.tsx";
 import Notifications from "../pages/applicant/Notifications.tsx";
 import QualifiedStudents from "../pages/admin/QualifiedStudents.tsx";
@@ -40,6 +40,8 @@ import ApplicantsReport from "../pages/admin/reports/ApplicantsReport.tsx";
 import ArchivedDocuments from "../pages/admin/documents/ArchivedDocuments.tsx";
 import SubmittedRequirements from "../pages/admin/documents/SubmittedRequirements.tsx";
 import {Import} from "lucide-react";
+import FuzzyLogic from "../pages/admin/FuzzyLogic.tsx";
+import ImportStudents from "../pages/admin/ImportStudents.tsx";
 
 export function AuthRedirect() {
     const { isAuthenticated, isAdmin, isStudent } = useAuth();
@@ -100,8 +102,8 @@ const AppRoutes: React.FC = () => {
 
                     <Route path="bulk-evaluation" element={<BulkEvaluation />} />
                     <Route path="evaluation-rules" element={<EvaluationRules />} />
-                    <Route path="import-students" element={<Import />} />
-                    <Route path="fuzzy-logic" element={<Import />} />
+                    <Route path="import-students" element={<ImportStudents />} />
+                    <Route path="fuzzy-logic" element={<FuzzyLogic />} />
 
                 </Route>
             </Route>

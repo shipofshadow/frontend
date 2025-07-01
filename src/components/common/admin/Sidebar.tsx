@@ -107,6 +107,12 @@ const Sidebar: React.FC = () => {
               {/* Automation */}
               <div className="sidenav-menu-heading">Automation & Rules</div>
 
+              <NavLink to="/admin/import-students" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
+                <div className="nav-link-icon"><i data-feather="upload-cloud"></i></div>
+                Import Student List
+              </NavLink>
+
+
               <NavLink to="/admin/bulk-evaluation" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
                 <div className="nav-link-icon"><i data-feather="upload"></i></div>
                 Bulk Evaluation
@@ -115,11 +121,6 @@ const Sidebar: React.FC = () => {
               <NavLink to="/admin/evaluation-rules" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
                 <div className="nav-link-icon"><i className="far fa-balance-scale"></i></div>
                 Evaluation Rules
-              </NavLink>
-
-              <NavLink to="/admin/import-students" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
-                <div className="nav-link-icon"><i data-feather="upload-cloud"></i></div>
-                Import Student List
               </NavLink>
 
               <NavLink to="/admin/fuzzy-logic" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
