@@ -7,9 +7,13 @@ import AppRoutes from './routes/AppRoutes';
 const App: React.FC = () => {
   return (
     <Router>
+<<<<<<< HEAD
         
             <AppRoutes />
        
+=======
+        <AppRoutes />
+>>>>>>> bdd07267b184537706a1db265b2763e9aacea33a
     </Router>
   );
 };

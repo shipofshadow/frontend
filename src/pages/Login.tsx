@@ -14,14 +14,21 @@ const Login: React.FC = () => {
   const [errors, setErrors] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
-  const { login, isAuthenticated } = useAuth();
+  const { login, isAuthenticated, user} = useAuth();
 
   // Redirect if already authenticated
   useEffect(() => {
     if (isAuthenticated) {
-      navigate('/applicant/home');
+      if (user?.role === 'admin') {
+        navigate('/admin');
+      } else if (user?.role === 'student') {
+        navigate('/applicant/home');
+      } else {
+        navigate('/');
+      }
     }
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, user, navigate]);
+
 
   useEffect(() => {
     const rememberedUsername = localStorage.getItem('rememberedUsername');
@@ -45,7 +52,6 @@ const Login: React.FC = () => {
 
       const response = await loginUser(username, password);
       const { user, token, refresh_token } = response;
-      console.log('Login response:', response);
 
       if (remember) {
         localStorage.setItem('rememberedUsername', username);
@@ -54,12 +60,16 @@ const Login: React.FC = () => {
       }
 
       login(user, token, refresh_token);
-      console.log("Is Authenticated After Login?", isAuthenticated);
 
       notyf.success('Login successful!');
 
-      // Navigate immediately since we're now authenticated
-      navigate('/applicant/home');
+      if (user.role === 'admin') {
+        navigate('/admin');
+      } else if (user.role === 'student') {
+        navigate('/applicant/home');
+      } else {
+        navigate('/');
+      }
 
     } catch (err) {
       setErrors(err instanceof Error ? err.message : 'Login failed');

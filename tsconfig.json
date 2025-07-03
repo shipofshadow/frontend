@@ -6,6 +6,6 @@
   ],
   "compilerOptions": {
     // ...
-    "types": ["node", "react", "react-dom"]  // add "node" here
+    "types": ["node", "react", "react-dom"]  // add "node" here,
   }
 }

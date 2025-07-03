@@ -6,11 +6,13 @@ import CourseSelect from "../../components/selects/CourseSelect.tsx";
 import { useAcademicTerm } from "../../hooks/useAcademicTerm.ts";
 import type {ApplicationForm} from "../../interfaces/ApplicationForm.ts";
 import {useAuth} from "../../context/AuthContext.tsx";
+import {API_BASE_URL} from "../../config.ts";
+import { citizenship, civilStatus } from '../../data/data.ts';
 
 const Apply = () => {
   const [step, setStep] = useState("step1");
   const { term } = useAcademicTerm();
-  const { user } = useAuth();
+  const { user, token } = useAuth();
 
   interface Region {
     reg_code: string;
@@ -54,13 +56,15 @@ const Apply = () => {
   }, []);
 
   const [formData, setFormData] = useState<ApplicationForm>({
-    firstName: '',
-    middleName: '',
-    lastName: '',
-    nameExtension: '',
-    email: '',
-    phone: '',
-    birthDate: '',
+    firstName: user?.profile?.first_name || '',
+    middleName: user?.profile?.middle_name || '',
+    lastName: user?.profile?.last_name || '',
+    nameExtension: user?.profile?.extension_name || '',
+    email: user?.profile?.email || '',
+    phone: user?.profile?.contact_number || '',
+    birthDate: user?.profile?.birth_date || '',
+    civilStatus: '',
+    citizenship: 'Filipino',
     street: '',
     regionCode: '',
     regionName: '',
@@ -215,22 +219,54 @@ const Apply = () => {
     setFormData((prev) => ({
       ...prev,
       campus: parseInt(campusId) || 0,
-    }));
-  }, [campusId]);
-
-  useEffect(() => {
-    setFormData((prev) => ({
-      ...prev,
       department: parseInt(departmentId) || 0,
-    }));
-  }, [departmentId]);
-
-  useEffect(() => {
-    setFormData((prev) => ({
-      ...prev,
       course: parseInt(courseId) || 0,
     }));
-  }, [courseId]);
+  }, [campusId, departmentId, courseId]);
+
+
+  const handleSubmit = async () => {
+    const data = new FormData();
+
+    // Append all simple fields
+    Object.entries(formData).forEach(([key, value]) => {
+      if (typeof value !== 'object' || value instanceof File || value === null) {
+        data.append(key, value ?? '');
+      }
+    });
+
+    // Append nested fields manually
+    Object.entries(formData.father).forEach(([key, value]) => {
+      data.append(`father[${key}]`, value ?? '');
+    });
+
+    Object.entries(formData.mother).forEach(([key, value]) => {
+      data.append(`mother[${key}]`, value ?? '');
+    });
+
+    // Files
+    if (formData.itr) data.append('itr', formData.itr);
+    if (formData.grades) data.append('grades', formData.grades);
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/application/apply`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: data,
+      });
+
+      if (!res.ok) throw new Error('Failed to submit application');
+
+      const result = await res.json();
+      alert('Application submitted successfully!');
+      console.log(result);
+    } catch (error) {
+      console.error('Submission error:', error);
+      alert('There was an error submitting your application.');
+    }
+  };
 
   return (
       <div className="container p-2">
@@ -406,6 +442,35 @@ const Apply = () => {
                             ))}
                           </select>
                         </div>
+
+
+                      <div className="row">
+                        <div className="col-md-6">
+                          <label>Citizenship</label>
+                          <select name="citizenship" className="form-control" value={formData.citizenship}
+                                  onChange={(e) => setFormData({...formData, citizenship: e.target.value})}>
+                            <option value="">Select citizenship</option>
+                            {citizenship.map(c => (
+                                <option key={c} value={c} selected={c === "Filipino"}>{c}</option>
+                            ))}
+                          </select>
+                        </div>
+
+                        <div className="col-md-6">
+                          <label>Civil Status</label>
+                          <select
+                              className="form-control"
+                              name="civilStatus"
+                              value={formData.civilStatus}
+                              onChange={(e) => setFormData({ ...formData, civilStatus: e.target.value })}
+                          >
+                            <option value="">Select civil status</option>
+                            {civilStatus.map((status) => (
+                                <option key={status} value={status}>{status}</option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
                       </div>
                     </div>
 
@@ -905,7 +970,7 @@ const Apply = () => {
 
                   <div className="d-flex justify-content-between mt-4">
                     <button className="btn btn-light" type="button" onClick={() => setStep("step3")}>Previous</button>
-                    <button className="btn btn-primary" type="submit">Submit Application</button>
+                    <button className="btn btn-primary" type="submit" onClick={handleSubmit}>Submit Application</button>
                   </div>
                 </div>
             )}

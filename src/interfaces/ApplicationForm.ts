@@ -8,6 +8,9 @@ export interface ApplicationForm {
     phone: string;
     birthDate: string;
 
+    civilStatus: string;
+    citizenship: string;
+
     // Address Info
     street: string;
 
