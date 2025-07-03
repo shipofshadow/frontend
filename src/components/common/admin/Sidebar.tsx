@@ -48,9 +48,9 @@ const Sidebar: React.FC = () => {
                 <div className="nav-link-icon"><i data-feather="upload"></i></div>
                 Bulk Evaluation
               </Link>
-              <Link className="nav-link" to="/admin/config/system">
+              <Link className="nav-link" to="/admin/config-system">
                 <div className="nav-link-icon"><i data-feather="sliders"></i></div>
-                System Config
+                System Config 
               </Link>
 
               {/* Academic Config */}

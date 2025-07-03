@@ -126,7 +126,7 @@ const Applicants = () => {
 
             <div className="container-fluid px-4">
                 <div className="card mb-4">
-                    <div className="card-header">Applicants List (TanStack Table)</div>
+                    <div className="card-header">Applicants</div>
                     <div className="card-body table-responsive">
                         <table className="table table-bordered">
                             <thead className="table-light">
@@ -170,7 +170,7 @@ const Applicants = () => {
                             </div>
                             <div className="modal-body">
                                 <div className="mb-2">
-                                    <label>Name</label>
+                                    <label>Student_ID</label>
                                     <input className="form-control" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} />
                                 </div>
                                 <div className="mb-2">

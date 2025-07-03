@@ -51,7 +51,7 @@ const AppRoutes: React.FC = () => {
                 <Route path="Applicants" element={<Applicants />} />
                 <Route path="users" element={<Users />} />
                 <Route path="scholarship-management" element={<ScholarshipManagement />} />
-                <Route path="system" element={<SystemSetting />} />
+                <Route path="config-system" element={<SystemSetting />} />
                 <Route path="documents" element={<Document />} />
                 <Route path="activity-logs" element={<ActivityLogs />} />
                 <Route path="archived-applicants" element={<ArchivedApplicants />} />
