@@ -57,6 +57,7 @@ export interface ApplicationForm {
 
     // Academic Info
     studentId: string;
+    year_level: string;
     campus: number;
     department: number;
     course: number;

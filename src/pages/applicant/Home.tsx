@@ -4,13 +4,9 @@ import {
     CheckCircle,
     Info,
     Bell,
-    User,
-    Award,
     Pencil,
     Clock,
     ChevronRight,
-    DollarSign,
-    GraduationCap,
     Brain,
     Zap,
     Settings
@@ -18,13 +14,64 @@ import {
 import { useAuth } from '../../context/AuthContext.tsx';
 import { hasApplied } from '../../services/applicationService';
 import { Link } from 'react-router-dom';
+import '../../index.css';
 
+// --- Timeline component ---
+const Timeline: React.FC<{ current: 'apply' | 'pending' | 'result' }> = ({ current }) => {
+    const steps = [
+        { key: 'apply', label: 'Apply', icon: <Pencil size={16} /> },
+        { key: 'pending', label: 'Under Review', icon: <Clock size={16} /> },
+        { key: 'result', label: 'Result', icon: <CheckCircle size={16} /> },
+    ];
+
+    const getStatus = (step: string) => {
+        const order = ['apply', 'pending', 'result'];
+        const currentIndex = order.indexOf(current);
+        const stepIndex = order.indexOf(step);
+        if (stepIndex < currentIndex) return 'completed';
+        if (stepIndex === currentIndex) return 'active';
+        return 'upcoming';
+    };
+
+    return (
+        <div className="timeline-wrapper d-flex justify-content-between align-items-center my-5 position-relative">
+            {steps.map((step, index) => {
+                const status = getStatus(step.key);
+
+                return (
+                    <div key={step.key} className="text-center flex-fill position-relative">
+                        <div
+                            className={`rounded-circle mx-auto d-flex justify-content-center align-items-center fw-bold step-icon
+                                ${status === 'completed' ? 'bg-success text-white' :
+                                status === 'active' ? 'bg-primary text-white pulse' :
+                                    'bg-light text-muted border'}
+                            `}
+                            style={{ width: 40, height: 40 }}
+                        >
+                            {step.icon}
+                        </div>
+                        <div className={`small mt-2 ${status === 'active' ? 'text-primary fw-semibold' : 'text-muted'}`}>
+                            {step.label}
+                        </div>
+                        {index < steps.length - 1 && (
+                            <div className="timeline-line position-absolute top-50 start-100 translate-middle-y" />
+                        )}
+                    </div>
+                );
+            })}
+        </div>
+    );
+};
+
+// --- Main Component ---
 const Home: React.FC = () => {
-    const [hasApplication, setHasApplication] = useState(false);
+    const [applicationInfo, setApplicationInfo] = useState<any>(null);
     const { user, token } = useAuth();
 
     useEffect(() => {
-        hasApplied(token).then(setHasApplication);
+        hasApplied(token)
+            .then(setApplicationInfo)
+            .catch(() => setApplicationInfo({ has_applied: false }));
     }, [token]);
 
     const NotAppliedView = () => (
@@ -40,7 +87,7 @@ const Home: React.FC = () => {
                                     </div>
                                 </div>
                                 <h2 className="fw-bold text-primary mb-3">Welcome, {user?.profile?.first_name}!</h2>
-                                <p className="text-muted">Get started with your scholarship application process today.</p>
+                                <p className="text-muted">Start your scholarship application to unlock opportunities tailored to your academic journey.</p>
                                 <Link to="/applicant/apply" className="btn btn-primary btn-lg mt-4">
                                     <Pencil size={18} className="me-2" /> Start Application <ChevronRight size={18} className="ms-2" />
                                 </Link>
@@ -52,7 +99,7 @@ const Home: React.FC = () => {
         </div>
     );
 
-    const AppliedView = () => (
+    const PendingView = ({ submitted_at }: { submitted_at: string }) => (
         <div className="bg-light min-vh-100">
             <div className="container py-5">
                 <div className="row justify-content-center">
@@ -63,79 +110,37 @@ const Home: React.FC = () => {
                                     <Clock size={32} className="text-primary me-2" />
                                     <h4 className="mb-0 fw-bold">Application Under Review</h4>
                                 </div>
-                                <p className="text-muted mb-2">Submitted on: June 10, 2025</p>
-                                <p className="text-muted mb-4">Estimated review time: 2-3 weeks</p>
+                                <p className="text-muted mb-2">You submitted your application on <strong>{submitted_at}</strong>.</p>
+                                <p className="text-muted mb-4">Our scholarship committee is currently reviewing your submission. Please check back regularly for updates.</p>
+
+                                <Timeline current="pending" />
 
                                 <div className="row g-3">
-                                    <div className="col-md-6">
-                                        <div className="card border-0 shadow-sm rounded-4 h-100">
-                                            <div className="card-body">
-                                                <div className="d-flex align-items-center mb-3">
-                                                    <GraduationCap size={20} className="text-success me-2" />
-                                                    <h6 className="mb-0">Academic Evaluation</h6>
-                                                </div>
-                                                <p className="mb-1">GPA: <strong className="text-success">3.82</strong></p>
-                                                <p>Status: <span className="badge bg-success">Qualified</span></p>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div className="col-md-6">
-                                        <div className="card border-0 shadow-sm rounded-4 h-100">
-                                            <div className="card-body">
-                                                <div className="d-flex align-items-center mb-3">
-                                                    <DollarSign size={20} className="text-warning me-2" />
-                                                    <h6 className="mb-0">Financial Evaluation</h6>
-                                                </div>
-                                                <p className="mb-1">Income: <strong className="text-warning">₱285,000/year</strong></p>
-                                                <p>Status: <span className="badge bg-warning text-dark">Eligible</span></p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="card bg-success text-white mt-4 border-0 shadow rounded-4">
-                                    <div className="card-body text-center">
-                                        <Award size={24} className="mb-2" />
-                                        <h5 className="fw-bold">Preliminary Assessment: Qualified</h5>
-                                        <p className="mb-0">Final decision pending committee review</p>
-                                    </div>
-                                </div>
-
-                                <div className="row g-3 mt-4">
                                     <div className="col-md-4">
-                                        <div className="card border-0 shadow-sm rounded-4 h-100">
-                                            <div className="card-body text-center">
-                                                <CheckCircle size={24} className="text-primary mb-2" />
-                                                <h6 className="fw-bold">Application Status</h6>
-                                                <button className="btn btn-outline-primary btn-sm mt-2">
-                                                    View Timeline <ChevronRight size={16} />
-                                                </button>
-                                            </div>
+                                        <div className="card border-0 shadow-sm rounded-4 h-100 text-center p-3">
+                                            <CheckCircle size={24} className="text-primary mb-2" />
+                                            <h6 className="fw-bold">Application Status</h6>
+                                            <span className="badge bg-primary">Pending Review</span>
                                         </div>
                                     </div>
 
                                     <div className="col-md-4">
-                                        <div className="card border-0 shadow-sm rounded-4 h-100">
-                                            <div className="card-body text-center">
-                                                <FileText size={24} className="text-success mb-2" />
-                                                <h6 className="fw-bold">Documents</h6>
-                                                <button className="btn btn-outline-success btn-sm mt-2">
-                                                    View Files <ChevronRight size={16} />
-                                                </button>
-                                            </div>
+                                        <div className="card border-0 shadow-sm rounded-4 h-100 text-center p-3">
+                                            <FileText size={24} className="text-secondary mb-2" />
+                                            <h6 className="fw-bold">Submitted Documents</h6>
+                                            <Link to="/applicant/documents" className="btn btn-sm btn-outline-secondary mt-2">
+                                                View Files <ChevronRight size={16} />
+                                            </Link>
                                         </div>
                                     </div>
 
                                     <div className="col-md-4">
-                                        <div className="card border-0 shadow-sm rounded-4 h-100">
-                                            <div className="card-body text-center">
-                                                <Info size={24} className="text-info mb-2" />
-                                                <h6 className="fw-bold">System Info</h6>
-                                                <button className="btn btn-outline-info btn-sm mt-2">
-                                                    Learn More <ChevronRight size={16} />
-                                                </button>
-                                            </div>
+                                        <div className="card border-0 shadow-sm rounded-4 h-100 text-center p-3">
+                                            <Info size={24} className="text-info mb-2" />
+                                            <h6 className="fw-bold">Need Help?</h6>
+                                            <Link to="/support" className="btn btn-sm btn-outline-info mt-2">
+                                                Contact Us <ChevronRight size={16} />
+                                            </Link>
                                         </div>
                                     </div>
                                 </div>
@@ -143,18 +148,18 @@ const Home: React.FC = () => {
                                 <div className="card border-0 shadow-sm rounded-4 mt-4">
                                     <div className="card-body">
                                         <div className="d-flex align-items-center mb-3">
-                                            <Bell size={20} className="text-danger me-2" />
-                                            <h6 className="fw-bold mb-0">System Updates</h6>
+                                            <Bell size={20} className="text-warning me-2" />
+                                            <h6 className="fw-bold mb-0">System Activity</h6>
                                         </div>
                                         <ul className="list-unstyled text-muted small mb-0">
                                             <li className="mb-2">
-                                                <Brain size={14} className="me-1 text-success" /> Fuzzy logic analysis completed - 1 day ago
+                                                <Brain size={14} className="me-1 text-success" /> Automated evaluation queued
                                             </li>
                                             <li className="mb-2">
-                                                <Zap size={14} className="me-1 text-warning" /> Real-time qualification generated - 2 days ago
+                                                <Zap size={14} className="me-1 text-warning" /> Initial screening completed
                                             </li>
                                             <li>
-                                                <Settings size={14} className="me-1 text-primary" /> System tested and optimized - 3 days ago
+                                                <Settings size={14} className="me-1 text-primary" /> Status synced with committee system
                                             </li>
                                         </ul>
                                     </div>
@@ -167,7 +172,56 @@ const Home: React.FC = () => {
         </div>
     );
 
-    return hasApplication ? <AppliedView /> : <NotAppliedView />;
+    const ApprovedView = () => (
+        <div className="bg-light min-vh-100 d-flex justify-content-center align-items-center">
+            <div className="card border-0 shadow rounded-4 text-center p-5">
+                <CheckCircle size={48} className="text-success mb-3" />
+                <h3 className="fw-bold text-success">You’ve Been Approved!</h3>
+                <p className="text-muted">Congratulations! Your scholarship application has been approved.</p>
+                <Timeline current="result" />
+                <Link to="/applicant/status" className="btn btn-success mt-3">
+                    View Status <ChevronRight size={16} />
+                </Link>
+            </div>
+        </div>
+    );
+
+    const RejectedView = () => (
+        <div className="bg-light min-vh-100 d-flex justify-content-center align-items-center">
+            <div className="card border-0 shadow rounded-4 text-center p-5">
+                <Info size={48} className="text-danger mb-3" />
+                <h3 className="fw-bold text-danger">Application Not Approved</h3>
+                <p className="text-muted">Unfortunately, your application didn’t meet the criteria. Try again next cycle.</p>
+                <Timeline current="result" />
+                <Link to="/applicant/support" className="btn btn-outline-danger mt-3">
+                    Need Help? <ChevronRight size={16} />
+                </Link>
+            </div>
+        </div>
+    );
+
+    if (applicationInfo === null) {
+        return (
+            <div className="min-vh-100 d-flex justify-content-center align-items-center bg-light">
+                <div className="spinner-border text-primary" role="status">
+                    <span className="visually-hidden">Loading...</span>
+                </div>
+            </div>
+        );
+    }
+
+    if (!applicationInfo.has_applied) return <NotAppliedView />;
+
+    switch (applicationInfo.status) {
+        case 'pending':
+            return <PendingView submitted_at={applicationInfo.submitted_at} />;
+        case 'approved':
+            return <ApprovedView />;
+        case 'rejected':
+            return <RejectedView />;
+        default:
+            return <NotAppliedView />;
+    }
 };
 
 export default Home;

@@ -8,6 +8,5 @@ export async function hasApplied(token: string | null): Promise<boolean> {
     });
     if (!response.ok) throw new Error('Failed to check application status');
 
-    const data = await response.json();
-    return !!data.has_applied;
+    return await response.json();
 }

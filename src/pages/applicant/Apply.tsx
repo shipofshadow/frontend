@@ -97,6 +97,7 @@ const Apply = () => {
     ipAffiliation: '',
     dswdProgram: '',
     studentId: user?.profile?.student_id || '',
+    year_level: '',
     campus: 0,
     department: 0,
     course: 0,
@@ -657,6 +658,16 @@ const Apply = () => {
                             className="form-control"
                             onChange={(e)=> handleInputChange('studentId', e.target.value)}
                         />
+                      </div>
+
+                      <div className="mb-3 col-md-4">
+                        <label htmlFor="year_level" className="form-label">Year Level</label>
+                        <select className="form-select">
+                            <option value="1st Year">1st Year</option>
+                            <option value="2nd Year">2nd Year</option>
+                            <option value="3rd Year">3rd Year</option>
+                            <option value="4th Year">4th Year</option>
+                        </select>
                       </div>
 
                       <div className="mb-3 col-md-4">
