@@ -62,6 +62,25 @@ const AppRoutes: React.FC = () => {
         <Routes>
             <Route path="/" element={isAuthenticated ? <Navigate to="/applicant" replace /> : <App />} />
 
+<<<<<<< HEAD
+            <Route path="/admin" element={<AdminLayout />}>
+                <Route index element={<Dashboard />} />
+                <Route path="manage-students" element={<ManageStudents />} />
+                <Route path="Applicants" element={<Applicants />} />
+                <Route path="users" element={<Users />} />
+                <Route path="scholarship-management" element={<ScholarshipManagement />} />
+                <Route path="config-system" element={<SystemSetting />} />
+                <Route path="documents" element={<Document />} />
+                <Route path="activity-logs" element={<ActivityLogs />} />
+                <Route path="archived-applicants" element={<ArchivedApplicants />} />
+                <Route path="reports" element={<Reports />} />
+                <Route path="campuses" element={<Campuses />} />
+                <Route path="bulk-evaluation" element={<BulkEvaluation />} />
+                <Route path="metrics" element={<Metrics />} />
+                <Route path="departments" element={<Departments />} />
+                <Route path="academic-years" element={<AcademicYears />} />
+                <Route path="courses" element={<Courses />} />
+=======
             <Route element={<ProtectedRoute allowedRoles={["admin"]} />}>
                 <Route path="/admin" element={<AdminLayout />}>
                     <Route index element={<Dashboard />} />
@@ -106,6 +125,7 @@ const AppRoutes: React.FC = () => {
                     <Route path="fuzzy-logic" element={<FuzzyLogic />} />
 
                 </Route>
+>>>>>>> bdd07267b184537706a1db265b2763e9aacea33a
             </Route>
 
 

@@ -116,6 +116,13 @@ const Sidebar: React.FC = () => {
               <NavLink to="/admin/bulk-evaluation" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
                 <div className="nav-link-icon"><i data-feather="upload"></i></div>
                 Bulk Evaluation
+<<<<<<< HEAD
+              </Link>
+              <Link className="nav-link" to="/admin/config-system">
+                <div className="nav-link-icon"><i data-feather="sliders"></i></div>
+                System Config 
+              </Link>
+=======
               </NavLink>
 
               <NavLink to="/admin/evaluation-rules" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
@@ -128,6 +135,7 @@ const Sidebar: React.FC = () => {
                 Fuzzy Logic Settings
               </NavLink>
 
+>>>>>>> bdd07267b184537706a1db265b2763e9aacea33a
 
               {/* Academic Config */}
               <div className="sidenav-menu-heading">Academic Config</div>

@@ -32,11 +32,86 @@ const ApplicantsTable = () => {
                     </div>
                 </div>
             </header>
+<<<<<<< HEAD
+
+            <div className="container-fluid px-4">
+                <div className="card mb-4">
+                    <div className="card-header">Applicants</div>
+                    <div className="card-body table-responsive">
+                        <table className="table table-bordered">
+                            <thead className="table-light">
+                            {table.getHeaderGroups().map(headerGroup => (
+                                <tr key={headerGroup.id}>
+                                    {headerGroup.headers.map(header => (
+                                        <th key={header.id}>
+                                            {flexRender(header.column.columnDef.header, header.getContext())}
+                                        </th>
+                                    ))}
+                                </tr>
+                            ))}
+                            </thead>
+                            <tbody>
+                            {table.getRowModel().rows.map(row => (
+                                <tr key={row.id}>
+                                    {row.getVisibleCells().map(cell => (
+                                        <td key={cell.id}>
+                                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                                        </td>
+                                    ))}
+                                </tr>
+                            ))}
+                            {table.getRowModel().rows.length === 0 && (
+                                <tr><td colSpan={columns.length} className="text-center">No data</td></tr>
+                            )}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            {/* Modal */}
+            {showModal && (
+                <div className="modal fade show d-block" tabIndex={-1} role="dialog" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+                    <div className="modal-dialog" role="document">
+                        <div className="modal-content">
+                            <div className="modal-header">
+                                <h5 className="modal-title">{editIndex !== null ? 'Edit' : 'Add'} Applicant</h5>
+                                <button type="button" className="btn-close" onClick={() => setShowModal(false)}></button>
+                            </div>
+                            <div className="modal-body">
+                                <div className="mb-2">
+                                    <label>Student_ID</label>
+                                    <input className="form-control" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} />
+                                </div>
+                                <div className="mb-2">
+                                    <label>Email</label>
+                                    <input className="form-control" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} />
+                                </div>
+                                <div className="mb-2">
+                                    <label>Course</label>
+                                    <input className="form-control" value={formData.course} onChange={e => setFormData({ ...formData, course: e.target.value })} />
+                                </div>
+                                <div className="mb-2">
+                                    <label>Status</label>
+                                    <select className="form-control" value={formData.status} onChange={e => setFormData({ ...formData, status: e.target.value })}>
+                                        <option>Pending</option>
+                                        <option>Approved</option>
+                                        <option>Rejected</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div className="modal-footer">
+                                <button className="btn btn-secondary" onClick={() => setShowModal(false)}>Cancel</button>
+                                <button className="btn btn-primary" onClick={handleSubmit}>
+                                    {editIndex !== null ? 'Update' : 'Add'} Applicant
+                                </button>
+=======
                     <div className="container-xl">
                         <div className="card mb-4">
                         <div className="card-header">
                             <div className="d-flex justify-content-end">
                                 <button className="btn btn-success btn-sm" onClick={() => alert('Add New Applicant')}>Add New Applicant</button>
+>>>>>>> bdd07267b184537706a1db265b2763e9aacea33a
                             </div>
                         </div>
                             <div className="card-body">
