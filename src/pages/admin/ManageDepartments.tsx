@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import {API_BASE_URL} from "../../config.ts";
+import { API_BASE_URL } from "../../config.ts";
+
 type Campus = {
     id: number;
     name: string;
@@ -10,7 +11,6 @@ type Department = {
     id: number;
     name: string;
     campus_id: number;
-    campus_name?: string; // optional for display
 };
 
 const ManageDepartments = () => {
@@ -31,7 +31,7 @@ const ManageDepartments = () => {
 
     const fetchCampuses = () => {
         axios
-            .get(`${API_BASE_URL}/api/campuses`)
+            .get(`${API_BASE_URL}/api/campus/`)
             .then((res) => setCampuses(res.data))
             .catch((err) => console.error("Failed to load campuses", err));
     };
@@ -39,7 +39,7 @@ const ManageDepartments = () => {
     const fetchDepartments = () => {
         setLoading(true);
         axios
-            .get(`${API_BASE_URL}/api/departments`)
+            .get(`${API_BASE_URL}/api/campus/department`)
             .then((res) => setDepartments(res.data))
             .catch((err) => console.error("Failed to load departments", err))
             .finally(() => setLoading(false));
@@ -53,19 +53,24 @@ const ManageDepartments = () => {
     };
 
     const handleSave = () => {
-        if (!deptName.trim() || !selectedCampusId) return alert("All fields are required");
+        if (!deptName.trim() || !selectedCampusId) {
+            return alert("All fields are required");
+        }
 
-        const data = { name: deptName, campus_id: parseInt(selectedCampusId) };
+        const data = {
+            name: deptName,
+            campus_id: parseInt(selectedCampusId),
+        };
 
         if (editing) {
             axios
-                .put(`${API_BASE_URL}/api/departments/${editing.id}`, data)
+                .put(`${API_BASE_URL}/api/campus/department/${editing.id}`, data)
                 .then(() => {
                     fetchDepartments();
                     setShowModal(false);
                 });
         } else {
-            axios.post(`${API_BASE_URL}/api/departments`, data).then(() => {
+            axios.post(`${API_BASE_URL}/api/campus/department`, data).then(() => {
                 fetchDepartments();
                 setShowModal(false);
             });
@@ -74,7 +79,7 @@ const ManageDepartments = () => {
 
     const handleDelete = (id: number) => {
         if (!confirm("Are you sure you want to delete this department?")) return;
-        axios.delete(`${API_BASE_URL}/api/departments/${id}`).then(() => fetchDepartments());
+        axios.delete(`${API_BASE_URL}/api/campus/department/${id}`).then(() => fetchDepartments());
     };
 
     return (
@@ -125,10 +130,7 @@ const ManageDepartments = () => {
                                             <td>{index + 1}</td>
                                             <td>{dept.name}</td>
                                             <td>
-                                                {
-                                                    campuses.find(c => c.id === dept.campus_id)?.name ||
-                                                    dept.campus_name || "N/A"
-                                                }
+                                                {campuses.find(c => c.id === dept.campus_id)?.name || "Unknown Campus"}
                                             </td>
                                             <td>
                                                 <button className="btn btn-sm btn-outline-primary me-2" onClick={() => openModal(dept)}>

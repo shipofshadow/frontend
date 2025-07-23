@@ -74,7 +74,7 @@ const Register = () => {
       console.log('Registration data:', form);
       notyf.success('Registration successful!');
 
-      navigate('/applicant/login');
+      navigate('/login');
 
 
     } catch (err) {
@@ -316,7 +316,7 @@ const Register = () => {
                   <p className="mb-0 text-muted">
                     Already have an account?{' '}
                     <a
-                        href="/applicant/login"
+                        href="/login"
                         className="text-decoration-none fw-semibold"
                         style={{color: '#667eea'}}
                     >

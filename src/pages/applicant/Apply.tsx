@@ -51,9 +51,24 @@ const Apply = () => {
   const [departmentId, setDepartmentId] = useState("");
   const [courseId, setCourseId] = useState("");
 
+  const [grades, setGrades] = useState([{ subject: "", grade: "" }]);
+
   useEffect(() => {
     setRegions(psgc.getAllRegions());
   }, []);
+
+  const numberFormatter = new Intl.NumberFormat("en-PH", {
+    style: "currency",
+    currency: "PHP",
+    minimumFractionDigits: 2,
+  });
+
+  function formatDate(dateStr: string | number | Date) {
+    if (!dateStr) return "N/A";
+    const d = new Date(dateStr);
+    return isNaN(d) ? "N/A" : d.toLocaleDateString();
+  }
+
 
   const [formData, setFormData] = useState<ApplicationForm>({
     firstName: user?.profile?.first_name || '',
@@ -63,45 +78,45 @@ const Apply = () => {
     email: user?.profile?.email || '',
     phone: user?.profile?.contact_number || '',
     birthDate: user?.profile?.birth_date || '',
-    civilStatus: '',
+    civilStatus: user?.profile?.civil_status || '',
     citizenship: 'Filipino',
-    street: '',
-    regionCode: '',
-    regionName: '',
-    provinceCode: '',
-    provinceName: '',
-    municipalityCode: '',
-    municipalityName: '',
-    barangayCode: '',
-    barangayName: '',
+    street: user?.profile?.street || '',
+    regionCode: user?.profile?.region_code || '',
+    regionName: user?.profile?.region_name || '',
+    provinceCode: user?.profile?.province_code || '',
+    provinceName: user?.profile?.province_name || '',
+    municipalityCode: user?.profile?.municipality_code || '',
+    municipalityName: user?.profile?.municipality_name ||'',
+    barangayCode: user?.profile?.barangay_code || '',
+    barangayName: user?.profile?.municipality_name || '',
     father: {
-      lastName: '',
-      firstName: '',
-      middleName: '',
-      extension: '',
-      occupation: '',
-      income: 0,
+      lastName: user?.profile?.father_last_name || '',
+      firstName: user?.profile?.father_first_name || '',
+      middleName: user?.profile?.father_middle_name || '',
+      extension: user?.profile?.father_extension || '',
+      occupation: user?.profile?.father_occupation || '',
+      income: parseFloat(user?.profile?.father_income) || 0,
     },
     mother: {
-      lastName: '',
-      firstName: '',
-      middleName: '',
-      occupation: '',
-      income: 0,
+      lastName: user?.profile?.mother_last_name || '',
+      firstName: user?.profile?.mother_first_name || '',
+      middleName: user?.profile?.mother_middle_name || '',
+      occupation: user?.profile?.mother_occupation || '',
+      income: parseFloat(user?.profile?.mother_income) || 0,
     },
     emergencyContactName: '',
     emergencyContactNumber: '',
-    householdNumber: 0,
-    siblings: 0,
-    siblingsStudying: 0,
-    ipAffiliation: '',
-    dswdProgram: '',
+    householdNumber: user?.profile?.household_number || 0,
+    siblings: user?.profile?.siblings || 0,
+    siblingsStudying: user?.profile?.siblings_studying || 0,
+    ipAffiliation: user?.profile?.ip_affiliation || '',
+    dswdProgram: user?.profile?.is_4ps_member === 1 ? '4Ps' : '',
     studentId: user?.profile?.student_id || '',
     year_level: '',
     campus: 0,
     department: 0,
     course: 0,
-    academicYearId: term?.academic_year_id || 0,
+    academicYearId: term?.academic_year_id || 0, 
     semesterId: term?.semester_id || 0,
     enrollmentStatus: '',
     total_units: 0,
@@ -110,7 +125,52 @@ const Apply = () => {
     scholarshipAmount: 0,
     itr: null,
     grades: null,
+    gradesList: [{ subject: "", grade: "" }],
   });
+
+  useEffect(() => {
+    if (user?.profile) {
+      setSelectedRegion(user.profile.region_code || '');
+      setSelectedProvince(user.profile.province_code || '');
+      setSelectedMunicipality(user.profile.municipality_code || '');
+      setSelectedBarangay(user.profile.barangay_code || '');
+    }
+  }, [user]);
+
+
+  useEffect(() => {
+    if (selectedRegion) {
+      setProvinces(psgc.getProvincesByRegion(selectedRegion));
+    }
+  }, [selectedRegion]);
+
+  useEffect(() => {
+    if (selectedProvince) {
+      setMunicipalities(psgc.getMunicipalitiesByProvince(selectedProvince));
+    }
+  }, [selectedProvince]);
+
+  useEffect(() => {
+    if (selectedMunicipality) {
+      setBarangays(psgc.getBarangaysByMunicipality(selectedMunicipality));
+    }
+  }, [selectedMunicipality]);
+
+  const addGradeRow = () => {
+    setGrades([...grades, { subject: "", grade: "" }]);
+  };
+
+  const removeGradeRow = (index: number) => {
+    setGrades(grades.filter((_, i) => i !== index));
+  };
+
+  const handleGradeChange = (index: number, field: string, value: string) => {
+    const updated = grades.map((g, i) =>
+        i === index ? { ...g, [field]: value } : g
+    );
+    setGrades(updated);
+  };
+
 
   const handleRegionChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const selectedCode = e.target.value;
@@ -247,7 +307,12 @@ const Apply = () => {
 
     // Files
     if (formData.itr) data.append('itr', formData.itr);
+
     if (formData.grades) data.append('grades', formData.grades);
+
+    if (grades && grades.length > 0) {
+      data.append('gradesList', JSON.stringify(grades));
+    }
 
     try {
       const res = await fetch(`${API_BASE_URL}/api/application/apply`, {
@@ -260,6 +325,7 @@ const Apply = () => {
 
       if (!res.ok) throw new Error('Failed to submit application');
 
+      // TODO: Fix the alerts
       const result = await res.json();
       alert('Application submitted successfully!');
       console.log(result);
@@ -284,6 +350,7 @@ const Apply = () => {
                   <div className="wizard-step-text-details">Personal and family information</div>
                 </div>
               </a>
+
               <a
                   className={`nav-item nav-link ${step === "step2" ? "active" : ""}`}
                   onClick={() => setStep("step2")}
@@ -294,27 +361,44 @@ const Apply = () => {
                   <div className="wizard-step-text-details">Academic performance and achievements</div>
                 </div>
               </a>
+
+              {/* NEW Grades Step */}
               <a
                   className={`nav-item nav-link ${step === "step3" ? "active" : ""}`}
                   onClick={() => setStep("step3")}
               >
                 <div className="wizard-step-icon">3</div>
                 <div className="wizard-step-text">
-                  <div className="wizard-step-text-name">Supporting Documents</div>
-                  <div className="wizard-step-text-details">Supporting documents</div>
+                  <div className="wizard-step-text-name">Grades</div>
+                  <div className="wizard-step-text-details">Enter your grades and upload transcript</div>
                 </div>
               </a>
+
+              {/* Shifted Supporting Documents step */}
               <a
                   className={`nav-item nav-link ${step === "step4" ? "active" : ""}`}
                   onClick={() => setStep("step4")}
               >
                 <div className="wizard-step-icon">4</div>
                 <div className="wizard-step-text">
+                  <div className="wizard-step-text-name">Supporting Documents</div>
+                  <div className="wizard-step-text-details">Supporting documents</div>
+                </div>
+              </a>
+
+              {/* Shifted Review & Submit step */}
+              <a
+                  className={`nav-item nav-link ${step === "step5" ? "active" : ""}`}
+                  onClick={() => setStep("step5")}
+              >
+                <div className="wizard-step-icon">5</div>
+                <div className="wizard-step-text">
                   <div className="wizard-step-text-name">Review & Submit</div>
                   <div className="wizard-step-text-details">Review and submit scholarship application</div>
                 </div>
               </a>
             </div>
+
           </div>
           <div className="card-body">
             {step === "step1" && (
@@ -662,11 +746,14 @@ const Apply = () => {
 
                       <div className="mb-3 col-md-4">
                         <label htmlFor="year_level" className="form-label">Year Level</label>
-                        <select className="form-select">
-                            <option value="1st Year">1st Year</option>
-                            <option value="2nd Year">2nd Year</option>
-                            <option value="3rd Year">3rd Year</option>
-                            <option value="4th Year">4th Year</option>
+                        <select className="form-select"
+                            value={formData.year_level}
+                          onChange={(e)=> handleInputChange('year_level', e.target.value)}
+                            >
+                            <option value="1">1st Year</option>
+                            <option value="2">2nd Year</option>
+                            <option value="3">3rd Year</option>
+                            <option value="4">4th Year</option>
                         </select>
                       </div>
 
@@ -835,7 +922,100 @@ const Apply = () => {
 
             {step === "step3" && (
                 <div>
-                  <h3 className="text-primary">Step 3: Supporting Documents</h3>
+                  <h3 className="text-primary">Step 3: Grades Entry</h3>
+                  <h5 className="card-title mb-4">Enter your grades and upload your transcript</h5>
+
+                  {/* Dynamic grade inputs */}
+                  {grades.map((grade, idx) => (
+                      <div className="row mb-3" key={idx}>
+                        <div className="col">
+                          <input
+                              type="text"
+                              className="form-control"
+                              placeholder="Subject"
+                              value={grade.subject}
+                              onChange={(e) => handleGradeChange(idx, "subject", e.target.value)}
+                              required
+                          />
+                        </div>
+                        <div className="col">
+                          <input
+                              type="text"
+                              className="form-control"
+                              placeholder="Grade"
+                              value={grade.grade}
+                              onChange={(e) => handleGradeChange(idx, "grade", e.target.value)}
+                              required
+                          />
+                        </div>
+                        <div className="col-auto">
+                          {grades.length > 1 && (
+                              <button
+                                  type="button"
+                                  className="btn btn-danger"
+                                  onClick={() => removeGradeRow(idx)}
+                              >
+                                &times;
+                              </button>
+                          )}
+                        </div>
+                      </div>
+                  ))}
+
+                  <button
+                      type="button"
+                      className="btn btn-secondary mb-4"
+                      onClick={addGradeRow}
+                  >
+                    + Add Subject
+                  </button>
+
+                  {/* Upload transcript document */}
+                  <div className="mb-4">
+                    <label>Upload Transcript / Report Card *</label>
+                    <input
+                        className="form-control"
+                        type="file"
+                        accept=".pdf, image/jpeg, image/jpg, image/png"
+                        onChange={(e) => handleFileUpload("grades", e.target.files?.[0])}
+                        required
+                    />
+                    <small className="form-text text-muted">
+                      Upload official transcript or report card (PDF, JPEG, JPG, PNG)
+                    </small>
+                  </div>
+
+                  <div className="alert alert-info">
+                    <strong>Document Requirements:</strong>
+                    <ul className="mb-0 mt-2">
+                      <li>Accepted formats: PDF, JPEG, JPG, PNG</li>
+                      <li>Maximum file size: 5MB</li>
+                      <li>Ensure clarity and readability</li>
+                    </ul>
+                  </div>
+
+                  <div className="d-flex justify-content-between mt-4">
+                    <button
+                        className="btn btn-light"
+                        type="button"
+                        onClick={() => setStep("step2")}
+                    >
+                      Previous
+                    </button>
+                    <button
+                        className="btn btn-primary"
+                        type="button"
+                        onClick={() => setStep("step4")}
+                    >
+                      Next
+                    </button>
+                  </div>
+                </div>
+            )}
+
+            {step === "step4" && (
+                <div>
+                  <h3 className="text-primary">Step 4: Supporting Documents</h3>
                   <h5 className="card-title mb-4">Upload required documents</h5>
 
                   <div className="mb-4">
@@ -844,68 +1024,119 @@ const Apply = () => {
                         className="form-control"
                         type="file"
                         accept=".pdf"
-                        onChange={(e)=> handleFileUpload('itr', e.target.files?.[0])}
+                        onChange={(e) => handleFileUpload("itr", e.target.files?.[0])}
+                        required
                     />
-                    <small className="form-text text-muted">Upload parent or guardian's ITR in PDF format (max 5MB)</small>
-                  </div>
-
-                  <div className="mb-4">
-                    <label>Recent Grades / Transcript *</label>
-                    <input
-                        className="form-control"
-                        type="file"
-                        accept=".pdf,.doc,.docx"
-                        onChange={(e)=> handleFileUpload('grades', e.target.files?.[0])}
-                    />
-                    <small className="form-text text-muted">Upload official transcript or report card (PDF, JPEG, JPG, PNG)</small>
+                    <small className="form-text text-muted">
+                      Upload parent or guardian's ITR in PDF format (max 5MB)
+                    </small>
                   </div>
 
                   <div className="alert alert-info">
                     <strong>Document Requirements:</strong>
                     <ul className="mb-0 mt-2">
-                      <li>Accepted formats: PDF, JPEG, JPG, PNG</li>
-                      <li>Maximum file size: 5MB per document</li>
+                      <li>Accepted formats: PDF</li>
+                      <li>Maximum file size: 5MB</li>
                       <li>Ensure clarity and readability</li>
                     </ul>
                   </div>
 
                   <div className="d-flex justify-content-between mt-4">
-                    <button className="btn btn-light" type="button" onClick={() => setStep("step2")}>Previous</button>
-                    <button className="btn btn-primary" type="button" onClick={() => setStep("step4")}>Next</button>
+                    <button className="btn btn-light" type="button" onClick={() => setStep("step3")}>
+                      Previous
+                    </button>
+                    <button className="btn btn-primary" type="button" onClick={() => setStep("step5")}>
+                      Next
+                    </button>
                   </div>
                 </div>
-
             )}
 
-            {step === "step4" && (
+            {step === "step5" && (
                 <div>
-                  <h3 className="text-primary">Step 4: Review & Submit</h3>
+                  <h3 className="text-primary">Step 5: Review & Submit</h3>
                   <h5 className="card-title mb-4">Review your application details</h5>
 
                   {/* Applicant Info */}
                   <div className="card mb-4">
-                    <div className="card-header"><h6 className="mb-0">Applicant Details</h6></div>
+                    <div className="card-header">
+                      <h6 className="mb-0">Applicant Details</h6>
+                    </div>
                     <div className="card-body">
                       <div className="row small mb-2">
                         <div className="col-sm-3 text-muted">Full Name:</div>
-                        <div className="col">{formData.firstName} {formData.middleName} {formData.lastName} {formData.nameExtension}</div>
+                        <div className="col">
+                          {[
+                            formData.firstName,
+                            formData.middleName,
+                            formData.lastName,
+                            formData.nameExtension,
+                          ]
+                              .filter(Boolean)
+                              .join(" ") || "N/A"}
+                        </div>
                       </div>
                       <div className="row small mb-2">
                         <div className="col-sm-3 text-muted">Email:</div>
-                        <div className="col">{formData.email}</div>
+                        <div className="col">{formData.email || "N/A"}</div>
                       </div>
                       <div className="row small mb-2">
                         <div className="col-sm-3 text-muted">Phone:</div>
-                        <div className="col">{formData.phone}</div>
+                        <div className="col">{formData.phone || "N/A"}</div>
                       </div>
                       <div className="row small mb-2">
                         <div className="col-sm-3 text-muted">Date of Birth:</div>
-                        <div className="col">{formData.birthDate}</div>
+                        <div className="col">{formatDate(formData.birthDate)}</div>
                       </div>
                       <div className="row small mb-2">
                         <div className="col-sm-3 text-muted">Address:</div>
                         <div className="col">
-                          {formData.street}, {formData.barangayName}, {formData.municipalityName}, {formData.provinceName}, {formData.regionName}
+                          {[formData.street, formData.barangayName, formData.municipalityName, formData.provinceName, formData.regionName]
+                              .filter(Boolean)
+                              .join(", ") || "N/A"}
+                        </div>
+                      </div>
+
+                      {/* Parents Info */}
+                      <div className="row small mt-3">
+                        <div className="col-sm-3 text-muted">Father's Name:</div>
+                        <div className="col">
+                          {[
+                            formData.father?.firstName,
+                            formData.father?.middleName,
+                            formData.father?.lastName,
+                            formData.father?.extension,
+                          ]
+                              .filter(Boolean)
+                              .join(" ") || "N/A"}
+                        </div>
+                      </div>
+                      <div className="row small mb-2">
+                        <div className="col-sm-3 text-muted">Father's Income:</div>
+                        <div className="col">
+                          {formData.father?.income
+                              ? numberFormatter.format(formData.father.income)
+                              : "N/A"}
+                        </div>
+                      </div>
+                      <div className="row small">
+                        <div className="col-sm-3 text-muted">Mother's Name:</div>
+                        <div className="col">
+                          {[
+                            formData.mother?.firstName,
+                            formData.mother?.middleName,
+                            formData.mother?.lastName,
+                          ]
+                              .filter(Boolean)
+                              .join(" ") || "N/A"}
+                        </div>
+                      </div>
+                      <div className="row small mb-2">
+                        <div className="col-sm-3 text-muted">Mother's Income:</div>
+                        <div className="col">
+                          {formData.mother?.income
+                              ? numberFormatter.format(formData.mother.income)
+                              : "N/A"}
                         </div>
                       </div>
                     </div>
@@ -913,75 +1144,132 @@ const Apply = () => {
 
                   {/* Academic Info */}
                   <div className="card mb-4">
-                    <div className="card-header"><h6 className="mb-0">Academic Details</h6></div>
+                    <div className="card-header">
+                      <h6 className="mb-0">Academic Details</h6>
+                    </div>
                     <div className="card-body">
                       <div className="row small mb-2">
                         <div className="col-sm-3 text-muted">Student ID:</div>
-                        <div className="col">{formData.studentId}</div>
+                        <div className="col">{formData.studentId || "N/A"}</div>
                       </div>
                       <div className="row small mb-2">
-                        <div className="col-sm-3 text-muted">Campus/Department/Course:</div>
-                        <div className="col">{formData.campus} / {formData.department} / {formData.course}</div>
+                        <div className="col-sm-3 text-muted">Campus / Department / Course:</div>
+                        <div className="col">
+                          {[formData.campus, formData.department, formData.course]
+                              .filter(Boolean)
+                              .join(" / ") || "N/A"}
+                        </div>
                       </div>
                       <div className="row small mb-2">
                         <div className="col-sm-3 text-muted">Academic Year & Semester:</div>
-                        <div className="col">{formData.academicYearId} - Semester {formData.semesterId}</div>
+                        <div className="col">
+                          {formData.academicYearId && formData.semesterId
+                              ? `${formData.academicYearId} - Semester ${formData.semesterId}`
+                              : "N/A"}
+                        </div>
                       </div>
                       <div className="row small mb-2">
                         <div className="col-sm-3 text-muted">Enrollment Status:</div>
-                        <div className="col">{formData.enrollmentStatus}</div>
+                        <div className="col">{formData.enrollmentStatus || "N/A"}</div>
+                      </div>
+                      <div className="row small">
+                        <div className="col-sm-3 text-muted">Total Units:</div>
+                        <div className="col">{formData.total_units || "N/A"}</div>
                       </div>
                     </div>
                   </div>
 
                   {/* Scholarship Info */}
                   <div className="card mb-4">
-                    <div className="card-header"><h6 className="mb-0">Scholarship</h6></div>
+                    <div className="card-header">
+                      <h6 className="mb-0">Scholarship</h6>
+                    </div>
                     <div className="card-body">
                       <div className="row small mb-2">
                         <div className="col-sm-3 text-muted">Scholarship Type:</div>
                         <div className="col">
-                          {formData.scholarshipName === 'others' ? formData.otherScholarship : formData.scholarshipName}
+                          {formData.scholarshipName === "others"
+                              ? formData.otherScholarship || "N/A"
+                              : formData.scholarshipName || "N/A"}
                         </div>
                       </div>
                       <div className="row small mb-2">
                         <div className="col-sm-3 text-muted">Scholarship Amount:</div>
-                        <div className="col">₱{formData.scholarshipAmount.toLocaleString()}</div>
+                        <div className="col">
+                          {formData.scholarshipAmount
+                              ? numberFormatter.format(formData.scholarshipAmount)
+                              : "N/A"}
+                        </div>
                       </div>
                     </div>
                   </div>
 
-                  {/* Documents */}
+                  {/* Documents & Grades Preview */}
                   <div className="card mb-4">
-                    <div className="card-header"><h6 className="mb-0">Documents & Preferences</h6></div>
+                    <div className="card-header">
+                      <h6 className="mb-0">Documents & Grades</h6>
+                    </div>
                     <div className="card-body">
-                      <div className="row small mb-2">
+                      <div className="row small mb-2 align-items-center">
                         <div className="col-sm-3 text-muted">ITR (Income Tax Return):</div>
                         <div className="col">
-                          {formData.itr ? <span className="badge bg-success">Uploaded</span> : <span className="badge bg-danger">Not Uploaded</span>}
+                          {formData.itr ? (
+                              <span className="badge bg-success">Uploaded</span>
+                          ) : (
+                              <span className="badge bg-danger">Not Uploaded</span>
+                          )}
                         </div>
                       </div>
-                      <div className="row small mb-2">
+
+                      {/* Grades Upload Status */}
+                      <div className="row small mb-1 align-items-center">
+                        <div className="col-sm-3 text-muted">Grades Upload Status:</div>
+                        <div className="col">
+                          {formData.grades ? (
+                              <span className="badge bg-success">Uploaded</span>
+                          ) : (
+                              <span className="badge bg-danger">Not Uploaded</span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Grades Details */}
+                      <div className="row small mb-3">
                         <div className="col-sm-3 text-muted">Grades / Transcript:</div>
                         <div className="col">
-                          {formData.grades ? <span className="badge bg-success">Uploaded</span> : <span className="badge bg-danger">Not Uploaded</span>}
+                          {Array.isArray(grades) && grades.length > 0 ? (
+                              <ul className="mb-0 ps-3">
+                                {grades.map((g, i) => (
+                                    <li key={i}>
+                                      <strong>{g.subject || "N/A"}:</strong> {g.grade || "N/A"}
+                                    </li>
+                                ))}
+                              </ul>
+                          ) : (
+                              <span className="badge bg-warning">No grades details available</span>
+                          )}
                         </div>
                       </div>
-                      <div className="row small mb-2">
-                        <div className="col-sm-3 text-muted">Notifications:</div>
-                        <div className="col">
-                        </div>
-                      </div>
+
                     </div>
                   </div>
 
                   <div className="alert alert-warning">
-                    <strong>Important:</strong> Please review all information carefully before submitting. Once submitted, changes may not be possible without contacting support.
+                    <strong>Important:</strong> Please review all information carefully before submitting. Once
+                    submitted, changes may not be possible without contacting support.
                   </div>
 
                   <div className="d-flex justify-content-between mt-4">
-                    <button className="btn btn-light" type="button" onClick={() => setStep("step3")}>Previous</button>
-                    <button className="btn btn-primary" type="submit" onClick={handleSubmit}>Submit Application</button>
+                    <button
+                        className="btn btn-light"
+                        type="button"
+                        onClick={() => setStep("step4")}
+                    >
+                      Previous
+                    </button>
+                    <button className="btn btn-primary" type="submit" onClick={handleSubmit}>
+                      Submit Application
+                    </button>
                   </div>
                 </div>
             )}

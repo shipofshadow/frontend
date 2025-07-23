@@ -1,20 +1,29 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import {API_BASE_URL} from "../../config.ts";
+import { API_BASE_URL } from "../../config.ts";
+
+type Campus = {
+    id: number;
+    name: string;
+};
 
 type Department = {
     id: number;
     name: string;
+    campus_id: number;
 };
 
 type Course = {
     id: number;
     name: string;
     department_id: number;
+    department_name: string;
+    campus_id: number;
 };
 
 const ManageCourses = () => {
     const [courses, setCourses] = useState<Course[]>([]);
+    const [campuses, setCampuses] = useState<Campus[]>([]);
     const [departments, setDepartments] = useState<Department[]>([]);
 
     const [loading, setLoading] = useState(true);
@@ -22,16 +31,28 @@ const ManageCourses = () => {
     const [editing, setEditing] = useState<Course | null>(null);
 
     const [courseName, setCourseName] = useState("");
+    const [selectedCampusId, setSelectedCampusId] = useState("");
     const [selectedDeptId, setSelectedDeptId] = useState("");
 
     useEffect(() => {
-        fetchDepartments();
+        fetchCampuses();
         fetchCourses();
     }, []);
 
-    const fetchDepartments = () => {
+    const fetchCampuses = () => {
         axios
-            .get(`${API_BASE_URL}/api/departments`)
+            .get(`${API_BASE_URL}/api/campus`)
+            .then((res) => setCampuses(res.data))
+            .catch((err) => console.error("Failed to load campuses", err));
+    };
+
+    const fetchDepartments = (campusId: string) => {
+        if (!campusId) {
+            setDepartments([]);
+            return;
+        }
+        axios
+            .get(`${API_BASE_URL}/api/campus/department?campus_id=${campusId}`)
             .then((res) => setDepartments(res.data))
             .catch((err) => console.error("Failed to load departments", err));
     };
@@ -39,7 +60,7 @@ const ManageCourses = () => {
     const fetchCourses = () => {
         setLoading(true);
         axios
-            .get(`${API_BASE_URL}/api/courses`)
+            .get(`${API_BASE_URL}/api/campus/course`)
             .then((res) => setCourses(res.data))
             .catch((err) => console.error("Failed to load courses", err))
             .finally(() => setLoading(false));
@@ -48,22 +69,37 @@ const ManageCourses = () => {
     const openModal = (course: Course | null = null) => {
         setEditing(course);
         setCourseName(course?.name || "");
-        setSelectedDeptId(course?.department_id.toString() || "");
+
+        if (course) {
+            setSelectedCampusId(course.campus_id.toString());
+            setSelectedDeptId(course.department_id.toString());
+            fetchDepartments(course.campus_id.toString());
+        } else {
+            setSelectedCampusId("");
+            setSelectedDeptId("");
+            setDepartments([]);
+        }
+
         setShowModal(true);
     };
 
     const handleSave = () => {
-        if (!courseName.trim() || !selectedDeptId) return alert("All fields are required");
+        if (!courseName.trim() || !selectedDeptId || !selectedCampusId) {
+            return alert("All fields are required");
+        }
 
-        const data = { name: courseName, department_id: parseInt(selectedDeptId) };
+        const data = {
+            name: courseName,
+            department_id: parseInt(selectedDeptId)
+        };
 
         if (editing) {
-            axios.put(`${API_BASE_URL}/api/courses/${editing.id}`, data).then(() => {
+            axios.put(`${API_BASE_URL}/api/campus/course/${editing.id}`, data).then(() => {
                 fetchCourses();
                 setShowModal(false);
             });
         } else {
-            axios.post(`${API_BASE_URL}/api/courses`, data).then(() => {
+            axios.post(`${API_BASE_URL}/api/campus/course`, data).then(() => {
                 fetchCourses();
                 setShowModal(false);
             });
@@ -72,7 +108,7 @@ const ManageCourses = () => {
 
     const handleDelete = (id: number) => {
         if (!confirm("Are you sure you want to delete this course?")) return;
-        axios.delete(`${API_BASE_URL}/api/courses/${id}`).then(() => fetchCourses());
+        axios.delete(`${API_BASE_URL}/api/campus/course/${id}`).then(() => fetchCourses());
     };
 
     return (
@@ -108,16 +144,17 @@ const ManageCourses = () => {
                             <table className="table table-bordered table-hover">
                                 <thead>
                                 <tr>
-                                    <th style={{ width: "10%" }}>#</th>
+                                    <th style={{ width: "5%" }}>#</th>
                                     <th>Course Name</th>
                                     <th>Department</th>
+                                    <th>Campus</th>
                                     <th style={{ width: "20%" }}>Actions</th>
                                 </tr>
                                 </thead>
                                 <tbody>
                                 {courses.length === 0 ? (
                                     <tr>
-                                        <td colSpan={4} className="text-center text-muted">
+                                        <td colSpan={5} className="text-center text-muted">
                                             No courses found.
                                         </td>
                                     </tr>
@@ -126,23 +163,13 @@ const ManageCourses = () => {
                                         <tr key={course.id}>
                                             <td>{index + 1}</td>
                                             <td>{course.name}</td>
+                                            <td>{course.department_name}</td>
+                                            <td>{campuses.find(c => c.id === course.campus_id)?.name || "Unknown"}</td>
                                             <td>
-                                                {
-                                                    departments.find((d) => d.id === course.department_id)?.name ||
-                                                    "Unknown"
-                                                }
-                                            </td>
-                                            <td>
-                                                <button
-                                                    className="btn btn-sm btn-outline-primary me-2"
-                                                    onClick={() => openModal(course)}
-                                                >
+                                                <button className="btn btn-sm btn-outline-primary me-2" onClick={() => openModal(course)}>
                                                     Edit
                                                 </button>
-                                                <button
-                                                    className="btn btn-sm btn-outline-danger"
-                                                    onClick={() => handleDelete(course.id)}
-                                                >
+                                                <button className="btn btn-sm btn-outline-danger" onClick={() => handleDelete(course.id)}>
                                                     Delete
                                                 </button>
                                             </td>
@@ -156,7 +183,6 @@ const ManageCourses = () => {
                 </div>
             </div>
 
-            {/* Modal */}
             {showModal && (
                 <div className="modal fade show d-block" tabIndex={-1}>
                     <div className="modal-dialog modal-dialog-centered">
@@ -174,11 +200,30 @@ const ManageCourses = () => {
                                     onChange={(e) => setCourseName(e.target.value)}
                                 />
 
+                                <label className="form-label">Campus</label>
+                                <select
+                                    className="form-select mb-3"
+                                    value={selectedCampusId}
+                                    onChange={(e) => {
+                                        setSelectedCampusId(e.target.value);
+                                        setSelectedDeptId("");
+                                        fetchDepartments(e.target.value);
+                                    }}
+                                >
+                                    <option value="">Select Campus</option>
+                                    {campuses.map((c) => (
+                                        <option key={c.id} value={c.id}>
+                                            {c.name}
+                                        </option>
+                                    ))}
+                                </select>
+
                                 <label className="form-label">Department</label>
                                 <select
                                     className="form-select"
                                     value={selectedDeptId}
                                     onChange={(e) => setSelectedDeptId(e.target.value)}
+                                    disabled={!selectedCampusId}
                                 >
                                     <option value="">Select Department</option>
                                     {departments.map((d) => (

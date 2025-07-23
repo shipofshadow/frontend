@@ -174,7 +174,7 @@ const Login: React.FC = () => {
 
                 <div className="card-footer text-center border-0 bg-white py-3">
                   <span className="text-muted small">Don't have an account?</span>{' '}
-                  <Link to="/applicant/register" className="text-primary fw-semibold">Create one</Link>
+                  <Link to="/register" className="text-primary fw-semibold">Create one</Link>
                 </div>
               </div>
 

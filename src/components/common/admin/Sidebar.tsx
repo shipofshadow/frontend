@@ -32,7 +32,6 @@ const Sidebar: React.FC = () => {
                 <div className="nav-link-icon"><i data-feather="activity"></i></div>
                 Dashboard
               </NavLink>
-
               {/* Scholarship Management */}
               <div className="sidenav-menu-heading">Scholarship Management</div>
               <SidebarCollapse
@@ -50,6 +49,11 @@ const Sidebar: React.FC = () => {
                       to: '/admin/applicants/qualified',
                       label: 'Qualified Applicants',
                       icon: 'far fa-check-circle',
+                    },
+                    {
+                      to: '/admin/applicants/not-applied',
+                      label: 'Not Applied',
+                      icon: 'far fa-user-slash',
                     },
                     {
                       to: '/admin/applicants/archived',
@@ -83,27 +87,6 @@ const Sidebar: React.FC = () => {
                   ]}
               />
 
-              <div className="sidenav-menu-heading">Documents</div>
-
-              <SidebarCollapse
-                  id="collapseDocuments"
-                  parentId="accordionSidenav"
-                  title="Documents"
-                  icon="far fa-folder-open"
-                  links={[
-                    {
-                      to: '/admin/documents/requirements',
-                      label: 'Submitted Requirements',
-                      icon: 'far fa-file-alt',
-                    },
-                    {
-                      to: '/admin/documents/archives',
-                      label: 'Archived Files',
-                      icon: 'far fa-box-archive',
-                    }
-                  ]}
-              />
-
               {/* Automation */}
               <div className="sidenav-menu-heading">Automation & Rules</div>
 
@@ -116,11 +99,6 @@ const Sidebar: React.FC = () => {
               <NavLink to="/admin/bulk-evaluation" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
                 <div className="nav-link-icon"><i data-feather="upload"></i></div>
                 Bulk Evaluation
-              </NavLink>
-
-              <NavLink to="/admin/evaluation-rules" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
-                <div className="nav-link-icon"><i className="far fa-balance-scale"></i></div>
-                Evaluation Rules
               </NavLink>
 
               <NavLink to="/admin/fuzzy-logic" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>

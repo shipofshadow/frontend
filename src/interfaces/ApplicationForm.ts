@@ -65,6 +65,7 @@ export interface ApplicationForm {
     semesterId: number;
     enrollmentStatus: string;
     total_units: number;
+
     // Scholarship Info
     scholarshipName: string;
     otherScholarship?: string;
@@ -72,5 +73,5 @@ export interface ApplicationForm {
 
     itr: File | null;
     grades: File | null;
-
+    gradesList: { subject: string; grade: string }[];
 }

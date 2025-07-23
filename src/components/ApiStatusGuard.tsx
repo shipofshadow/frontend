@@ -29,7 +29,6 @@ const ApiStatusGuard: React.FC<ApiStatusGuardProps> = ({ children }) => {
                 console.log('API is offline');
             }
         });
-
     });
 
     if (isOnline === null) {

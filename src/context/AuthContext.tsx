@@ -72,7 +72,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                     'Content-Type': 'application/json'
                 },
             });
-
+            
             if (!res.ok) throw new Error("Invalid token");
 
             const userData = await res.json();

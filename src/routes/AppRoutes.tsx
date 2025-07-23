@@ -16,10 +16,9 @@ import Home from '../pages/applicant/Home';
 import Register from '../pages/Register';
 import ForgotPassword from '../pages/ForgotPassword.tsx';
 import Settings from '../pages/applicant/Settings';
-import ManageStudents from '../pages/admin/ManageStudents';
+import NotApplied from '../pages/admin/NotApplied';
 import Applicants from '../pages/admin/Applicants';
 import Users from '../pages/admin/Users';
-import EvaluationRules from '../pages/admin/EvaluationRules.tsx';
 import SystemSetting from '../pages/admin/SystemSetting';
 import Document from '../pages/admin/Document';
 import ActivityLogs from '../pages/admin/ActivityLogs';
@@ -60,13 +59,10 @@ const AppRoutes: React.FC = () => {
     return (
         <Routes>
             <Route path="/" element={isAuthenticated ? <Navigate to="/applicant" replace /> : <App />} />
-
-
             <Route element={<ProtectedRoute allowedRoles={["admin"]} />}>
                 <Route path="/admin" element={<AdminLayout />}>
                     <Route index element={<Dashboard />} />
                     <Route path="dashboard" element={<Dashboard />} />
-                    <Route path="manage-students" element={<ManageStudents />} />
                     <Route path="users" element={<Users />} />
                     <Route path="system" element={<SystemSetting />} />
                     <Route path="documents" element={<Document />} />
@@ -83,6 +79,7 @@ const AppRoutes: React.FC = () => {
                         <Route path="manage" element={<Applicants />} />
                         <Route path="qualified" element={<QualifiedStudents/>} />
                         <Route path="archived" element={<ArchivedApplicants />} />
+                        <Route path="not-applied" element={<NotApplied />} />
                     </Route>
 
                     {/* Document Routes */}
@@ -101,7 +98,6 @@ const AppRoutes: React.FC = () => {
 
 
                     <Route path="bulk-evaluation" element={<BulkEvaluation />} />
-                    <Route path="evaluation-rules" element={<EvaluationRules />} />
                     <Route path="import-students" element={<ImportStudents />} />
                     <Route path="fuzzy-logic" element={<FuzzyLogic />} />
 

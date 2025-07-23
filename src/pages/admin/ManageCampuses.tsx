@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import { API_BASE_URL} from "../../config.ts";
+import { API_BASE_URL } from "../../config.ts";
 
 type Campus = {
     id: number;
@@ -22,7 +22,7 @@ const ManageCampuses = () => {
     const fetchCampuses = () => {
         setLoading(true);
         axios
-            .get(`${API_BASE_URL}/api/campuses`)
+            .get(`${API_BASE_URL}/api/campus`)
             .then((res) => setCampuses(res.data))
             .catch((err) => console.error("Failed to load campuses", err))
             .finally(() => setLoading(false));
@@ -40,7 +40,7 @@ const ManageCampuses = () => {
         if (editingCampus) {
             // Update
             axios
-                .put(`${API_BASE_URL}/api/campuses/${editingCampus.id}`, { name: campusName })
+                .put(`${API_BASE_URL}/api/campus/${editingCampus.id}`, { name: campusName })
                 .then(() => {
                     fetchCampuses();
                     setShowModal(false);
@@ -48,7 +48,7 @@ const ManageCampuses = () => {
         } else {
             // Create
             axios
-                .post(`${API_BASE_URL}/api/campuses`, { name: campusName })
+                .post(`${API_BASE_URL}/api/campus`, { name: campusName })
                 .then(() => {
                     fetchCampuses();
                     setShowModal(false);
@@ -58,7 +58,7 @@ const ManageCampuses = () => {
 
     const handleDelete = (id: number) => {
         if (!confirm("Delete this campus?")) return;
-        axios.delete(`${API_BASE_URL}/api/campuses/${id}`).then(() => fetchCampuses());
+        axios.delete(`${API_BASE_URL}/api/campus/${id}`).then(() => fetchCampuses());
     };
 
     return (

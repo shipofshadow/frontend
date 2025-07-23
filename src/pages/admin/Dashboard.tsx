@@ -1,7 +1,26 @@
+import React, { useEffect, useState } from 'react';
 import ScholarshipBreakdownCharts from "../../components/charts/ScholarshipBreakdownCharts";
-import Breadcrumbs from "../../components/common/admin/Breadcrumbs.tsx";
-
+import { Clock, Calendar, BookOpen } from "lucide-react"; 
+import { API_BASE_URL } from '../../config';
 const Dashboard = () => {
+    const [currentDate, setCurrentDate] = useState(new Date());
+    const [currentSemester, setCurrentSemester] = useState('Loading...');
+
+    useEffect(() => {
+        fetch(`${API_BASE_URL}/api/active-academic-term`)
+            .then(response => response.json())
+            .then(data => setCurrentSemester(data.formatted)
+            );
+            
+        const timer = setInterval(() => setCurrentDate(new Date()), 1000);
+        return () => clearInterval(timer);
+    }, []);
+
+    const options = { month: 'long', day: 'numeric', year: 'numeric' };
+    const day = currentDate.toLocaleDateString('en-US', { weekday: 'long' });
+    const date = currentDate.toLocaleDateString('en-US', options);
+    const time = currentDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+
     return (
         <>
             {/* Header */}
@@ -10,18 +29,26 @@ const Dashboard = () => {
                     <div className="page-header-content pt-4">
                         <div className="row align-items-center justify-content-between">
                             <div className="col-auto mt-4">
-                                <h1 className="page-header-title">
-                                    <div className="page-header-icon"><i data-feather="award"></i></div>
-                                    Welcome to iScholar
+                                <h1 className="page-header-title d-flex align-items-center">
+                                    <div className="page-header-icon me-2"><i data-feather="award"></i></div>
+                                    Dashboard
                                 </h1>
-                                <div className="page-header-subtitle">An Intelligent Scholarship Prequalification System</div>
-                                <div className="small">
-                                    <span className="fw-500 text-white" id="current-day"></span>
-                                    · <span id="current-date"></span> · <span id="current-time"></span>
-                                </div>
+                                <div className="page-header-subtitle">Overview</div>
                             </div>
                         </div>
-                        <Breadcrumbs />
+                        <div className="row small text-white mt-0">
+                            <div className="col-md-6 mb-2 mb-md-0 d-flex align-items-center gap-2 flex-wrap">
+                                <Calendar size={16} />
+                                <span className="fw-500">{day}</span> · 
+                                <span>{date}</span> · 
+                                <Clock size={16} />
+                                <span>{time}</span>
+                            </div>
+                            <div className="col-md-6 text-md-end d-flex align-items-center justify-content-md-end gap-2">
+                                <BookOpen size={16} />
+                                <span>{ currentSemester }</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </header>
@@ -29,6 +56,7 @@ const Dashboard = () => {
             {/* Stats Cards */}
             <div className="container-xl px-4 mt-n10">
                 <div className="row">
+                    {/* Applicants Cards */}
                     <div className="col-xl-3 col-md-6 mb-4">
                         <div className="card border-start-lg border-start-info h-100">
                             <div className="card-body d-flex align-items-center justify-content-between">
@@ -75,17 +103,17 @@ const Dashboard = () => {
                     </div>
                 </div>
 
-                <ScholarshipBreakdownCharts/>
+                <ScholarshipBreakdownCharts />
 
                 {/* Charts & Reports */}
                 <div className="row">
-                    {/* Chart: Application Trends */}
+                    {/* Application Trends */}
                     <div className="col-lg-8 mb-4">
                         <div className="card">
                             <div className="card-header bg-transparent d-flex justify-content-between align-items-center">
                                 <span>Application Trends</span>
-                                <select className="form-control w-auto" id="year_filter">
-                                    <option value="2025" selected>2025</option>
+                                <select className="form-control w-auto" id="year_filter" defaultValue="2025">
+                                    <option value="2025">2025</option>
                                     <option value="2024">2024</option>
                                 </select>
                             </div>
@@ -136,7 +164,7 @@ const Dashboard = () => {
                         </div>
                     </div>
 
-                    {/* Future Feature Panel */}
+                    {/* Future Features */}
                     <div className="col-lg-8 mb-4">
                         <div className="card">
                             <div className="card-body">
