@@ -32,8 +32,9 @@ const Sidebar: React.FC = () => {
                 <div className="nav-link-icon"><i data-feather="activity"></i></div>
                 Dashboard
               </NavLink>
-              {/* Scholarship Management */}
-              <div className="sidenav-menu-heading">Scholarship Management</div>
+
+              <div className="sidenav-menu-heading">Applicant Management</div>
+
               <SidebarCollapse
                   id="collapseApplicants"
                   parentId="accordionSidenav"
@@ -44,6 +45,11 @@ const Sidebar: React.FC = () => {
                       to: '/admin/applicants/manage',
                       label: 'Manage Applicants',
                       icon: 'far fa-user-check',
+                    },
+                    {
+                      to: '/admin/bulk-evaluation',
+                      label: 'Evaluation',
+                      icon: 'far fa-file-upload',
                     },
                     {
                       to: '/admin/applicants/qualified',
@@ -63,6 +69,9 @@ const Sidebar: React.FC = () => {
                   ]}
               />
 
+
+
+
               <SidebarCollapse
                   id="collapseReports"
                   parentId="accordionSidenav"
@@ -74,11 +83,7 @@ const Sidebar: React.FC = () => {
                       label: 'Applicants Report',
                       icon: 'far fa-file-alt',
                     },
-                    {
-                      to: '/admin/reports/scholarship-summary',
-                      label: 'Scholarship Summary',
-                      icon: 'far fa-medal',
-                    },
+
                     {
                       to: '/admin/reports/department',
                       label: 'Campus Report',
@@ -87,6 +92,27 @@ const Sidebar: React.FC = () => {
                   ]}
               />
 
+              {/* Scholarship Management */}
+              <div className="sidenav-menu-heading">Scholarship Management</div>
+
+              <SidebarCollapse
+                  id="collapseScholarship"
+                  parentId="accordionSidenav"
+                  title="Scholarship Management"
+                  icon="fas fa-graduation-cap"
+                  links={[
+                    {
+                      to: '/admin/scholarships/manage',
+                      label: 'Scholarships',
+                      icon: 'fas fa-hand-holding-usd',
+                    },
+                    {
+                      to: '/admin/scholarships/scholarship-summary',
+                      label: 'Scholarship Summary',
+                      icon: 'far fa-medal',
+                    },
+                  ]}
+              />
               {/* Automation */}
               <div className="sidenav-menu-heading">Automation & Rules</div>
 
@@ -96,10 +122,7 @@ const Sidebar: React.FC = () => {
               </NavLink>
 
 
-              <NavLink to="/admin/bulk-evaluation" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
-                <div className="nav-link-icon"><i data-feather="upload"></i></div>
-                Bulk Evaluation
-              </NavLink>
+
 
               <NavLink to="/admin/fuzzy-logic" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
                 <div className="nav-link-icon"><i className="far fa-brain"></i></div>

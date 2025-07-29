@@ -17,32 +17,6 @@ interface NavigationHandler {
   (path: string): void;
 }
 
-// Floating particles component
-const FloatingParticles: React.FC = () => {
-  return (
-    <div className="position-absolute top-0 start-0 w-100 h-100 overflow-hidden" style={{
-      pointerEvents: 'none',
-      zIndex: 1
-    }}>
-      {[...Array(15)].map((_, i) => (
-        <div
-          key={i}
-          className="position-absolute rounded-circle"
-          style={{
-            width: Math.random() * 4 + 2 + 'px',
-            height: Math.random() * 4 + 2 + 'px',
-            backgroundColor: 'rgba(59, 130, 246, 0.15)',
-            left: Math.random() * 100 + '%',
-            top: Math.random() * 100 + '%',
-            animation: `float${i % 3} ${8 + Math.random() * 4}s infinite ease-in-out`,
-            animationDelay: Math.random() * 5 + 's'
-          }}
-        />
-      ))}
-    </div>
-  );
-};
-
 const LandingPage: React.FC = () => {
 
   const navigate = useNavigate();
@@ -88,8 +62,7 @@ const LandingPage: React.FC = () => {
 
       
       <div className="min-vh-100 position-relative overflow-hidden bg-light">
-        <FloatingParticles />
-        
+
         {/* Header Section */}
         <section className="py-5 position-relative bg-white shadow-sm" style={{ zIndex: 2 }}>
           <div className="container-fluid px-4">

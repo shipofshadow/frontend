@@ -1,299 +1,369 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from 'react';
 
-type FuzzySet = {
-    id: number;
-    criterion: "GWA" | "Family Income";
-    label: string;
-    type: "triangular" | "trapezoidal";
-    points: number[];
-};
+// --- Type Definitions for our Fuzzy System Configuration ---
+interface MembershipParams extends Array<number> {
+    [0]: number; // Left boundary (a)
+    [1]: number; // Peak (b)
+    [2]: number; // Right boundary (c)
+}
 
-const criteriaOptions = ["GWA", "Family Income"] as const;
+interface MembershipFunctionSet {
+    [setName: string]: MembershipParams;
+}
 
-const triangularMembership = (x: number, [a, b, c]: number[]) => {
-    if (x <= a || x >= c) return 0;
-    if (x === b) return 1;
-    if (x < b) return (x - a) / (b - a);
-    return (c - x) / (c - b);
-};
+interface FuzzyVariables {
+    gwa: MembershipFunctionSet;
+    income: MembershipFunctionSet;
+}
 
-const trapezoidalMembership = (x: number, [a, b, c, d]: number[]) => {
-    if (x <= a || x >= d) return 0;
-    if (x >= b && x <= c) return 1;
-    if (x > a && x < b) return (x - a) / (b - a);
-    return (d - x) / (d - c);
-};
+interface Rule {
+    if: {
+        gwa: string;
+        income: string;
+    };
+    then: number; // Consequent output value
+}
 
+
+// --- The Main React Component ---
 const FuzzyLogic = () => {
-    const [sets, setSets] = useState<FuzzySet[]>([
-        { id: 1, criterion: "GWA", label: "Excellent", type: "triangular", points: [0.75, 1.0, 1.25] },
-        { id: 2, criterion: "GWA", label: "Very Good", type: "trapezoidal", points: [1.25, 1.4, 1.6, 1.8] },
-        { id: 3, criterion: "GWA", label: "Average", type: "trapezoidal", points: [1.75, 2.2, 2.6, 3.0] },
-        { id: 4, criterion: "GWA", label: "Poor", type: "trapezoidal", points: [3.0, 4.0, 5.0, 5.0] },
-        { id: 5, criterion: "Family Income", label: "Low", type: "trapezoidal", points: [0, 3000, 10000, 20000] },
-        { id: 6, criterion: "Family Income", label: "Average", type: "trapezoidal", points: [15000, 50000, 100000, 150000] },
-        { id: 7, criterion: "Family Income", label: "High", type: "trapezoidal", points: [130000, 200000, 300000, 400000] }
+    // --- STATE MANAGEMENT ---
+    // Initialize state with the default configuration from your Python class
+    const [membershipFunctions, setMembershipFunctions] = useState<FuzzyVariables>({
+        gwa: {
+            'high': [0.75, 1.0, 1.5],
+            'medium': [1.25, 1.75, 2.25],
+            'low': [2.0, 2.5, 3.25]
+        },
+        income: {
+            'low': [0, 7500, 15000],
+            'medium': [10000, 25000, 40000],
+            'high': [30000, 65000, 100000]
+        }
+    });
+
+    const [rules, setRules] = useState<Rule[]>([
+        { 'if': { 'gwa': 'high', 'income': 'low' }, 'then': 1.0 },
+        { 'if': { 'gwa': 'high', 'income': 'medium' }, 'then': 0.9 },
+        { 'if': { 'gwa': 'high', 'income': 'high' }, 'then': 0.6 },
+        { 'if': { 'gwa': 'medium', 'income': 'low' }, 'then': 0.8 },
+        { 'if': { 'gwa': 'medium', 'income': 'medium' }, 'then': 0.6 },
+        { 'if': { 'gwa': 'medium', 'income': 'high' }, 'then': 0.4 },
+        { 'if': { 'gwa': 'low', 'income': 'low' }, 'then': 0.5 },
+        { 'if': { 'gwa': 'low', 'income': 'medium' }, 'then': 0.3 },
+        { 'if': { 'gwa': 'low', 'income': 'high' }, 'then': 0.1 },
     ]);
 
-    const [sampleGwa, setSampleGwa] = useState<number>(1.75);
-    const [sampleIncome, setSampleIncome] = useState<number>(100000);
-    const [showModal, setShowModal] = useState(false);
-    const [form, setForm] = useState<FuzzySet>({
-        id: 0,
-        criterion: "GWA",
-        label: "",
-        type: "triangular",
-        points: [0, 0, 0],
-    });
-    const [editingId, setEditingId] = useState<number | null>(null);
+    // State to manage modals for Add/Edit operations
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [modalType, setModalType] = useState<'addSet' | 'editSet' | 'addRule' | 'editRule' | null>(null);
+    const [currentItem, setCurrentItem] = useState<any>(null); // Holds data for the item being edited/added
 
-    const getMembership = (value: number, set: FuzzySet) => {
-        return set.type === "triangular"
-            ? triangularMembership(value, set.points)
-            : trapezoidalMembership(value, set.points);
+    // --- COMPUTED VALUES ---
+    // Memoize fuzzy set names to avoid re-calculating on every render
+    const gwaSetNames = useMemo(() => Object.keys(membershipFunctions.gwa), [membershipFunctions]);
+    const incomeSetNames = useMemo(() => Object.keys(membershipFunctions.income), [membershipFunctions]);
+
+    // --- CRUD HANDLERS FOR FUZZY SETS ---
+
+    const handleAddSet = (variable: 'gwa' | 'income') => {
+        setModalType('addSet');
+        setCurrentItem({ variable, setName: '', params: [0, 0, 0] });
+        setIsModalOpen(true);
     };
 
-    const computeEligibility = (gwa: number, income: number, fuzzySets: FuzzySet[]) => {
-        const getDegree = (value: number, criterion: "GWA" | "Family Income", labels: string[]) => {
-            return Math.max(0,
-                ...fuzzySets
-                    .filter(s => s.criterion === criterion && labels.includes(s.label))
-                    .map(s => getMembership(value, s))
-            );
-        };
+    const handleEditSet = (variable: 'gwa' | 'income', setName: string) => {
+        const params = membershipFunctions[variable][setName];
+        setModalType('editSet');
+        setCurrentItem({ variable, setName, params });
+        setIsModalOpen(true);
+    };
 
-        const gwaHigh = getDegree(gwa, "GWA", ["Excellent", "Very Good"]);
-        const gwaMedium = getDegree(gwa, "GWA", ["Average"]);
-        const gwaLow = getDegree(gwa, "GWA", ["Poor"]);
+    const handleDeleteSet = (variable: 'gwa' | 'income', setName: string) => {
+        // Prevent deletion if the set is used in any rule
+        const isSetInUse = rules.some(rule => rule.if[variable] === setName);
+        if (isSetInUse) {
+            alert(`Cannot delete the set "${setName}". It is currently used in one or more rules.`);
+            return;
+        }
 
-        const incomeLow = getDegree(income, "Family Income", ["Low"]);
-        const incomeMedium = getDegree(income, "Family Income", ["Average"]);
-        const incomeHigh = getDegree(income, "Family Income", ["High"]);
+        if (window.confirm(`Are you sure you want to delete the fuzzy set "${setName}"?`)) {
+            setMembershipFunctions(prev => {
+                const newSets = { ...prev };
+                delete newSets[variable][setName];
+                return newSets;
+            });
+        }
+    };
 
-        const ruleResults = [
-            { label: "High Eligibility", strength: Math.min(gwaHigh, incomeLow) },
-            { label: "Medium Eligibility", strength: Math.min(gwaMedium, Math.max(incomeLow, incomeMedium)) },
-            { label: "Low Eligibility", strength: Math.min(gwaMedium, incomeHigh) },
-            { label: "Not Eligible", strength: gwaLow },
-        ];
+    // --- CRUD HANDLERS FOR RULES ---
 
-        let best = { label: "Not Eligible", strength: 0 };
+    const handleAddRule = () => {
+        setModalType('addRule');
+        // Set default values using the first available set names
+        setCurrentItem({ if: { gwa: gwaSetNames[0], income: incomeSetNames[0] }, then: 0.5 });
+        setIsModalOpen(true);
+    };
 
-        for (const rule of ruleResults) {
-            if (rule.strength > best.strength) {
-                best = rule;
+    const handleEditRule = (rule: Rule, index: number) => {
+        setModalType('editRule');
+        setCurrentItem({ ...rule, index });
+        setIsModalOpen(true);
+    };
+
+    const handleDeleteRule = (index: number) => {
+        if (window.confirm(`Are you sure you want to delete Rule #${index + 1}?`)) {
+            setRules(prev => prev.filter((_, i) => i !== index));
+        }
+    };
+
+    // --- MODAL SAVE HANDLER ---
+
+    const handleSave = () => {
+        if (!currentItem) return;
+
+        // Save logic for Fuzzy Sets
+        if (modalType === 'addSet') {
+            if (!currentItem.setName) {
+                alert("Set Name cannot be empty.");
+                return;
             }
-        }
-
-        return {
-            eligibility: best.label,
-            strength: best.strength,
-            memberships: {
-                gwa: { high: gwaHigh, medium: gwaMedium, low: gwaLow },
-                income: { low: incomeLow, medium: incomeMedium, high: incomeHigh }
+            if (membershipFunctions[currentItem.variable][currentItem.setName]) {
+                alert(`A set with the name "${currentItem.setName}" already exists.`);
+                return;
             }
-        };
+            setMembershipFunctions(prev => ({
+                ...prev,
+                [currentItem.variable]: {
+                    ...prev[currentItem.variable],
+                    [currentItem.setName]: currentItem.params,
+                }
+            }));
+        }
+        else if (modalType === 'editSet') {
+            setMembershipFunctions(prev => ({
+                ...prev,
+                [currentItem.variable]: {
+                    ...prev[currentItem.variable],
+                    [currentItem.setName]: currentItem.params,
+                }
+            }));
+        }
+
+        // Save logic for Rules
+        if (modalType === 'addRule') {
+            const { index, ...newRule } = currentItem;
+            setRules(prev => [...prev, newRule]);
+        }
+        else if (modalType === 'editRule') {
+            setRules(prev => {
+                const newRules = [...prev];
+                const { index, ...updatedRule } = currentItem;
+                newRules[index] = updatedRule;
+                return newRules;
+            });
+        }
+
+        closeModal();
     };
 
-    const eligibilityResult = computeEligibility(sampleGwa, sampleIncome, sets);
-
-    const getEligibilityColor = (eligibility: string) => {
-        switch (eligibility) {
-            case "High Eligibility": return "alert-success";
-            case "Medium Eligibility": return "alert-warning";
-            case "Low Eligibility": return "alert-info";
-            case "Not Eligible": return "alert-danger";
-            default: return "alert-secondary";
-        }
+    const closeModal = () => {
+        setIsModalOpen(false);
+        setModalType(null);
+        setCurrentItem(null);
     };
 
-    const openModal = (setToEdit?: FuzzySet) => {
-        if (setToEdit) {
-            setEditingId(setToEdit.id);
-            setForm(setToEdit);
-        } else {
-            setEditingId(null);
-            setForm({ id: 0, criterion: "GWA", label: "", type: "triangular", points: [0, 0, 0] });
-        }
-        setShowModal(true);
-    };
-
-    const handlePointChange = (index: number, value: number) => {
-        const newPoints = [...form.points];
-        newPoints[index] = value;
-        setForm({ ...form, points: newPoints });
-    };
-
-    const saveSet = () => {
-        if (!form.label.trim()) {
-            alert("Label is required.");
-            return;
-        }
-
-        if (form.type === "triangular" && form.points.length !== 3) {
-            alert("Triangular function requires 3 points.");
-            return;
-        }
-
-        if (form.type === "trapezoidal" && form.points.length !== 4) {
-            alert("Trapezoidal function requires 4 points.");
-            return;
-        }
-
-        if (editingId !== null) {
-            setSets(prev => prev.map(s => (s.id === editingId ? { ...form, id: editingId } : s)));
-        } else {
-            setSets(prev => [...prev, { ...form, id: Date.now() }]);
-        }
-
-        setShowModal(false);
-    };
-
-    const deleteSet = (id: number) => {
-        if (window.confirm("Are you sure you want to delete this set?")) {
-            setSets(prev => prev.filter(s => s.id !== id));
-        }
-    };
-
-    return (
-        <div className="container-xl mt-4">
-            <h3 className="mb-4">Fuzzy Logic Scholarship Eligibility System</h3>
-
-            <div className="card mb-4">
-                <div className="card-header d-flex justify-content-between">
-                    <span>Fuzzy Sets</span>
-                    <button className="btn btn-primary btn-sm" onClick={() => openModal()}>Add Fuzzy Set</button>
-                </div>
-                <div className="card-body table-responsive">
-                    <table className="table table-bordered table-hover">
-                        <thead className="table-light">
-                        <tr>
-                            <th>Criterion</th>
-                            <th>Label</th>
-                            <th>Type</th>
-                            <th>Points</th>
-                            <th>Actions</th>
+    // --- RENDER HELPER ---
+    // Renders a card and table for a given fuzzy variable ('gwa' or 'income')
+    const renderFuzzySetCard = (variable: 'gwa' | 'income', title: string) => (
+        <div className="card mb-4">
+            <div className="card-header d-flex justify-content-between align-items-center">
+                <span>{title} Fuzzy Sets</span>
+                <button className="btn btn-primary btn-sm" onClick={() => handleAddSet(variable)}>Add Set</button>
+            </div>
+            <div className="card-body table-responsive">
+                <table className="table table-bordered table-hover">
+                    <thead className="table-light">
+                    <tr>
+                        <th>Set Name</th>
+                        <th>Params [low, peak, high]</th>
+                        <th style={{ width: '150px' }}>Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {Object.entries(membershipFunctions[variable]).map(([setName, params]) => (
+                        <tr key={setName}>
+                            <td>{setName}</td>
+                            <td>[{params.join(', ')}]</td>
+                            <td>
+                                <button className="btn btn-datatable btn-icon btn-transparent-dark me-2" onClick={() => handleEditSet(variable, setName)}>
+                                    <i className="fas fa-edit"></i>
+                                </button>
+                                <button className="btn btn-datatable btn-icon btn-transparent-dark" onClick={() => handleDeleteSet(variable, setName)}>
+                                    <i className="fas fa-trash-alt"></i>
+                                </button>
+                            </td>
                         </tr>
-                        </thead>
-                        <tbody>
-                        {sets.length === 0 ? (
-                            <tr><td colSpan={5} className="text-center text-muted">No fuzzy sets defined.</td></tr>
-                        ) : sets.map(s => (
-                            <tr key={s.id}>
-                                <td>{s.criterion}</td>
-                                <td>{s.label}</td>
-                                <td>{s.type}</td>
-                                <td>{s.points.join(", ")}</td>
-                                <td>
-                                    <button className="btn btn-outline-secondary btn-sm me-2" onClick={() => openModal(s)}>Edit</button>
-                                    <button className="btn btn-outline-danger btn-sm" onClick={() => deleteSet(s.id)}>Delete</button>
-                                </td>
+                    ))}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    );
+
+    // --- MAIN RENDER ---
+    return (
+        <>
+            <header className="page-header page-header-compact page-header-light border-bottom bg-white mb-4">
+                <div className="container-fluid px-4">
+                    <div className="page-header-content">
+                        <div className="row align-items-center justify-content-between pt-3">
+                            <div className="col-auto mb-3">
+                                <h1 className="page-header-title">
+                                    <div className="page-header-icon"><i data-feather="settings"></i></div>
+                                    Fuzzy Logic Configuration
+                                </h1>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <div className="container-xl px-4 mt-4">
+                {/* Fuzzy Set Cards */}
+                <div className="row">
+                    <div className='col-lg-6'>
+                        {renderFuzzySetCard('gwa', 'GWA')}
+                    </div>
+                    <div className='col-lg-6'>
+                        {renderFuzzySetCard('income', 'Income')}
+                    </div>
+                </div>
+
+                {/* Fuzzy Rules Card */}
+                <div className="card mb-4">
+                    <div className="card-header d-flex justify-content-between align-items-center">
+                        <span>Fuzzy Rules</span>
+                        <button className="btn btn-primary btn-sm" onClick={handleAddRule}>Add Rule</button>
+                    </div>
+                    <div className="card-body table-responsive">
+                        <table className="table table-bordered table-hover">
+                            <thead className="table-light">
+                            <tr>
+                                <th>#</th>
+                                <th>IF GWA is</th>
+                                <th>AND Income is</th>
+                                <th>THEN Eligibility is</th>
+                                <th style={{ width: '150px' }}>Actions</th>
                             </tr>
-                        ))}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <div className="card mb-4">
-                <div className="card-header">Test Eligibility</div>
-                <div className="card-body">
-                    <div className="row">
-                        <div className="col-md-6">
-                            <label className="form-label">Sample GWA (1.0 = highest)</label>
-                            <input type="number" step="0.01" min="1.0" max="5.0" className="form-control"
-                                   value={sampleGwa} onChange={(e) => setSampleGwa(+e.target.value)} />
-                        </div>
-                        <div className="col-md-6">
-                            <label className="form-label">Sample Family Income (PHP)</label>
-                            <input type="number" min="0" className="form-control"
-                                   value={sampleIncome} onChange={(e) => setSampleIncome(+e.target.value)} />
-                        </div>
-                    </div>
-
-                    <h5 className="mt-4 text-primary">Scholarship Eligibility Result:</h5>
-                    <div className={`alert ${getEligibilityColor(eligibilityResult.eligibility)}`}>
-                        <strong>{eligibilityResult.eligibility}</strong><br />
-                        <small>Confidence: {(eligibilityResult.strength * 100).toFixed(1)}%</small>
-                    </div>
-
-                    <div className="row">
-                        <div className="col-md-6">
-                            <h6>GWA Membership Degrees:</h6>
-                            <ul className="list-group list-group-flush">
-                                {sets.filter(s => s.criterion === "GWA").map(s => (
-                                    <li key={s.id} className="list-group-item d-flex justify-content-between">
-                                        {s.label}
-                                        <span className="badge bg-secondary">{getMembership(sampleGwa, s).toFixed(3)}</span>
-                                    </li>
-                                ))}
-                            </ul>
-                        </div>
-                        <div className="col-md-6">
-                            <h6>Family Income Membership Degrees:</h6>
-                            <ul className="list-group list-group-flush">
-                                {sets.filter(s => s.criterion === "Family Income").map(s => (
-                                    <li key={s.id} className="list-group-item d-flex justify-content-between">
-                                        {s.label}
-                                        <span className="badge bg-secondary">{getMembership(sampleIncome, s).toFixed(3)}</span>
-                                    </li>
-                                ))}
-                            </ul>
-                        </div>
+                            </thead>
+                            <tbody>
+                            {rules.map((rule, index) => (
+                                <tr key={index}>
+                                    <td>{index + 1}</td>
+                                    <td><span className="badge bg-primary-soft text-primary">{rule.if.gwa}</span></td>
+                                    <td><span className="badge bg-success-soft text-success">{rule.if.income}</span></td>
+                                    <td>{rule.then}</td>
+                                    <td>
+                                        <button className="btn btn-datatable btn-icon btn-transparent-dark me-2" onClick={() => handleEditRule(rule, index)}>
+                                            <i className="fas fa-edit"></i>
+                                        </button>
+                                        <button className="btn btn-datatable btn-icon btn-transparent-dark" onClick={() => handleDeleteRule(index)}>
+                                            <i className="fas fa-trash-alt"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            ))}
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
 
-            {showModal && (
-                <div className="modal fade show d-block" style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
-                    <div className="modal-dialog">
+            {/* --- MODAL DIALOG for Add/Edit --- */}
+            {isModalOpen && (
+                <div className="modal" style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)' }}>
+                    <div className="modal-dialog modal-dialog-centered">
                         <div className="modal-content">
                             <div className="modal-header">
-                                <h5 className="modal-title">{editingId ? "Edit Fuzzy Set" : "Add Fuzzy Set"}</h5>
-                                <button className="btn-close" onClick={() => setShowModal(false)}></button>
+                                <h5 className="modal-title">
+                                    {modalType === 'addSet' && 'Add New Fuzzy Set'}
+                                    {modalType === 'editSet' && `Edit Fuzzy Set: ${currentItem?.setName}`}
+                                    {modalType === 'addRule' && 'Add New Rule'}
+                                    {modalType === 'editRule' && `Edit Rule #${currentItem?.index + 1}`}
+                                </h5>
+                                <button type="button" className="btn-close" onClick={closeModal}></button>
                             </div>
                             <div className="modal-body">
-                                <label>Criterion</label>
-                                <select className="form-select mb-2"
-                                        value={form.criterion}
-                                        onChange={(e) => setForm({ ...form, criterion: e.target.value as "GWA" | "Family Income" })}>
-                                    {criteriaOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-                                </select>
-
-                                <label>Label</label>
-                                <input className="form-control mb-2" value={form.label}
-                                       onChange={(e) => setForm({ ...form, label: e.target.value })} />
-
-                                <label>Type</label>
-                                <select className="form-select mb-2"
-                                        value={form.type}
-                                        onChange={(e) => {
-                                            const newType = e.target.value as "triangular" | "trapezoidal";
-                                            let newPoints = newType === "triangular" ? [0, 0, 0] : [0, 0, 0, 0];
-                                            setForm({ ...form, type: newType, points: newPoints });
-                                        }}>
-                                    <option value="triangular">Triangular</option>
-                                    <option value="trapezoidal">Trapezoidal</option>
-                                </select>
-
-                                {form.points.map((p, idx) => (
-                                    <div key={idx} className="mb-2">
-                                        <label>Point {idx + 1}</label>
-                                        <input type="number" step="0.01" className="form-control"
-                                               value={p}
-                                               onChange={(e) => handlePointChange(idx, +e.target.value)} />
-                                    </div>
-                                ))}
+                                {/* Form for Fuzzy Sets */}
+                                {(modalType === 'addSet' || modalType === 'editSet') && currentItem && (
+                                    <>
+                                        <div className="mb-3">
+                                            <label className="form-label">Variable</label>
+                                            <input type="text" className="form-control" value={currentItem.variable.toUpperCase()} disabled />
+                                        </div>
+                                        <div className="mb-3">
+                                            <label htmlFor="setName" className="form-label">Set Name</label>
+                                            <input
+                                                type="text"
+                                                className="form-control"
+                                                id="setName"
+                                                value={currentItem.setName}
+                                                onChange={(e) => setCurrentItem({ ...currentItem, setName: e.target.value })}
+                                                disabled={modalType === 'editSet'} // Prevent editing name to avoid breaking rules
+                                            />
+                                            {modalType === 'editSet' && <div className="form-text">Set name cannot be changed.</div>}
+                                        </div>
+                                        <div className="mb-3">
+                                            <label className="form-label">Parameters [a, b, c]</label>
+                                            <div className='d-flex'>
+                                                <input type="number" className="form-control me-2" value={currentItem.params[0]} onChange={(e) => setCurrentItem({...currentItem, params: [parseFloat(e.target.value), currentItem.params[1], currentItem.params[2]]})} />
+                                                <input type="number" className="form-control me-2" value={currentItem.params[1]} onChange={(e) => setCurrentItem({...currentItem, params: [currentItem.params[0], parseFloat(e.target.value), currentItem.params[2]]})} />
+                                                <input type="number" className="form-control" value={currentItem.params[2]} onChange={(e) => setCurrentItem({...currentItem, params: [currentItem.params[0], currentItem.params[1], parseFloat(e.target.value)]})} />
+                                            </div>
+                                        </div>
+                                    </>
+                                )}
+                                {/* Form for Rules */}
+                                {(modalType === 'addRule' || modalType === 'editRule') && currentItem && (
+                                    <>
+                                        <div className="mb-3">
+                                            <label htmlFor="gwaSelect" className="form-label">IF GWA is</label>
+                                            <select id="gwaSelect" className="form-select" value={currentItem.if.gwa} onChange={e => setCurrentItem({...currentItem, if: {...currentItem.if, gwa: e.target.value}})}>
+                                                {gwaSetNames.map(name => <option key={name} value={name}>{name}</option>)}
+                                            </select>
+                                        </div>
+                                        <div className="mb-3">
+                                            <label htmlFor="incomeSelect" className="form-label">AND Income is</label>
+                                            <select id="incomeSelect" className="form-select" value={currentItem.if.income} onChange={e => setCurrentItem({...currentItem, if: {...currentItem.if, income: e.target.value}})}>
+                                                {incomeSetNames.map(name => <option key={name} value={name}>{name}</option>)}
+                                            </select>
+                                        </div>
+                                        <div className="mb-3">
+                                            <label htmlFor="thenValue" className="form-label">THEN Eligibility is</label>
+                                            <input
+                                                id="thenValue"
+                                                type="number"
+                                                step="0.1"
+                                                min="0"
+                                                max="1"
+                                                className="form-control"
+                                                value={currentItem.then}
+                                                onChange={e => setCurrentItem({...currentItem, then: parseFloat(e.target.value)})}
+                                            />
+                                        </div>
+                                    </>
+                                )}
                             </div>
                             <div className="modal-footer">
-                                <button className="btn btn-secondary" onClick={() => setShowModal(false)}>Cancel</button>
-                                <button className="btn btn-primary" onClick={saveSet}>Save</button>
+                                <button type="button" className="btn btn-secondary" onClick={closeModal}>Cancel</button>
+                                <button type="button" className="btn btn-primary" onClick={handleSave}>Save changes</button>
                             </div>
                         </div>
                     </div>
                 </div>
             )}
-        </div>
+        </>
     );
 };
 

@@ -58,7 +58,7 @@ const Register = () => {
       return;
     }
 
-    if (!form.student_id.match(/^E\d{2}-\d{5}$/)) {
+    if (!form.student_id.match(/^[A-Z]\d{2}-\d{5}$/)) {
       notyf.error('Student ID must be in the format E25-00123');
       return;
     }

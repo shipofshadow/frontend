@@ -1,92 +1,66 @@
-import React from 'react';
-import { Bar } from 'react-chartjs-2';
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  Tooltip,
-  Legend,
-  Title,
-} from 'chart.js';
+import React, { useEffect, useState } from 'react';
+import Chart from 'react-apexcharts';
+import {API_BASE_URL} from "../../config.ts";
 
-ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip, Legend, Title);
+const ApplicantsBarChart = () => {
+  const [chartData, setChartData] = useState({ categories: [], series: [] });
 
-// 🗂️ Course → Department + Campus mapping
-const courseInfo = {
-  BSIT: { department: 'IT', campus: 'Main Campus', applicants: 120 },
-  BSED: { department: 'Education', campus: 'San Fernando', applicants: 100 },
-  BSBA: { department: 'Business', campus: 'La Union', applicants: 95 },
-  BSTM: { department: 'Tourism', campus: 'Candon', applicants: 85 },
-  BSA:  { department: 'Business', campus: 'La Union', applicants: 70 },
-};
+  useEffect(() => {
+    async function fetchData() {
+      const res = await fetch(`${API_BASE_URL}/api/dashboard/applicants-breakdown`);
+      const data = await res.json();
 
-// 🎨 Grouped colors by campus
-const campusColors = {
-  'Main Campus': '#4e73df',
-  'San Fernando': '#1cc88a',
-  'La Union': '#36b9cc',
-  'Candon': '#f6c23e',
-};
+      const courses = data.map(item => item.course);
+      const campuses = [...new Set(data.map(item => item.campus))];
 
-const CourseChartWithContext = () => {
-  const labels = Object.keys(courseInfo);
+      const series = campuses.map(campus => ({
+        name: campus,
+        data: courses.map(course => {
+          const match = data.find(
+              item => item.campus === campus && item.course === course
+          );
+          return match ? match.total_applicants : 0;
+        })
+      }));
 
-  const datasets = labels.map(course => {
-    const info = courseInfo[course];
-    return {
-      label: course,
-      data: [info.applicants],
-      backgroundColor: campusColors[info.campus],
-      stack: 'applicants',
-    };
-  });
+      setChartData({ categories: courses, series });
+    }
 
-  const data = {
-    labels: ['Applicants'], // single grouped label
-    datasets: datasets,
-  };
+    fetchData();
+  }, []);
 
   const options = {
-    responsive: true,
-    plugins: {
-      tooltip: {
-        callbacks: {
-          label: function (ctx) {
-            const course = ctx.dataset.label;
-            const info = courseInfo[course];
-            return `${course}: ${info.applicants} applicants\nDept: ${info.department}\nCampus: ${info.campus}`;
-          }
-        }
-      },
-      legend: {
-        display: true,
-        position: 'bottom'
-      },
+    chart: {
+      type: 'bar',
+      stacked: false
+    },
+    title: {
+      text: 'Applicants per Course (Grouped by Campus)',
+      align: 'center'
+    },
+    xaxis: {
+      categories: chartData.categories,
+      labels: { rotate: -45 }
+    },
+    yaxis: {
       title: {
-        display: true,
-        text: 'Applicants per Course (with Campus & Department)',
-        font: { size: 18 }
+        text: 'Total Applicants'
       }
     },
-    scales: {
-      y: {
-        beginAtZero: true,
-        ticks: {
-          precision: 0
-        }
+    legend: {
+      position: 'top'
+    },
+    plotOptions: {
+      bar: {
+        horizontal: false,
+        columnWidth: '60%'
       }
     }
   };
 
   return (
-    <div className="card mb-4">
-      <div className="card-header">Course Breakdown</div>
-      <div className="card-body">
-        <Bar data={data} options={options} />
-      </div>
-    </div>
+      <Chart options={options} series={chartData.series} type="bar" height={400} />
   );
 };
 
-export default CourseChartWithContext;
+export default ApplicantsBarChart;

@@ -1,11 +1,16 @@
 import React, { useEffect, useState } from 'react';
-import ScholarshipBreakdownCharts from "../../components/charts/ScholarshipBreakdownCharts";
-import { Clock, Calendar, BookOpen } from "lucide-react"; 
+import { Clock, Calendar, BookOpen } from "lucide-react";
 import { API_BASE_URL } from '../../config';
+import {activeApplicants, approvedApplicants, pendingApplicants, rejectedApplicants} from "../../services/dashboard.ts";
+import ApplicantsBarChart from "../../components/charts/ScholarshipBreakdownCharts";
+import ApplicationsTrendChart from "../../components/charts/ApplicationsTrendChart.tsx";
 const Dashboard = () => {
     const [currentDate, setCurrentDate] = useState(new Date());
+    const [activeApplicantsCount, setActiveApplicantsCount] = useState(0);
+    const [approvedApplicantsCount, setApprovedApplicantsCount] = useState(0);
+    const [pendingApplicantsCount, setPendingApplicantsCount] = useState(0);
+    const [rejectedApplicantsCount, setRejectedApplicantsCount] = useState(0);
     const [currentSemester, setCurrentSemester] = useState('Loading...');
-
     useEffect(() => {
         fetch(`${API_BASE_URL}/api/active-academic-term`)
             .then(response => response.json())
@@ -15,6 +20,14 @@ const Dashboard = () => {
         const timer = setInterval(() => setCurrentDate(new Date()), 1000);
         return () => clearInterval(timer);
     }, []);
+
+    useEffect(() => {
+        activeApplicants().then(setActiveApplicantsCount);
+        approvedApplicants().then(setApprovedApplicantsCount);
+        pendingApplicants().then(setPendingApplicantsCount);
+        rejectedApplicants().then(setRejectedApplicantsCount);
+    }, []);
+
 
     const options = { month: 'long', day: 'numeric', year: 'numeric' };
     const day = currentDate.toLocaleDateString('en-US', { weekday: 'long' });
@@ -62,7 +75,7 @@ const Dashboard = () => {
                             <div className="card-body d-flex align-items-center justify-content-between">
                                 <div>
                                     <div className="small fw-bold text-info mb-1">Total Applicants</div>
-                                    <div className="h5 mb-0"><span id="total_applicants">1,248</span></div>
+                                    <div className="h5 mb-0"><span id="total_applicants">{activeApplicantsCount !== null ? activeApplicantsCount : "Loading..."}</span></div>
                                 </div>
                                 <div className="ms-2"><i className="fas fa-users fa-2x text-gray-200"></i></div>
                             </div>
@@ -72,8 +85,8 @@ const Dashboard = () => {
                         <div className="card border-start-lg border-start-success h-100">
                             <div className="card-body d-flex align-items-center justify-content-between">
                                 <div>
-                                    <div className="small fw-bold text-success mb-1">Qualified Applicants</div>
-                                    <div className="h5 mb-0"><span id="qualified_applicants">976</span></div>
+                                    <div className="small fw-bold text-success mb-1">Approved Applicants</div>
+                                    <div className="h5 mb-0"><span id="qualified_applicants">{approvedApplicantsCount !== null ? approvedApplicantsCount : "Loading..."}</span></div>
                                 </div>
                                 <div className="ms-2"><i className="fas fa-check-circle fa-2x text-gray-200"></i></div>
                             </div>
@@ -84,7 +97,7 @@ const Dashboard = () => {
                             <div className="card-body d-flex align-items-center justify-content-between">
                                 <div>
                                     <div className="small fw-bold text-warning mb-1">Pending Applications</div>
-                                    <div className="h5 mb-0"><span id="pending_applications">135</span></div>
+                                    <div className="h5 mb-0"><span id="pending_applications">{pendingApplicantsCount !== null ? pendingApplicantsCount : "Loading..."}</span></div>
                                 </div>
                                 <div className="ms-2"><i className="fas fa-hourglass-half fa-2x text-gray-200"></i></div>
                             </div>
@@ -94,8 +107,8 @@ const Dashboard = () => {
                         <div className="card border-start-lg border-start-danger h-100">
                             <div className="card-body d-flex align-items-center justify-content-between">
                                 <div>
-                                    <div className="small fw-bold text-danger mb-1">Disqualified</div>
-                                    <div className="h5 mb-0"><span id="disqualified_applicants">112</span></div>
+                                    <div className="small fw-bold text-danger mb-1">Denied</div>
+                                    <div className="h5 mb-0"><span id="disqualified_applicants">{rejectedApplicantsCount !== null ? rejectedApplicantsCount : "Loading..."}</span></div>
                                 </div>
                                 <div className="ms-2"><i className="fas fa-times-circle fa-2x text-gray-200"></i></div>
                             </div>
@@ -103,25 +116,12 @@ const Dashboard = () => {
                     </div>
                 </div>
 
-                <ScholarshipBreakdownCharts />
+                <ApplicantsBarChart />
 
                 {/* Charts & Reports */}
                 <div className="row">
                     {/* Application Trends */}
-                    <div className="col-lg-8 mb-4">
-                        <div className="card">
-                            <div className="card-header bg-transparent d-flex justify-content-between align-items-center">
-                                <span>Application Trends</span>
-                                <select className="form-control w-auto" id="year_filter" defaultValue="2025">
-                                    <option value="2025">2025</option>
-                                    <option value="2024">2024</option>
-                                </select>
-                            </div>
-                            <div className="card-body">
-                                <div id="applicationsChart" className="chart-area" style={{ height: 300 }}></div>
-                            </div>
-                        </div>
-                    </div>
+                  <ApplicationsTrendChart />
 
                     {/* Pie Charts */}
                     <div className="col-lg-4 mb-4">

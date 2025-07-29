@@ -1,18 +1,21 @@
 import React, {useEffect, useState} from "react";
 import psgc from "@dropdowns/psgc";
+import Swal from "sweetalert2";
+import {useNavigate} from "react-router-dom";
+import {useAuth} from "../../context/AuthContext.tsx";
+import {API_BASE_URL} from "../../config.ts";
+import { citizenship, civilStatus } from '../../data/data.ts'
 import DepartmentSelect from "../../components/selects/DepartmentSelect.tsx";
 import CampusSelect from "../../components/selects/CampusSelect.tsx";
 import CourseSelect from "../../components/selects/CourseSelect.tsx";
 import { useAcademicTerm } from "../../hooks/useAcademicTerm.ts";
 import type {ApplicationForm} from "../../interfaces/ApplicationForm.ts";
-import {useAuth} from "../../context/AuthContext.tsx";
-import {API_BASE_URL} from "../../config.ts";
-import { citizenship, civilStatus } from '../../data/data.ts';
 
 const Apply = () => {
   const [step, setStep] = useState("step1");
   const { term } = useAcademicTerm();
   const { user, token } = useAuth();
+  const navigate = useNavigate();
 
   interface Region {
     reg_code: string;
@@ -51,7 +54,7 @@ const Apply = () => {
   const [departmentId, setDepartmentId] = useState("");
   const [courseId, setCourseId] = useState("");
 
-  const [grades, setGrades] = useState([{ subject: "", grade: "" }]);
+  const [grades, setGrades] = useState([{ subject: "", grade: "", units: "" }]);
 
   useEffect(() => {
     setRegions(psgc.getAllRegions());
@@ -88,7 +91,7 @@ const Apply = () => {
     municipalityCode: user?.profile?.municipality_code || '',
     municipalityName: user?.profile?.municipality_name ||'',
     barangayCode: user?.profile?.barangay_code || '',
-    barangayName: user?.profile?.municipality_name || '',
+    barangayName: user?.profile?.barangay_name || '',
     father: {
       lastName: user?.profile?.father_last_name || '',
       firstName: user?.profile?.father_first_name || '',
@@ -137,6 +140,12 @@ const Apply = () => {
     }
   }, [user]);
 
+  useEffect(() => {
+    const total = grades.reduce((acc, curr) => acc + Number(curr.units || 0), 0);
+    setFormData(prev => ({ ...prev, total_units: total }));
+  }, [grades]);
+
+
 
   useEffect(() => {
     if (selectedRegion) {
@@ -157,7 +166,7 @@ const Apply = () => {
   }, [selectedMunicipality]);
 
   const addGradeRow = () => {
-    setGrades([...grades, { subject: "", grade: "" }]);
+    setGrades([...grades, { subject: "", grade: "", units: ""}]);
   };
 
   const removeGradeRow = (index: number) => {
@@ -325,13 +334,25 @@ const Apply = () => {
 
       if (!res.ok) throw new Error('Failed to submit application');
 
-      // TODO: Fix the alerts
       const result = await res.json();
-      alert('Application submitted successfully!');
+
+      Swal.fire({
+        icon: 'success',
+        title: 'Application Submitted!',
+        text: 'Your scholarship application has been submitted successfully.',
+        confirmButtonText: 'Go to Dashboard',
+      }).then(() => {
+        navigate('/applicant/home');
+      });
+
       console.log(result);
     } catch (error) {
       console.error('Submission error:', error);
-      alert('There was an error submitting your application.');
+      Swal.fire({
+        icon: 'error',
+        title: 'Submission Failed',
+        text: 'There was an error submitting your application. Please try again later.',
+      });
     }
   };
 
@@ -712,6 +733,7 @@ const Apply = () => {
                                 onChange={(e)=> handleInputChange('dswdProgram', e.target.value)}
                         >
                           <option value="">Select DSWD Program</option>
+                          <option value="None">None</option>
                           <option value="Listahan">Listahan</option>
                           <option value="4Ps">4Ps</option>
                         </select>
@@ -783,34 +805,8 @@ const Apply = () => {
                         />
                       </div>
 
-                      <div className="mb-3 col-md-4">
-                        <label className="form-label">Academic Term</label>
-                        <input
-                            type="text"
-                            className="form-control"
-                            value={term?.formatted || ''}
-                            readOnly
-                        />
-                      </div>
 
-                      <div className="mb-3 col-md-4">
-                        <label className="form-label">Enrollment Status</label>
-                        <select className="form-control"
-                                value={formData.enrollmentStatus}
-                                onChange={(e)=> handleInputChange('enrollmentStatus', e.target.value)}>
-                          <option value="">Select Enrollment Status</option>
-                          <option value="Enrolled">Enrolled</option>
-                          <option value="Not Enrolled">Not Enrolled</option>
-                          <option value="Dropped">Dropped</option>
-                        </select>
-                      </div>
 
-                      <div className="mb-3 col-md-4">
-                        <label className="form-label">Total Units Enrolled</label>
-                        <input className="form-control"
-                                value={formData.total_units}
-                                onChange={(e)=> handleInputChange('total_units', e.target.value)} />
-                      </div>
                     </div>
 
                     <h6 className="mt-4 mb-3 text-secondary">Scholarship Information</h6>
@@ -927,48 +923,111 @@ const Apply = () => {
 
                   {/* Dynamic grade inputs */}
                   {grades.map((grade, idx) => (
-                      <div className="row mb-3" key={idx}>
-                        <div className="col">
-                          <input
-                              type="text"
-                              className="form-control"
-                              placeholder="Subject"
-                              value={grade.subject}
-                              onChange={(e) => handleGradeChange(idx, "subject", e.target.value)}
-                              required
-                          />
+                      <div className="row g-2 align-items-center mb-3" key={idx}>
+                        <div className="col-md-4">
+                          <div className="input-group">
+                        <span className="input-group-text">
+                          <i className="fas fa-book"></i>
+                        </span>
+                            <input
+                                type="text"
+                                className="form-control"
+                                placeholder="Subject"
+                                value={grade.subject}
+                                onChange={(e) => handleGradeChange(idx, "subject", e.target.value)}
+                                required
+                            />
+                          </div>
                         </div>
-                        <div className="col">
-                          <input
-                              type="text"
-                              className="form-control"
-                              placeholder="Grade"
-                              value={grade.grade}
-                              onChange={(e) => handleGradeChange(idx, "grade", e.target.value)}
-                              required
-                          />
+                        <div className="col-md-3">
+                          <div className="input-group">
+                        <span className="input-group-text">
+                          <i className="fas fa-graduation-cap"></i>
+                        </span>
+                            <input
+                                type="number"
+                                step="0.01"
+                                className="form-control"
+                                placeholder="Grade"
+                                value={grade.grade}
+                                onChange={(e) => handleGradeChange(idx, "grade", e.target.value)}
+                                required
+                            />
+                          </div>
                         </div>
-                        <div className="col-auto">
+                        <div className="col-md-3">
+                          <div className="input-group">
+        <span className="input-group-text">
+          <i className="fas fa-layer-group"></i>
+        </span>
+                            <input
+                                type="number"
+                                className="form-control"
+                                placeholder="Units"
+                                value={grade.units}
+                                onChange={(e) => handleGradeChange(idx, "units", e.target.value)}
+                                required
+                            />
+                          </div>
+                        </div>
+                        <div className="col-md-2 text-end">
                           {grades.length > 1 && (
                               <button
                                   type="button"
-                                  className="btn btn-danger"
+                                  className="btn btn-outline-danger"
                                   onClick={() => removeGradeRow(idx)}
                               >
-                                &times;
+                                <i className="fas fa-trash-alt"></i>
                               </button>
                           )}
                         </div>
                       </div>
                   ))}
 
-                  <button
-                      type="button"
-                      className="btn btn-secondary mb-4"
-                      onClick={addGradeRow}
-                  >
-                    + Add Subject
-                  </button>
+                  <div className="text-end mb-4">
+                    <button
+                        type="button"
+                        className="btn btn-outline-primary"
+                        onClick={addGradeRow}
+                    >
+                      <i className="fas fa-plus me-1"></i>
+                      Add Subject
+                    </button>
+                  </div>
+
+
+                  <div className="row">
+                    <div className="mb-3 col-md-4">
+                      <label className="form-label">Academic Term</label>
+                      <input
+                          type="text"
+                          className="form-control"
+                          value={term?.formatted || ''}
+                          readOnly
+                      />
+                    </div>
+
+                    <div className="mb-3 col-md-4">
+                      <label className="form-label">Enrollment Status</label>
+                      <select className="form-control"
+                              value={formData.enrollmentStatus}
+                              onChange={(e)=> handleInputChange('enrollmentStatus', e.target.value)}>
+                        <option value="">Select Enrollment Status</option>
+                        <option value="Enrolled">Enrolled</option>
+                        <option value="Not Enrolled">Not Enrolled</option>
+                        <option value="Dropped">Dropped</option>
+                      </select>
+                    </div>
+
+                    <div className="mb-3 col-md-4">
+                      <label className="form-label">Total Units Enrolled</label>
+                      <input
+                          className="form-control"
+                          value={formData.total_units}
+                          readOnly
+                      />
+                    </div>
+                  </div>
 
                   {/* Upload transcript document */}
                   <div className="mb-4">
@@ -1023,7 +1082,7 @@ const Apply = () => {
                     <input
                         className="form-control"
                         type="file"
-                        accept=".pdf"
+                        accept=".pdf, image/jpeg, image/jpg, image/png"
                         onChange={(e) => handleFileUpload("itr", e.target.files?.[0])}
                         required
                     />
@@ -1035,7 +1094,7 @@ const Apply = () => {
                   <div className="alert alert-info">
                     <strong>Document Requirements:</strong>
                     <ul className="mb-0 mt-2">
-                      <li>Accepted formats: PDF</li>
+                      <li>Accepted formats: PDF, JPEG, JPG, PNG</li>
                       <li>Maximum file size: 5MB</li>
                       <li>Ensure clarity and readability</li>
                     </ul>

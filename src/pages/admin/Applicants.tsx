@@ -49,6 +49,67 @@ const ApplicantsTable = () => {
         }
     }, [applicants]);
 
+
+
+    const viewApplicant = async (id: number): Promise<void> => {
+        setSelectedApplicant(null);
+        setEditApplicant(null);
+        try {
+            const response = await axios.get(`${API_BASE_URL}/api/applicants/${id}`, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            setSelectedApplicant(response.data);
+            setEditApplicant(response.data);
+            console.log(response.data);
+        } catch (error) {
+            console.error('Error viewing applicant:', error);
+            await Swal.fire('Error', 'Failed to load applicant details.', 'error');
+        }
+    };
+
+    const handleApplicationStatus = async (
+        applicationId: number,
+        status: 'approved' | 'denied',
+        remarks?: string
+    ) => {
+        const confirm = await Swal.fire({
+            title: `Are you sure?`,
+            text: `You are about to ${status} this application.`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Yes, proceed!',
+        });
+
+        if (!confirm.isConfirmed) return;
+
+        try {
+            await axios.put(
+                `${API_BASE_URL}/api/applicants/${applicationId}/status`,
+                {
+                    status,
+                    remarks,
+                },
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
+            );
+
+            await Swal.fire(
+                'Success',
+                `Application has been ${status}.`,
+                'success'
+            ).then(() => {
+                window.location.reload();
+            });
+
+        } catch (error) {
+            console.error(error);
+            Swal.fire('Error', 'Failed to update status.', 'error');
+        }
+    };
+
     const handleDelete = async (applicantId) => {
         const confirm = await Swal.fire({
             title: 'Are you sure?',
@@ -71,19 +132,6 @@ const ApplicantsTable = () => {
                 console.error('Delete error:', error);
                 Swal.fire('Error', 'Failed to delete applicant.', 'error');
             }
-        }
-    };
-
-    const viewApplicant = async (id: number): Promise<void> => {
-        setSelectedApplicant(null);
-        try {
-            const response = await axios.get(`${API_BASE_URL}/api/applicants/${id}`, {
-                headers: { Authorization: `Bearer ${token}` },
-            });
-            setSelectedApplicant(response.data);
-        } catch (error) {
-            console.error('Error viewing applicant:', error);
-            await Swal.fire('Error', 'Failed to load applicant details.', 'error');
         }
     };
 
@@ -152,9 +200,9 @@ const ApplicantsTable = () => {
                                             </div>
                                         </td>
                                         <td>
-                                            <div className="d-flex align-items-center gap-1">
+                                            <div className="btn-group">
                                                 <button
-                                                    className="btn btn-datatable btn-icon btn-transparent-dark"
+                                                    className="btn btn-outline-success btn-sm"
                                                     onClick={() => viewApplicant(applicant.student_id)}
                                                     data-bs-toggle="modal"
                                                     data-bs-target="#viewModal"
@@ -164,8 +212,8 @@ const ApplicantsTable = () => {
                                                 </button>
 
                                                 <button
-                                                    className="btn btn-datatable btn-icon btn-transparent-dark"
-                                                    onClick={() => editApplicant(applicant.student_id)}
+                                                    className="btn btn-outline-secondary btn-sm"
+                                                    onClick={() => viewApplicant(applicant.student_id)}
                                                     data-bs-toggle="modal"
                                                     data-bs-target="#editModal"
                                                     title="Edit"
@@ -173,18 +221,9 @@ const ApplicantsTable = () => {
                                                     <i className="fa-regular fa-pen-to-square"></i>
                                                 </button>
 
-                                                <button
-                                                    className="btn btn-datatable btn-icon btn-transparent-dark"
-                                                    onClick={() => viewApplicant(applicant.student_id)}
-                                                    data-bs-toggle="modal"
-                                                    data-bs-target="#filesModal"
-                                                    title="Files"
-                                                >
-                                                    <i className="far fa-file"></i>
-                                                </button>
 
                                                 <button
-                                                    className="btn btn-datatable btn-icon btn-transparent-dark"
+                                                    className="btn btn-outline-danger btn-sm"
                                                     title="Delete"
                                                     onClick={() => handleDelete(applicant.id)}
                                                 >
@@ -210,14 +249,18 @@ const ApplicantsTable = () => {
 
             {/* View Modal */}
             <div className="modal fade" id="viewModal" tabIndex={-1} aria-hidden="true">
-                <div className="modal-dialog modal-xl modal-dialog-centered">
+                <div className="modal-dialog modal-xl">
                     <div className="modal-content">
                         <div className="modal-header">
                             <h5 className="modal-title">Applicant Details</h5>
                             <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
                         <div className="modal-body">
-                            <ViewApplicantReadOnlyForm applicant={selectedApplicant} />
+                            <ViewApplicantReadOnlyForm
+                                applicant={selectedApplicant}
+                                onApplicationStatus={handleApplicationStatus}
+                            />
+
                         </div>
                 </div>
             </div>
@@ -225,7 +268,7 @@ const ApplicantsTable = () => {
 
             {/* Edit Modal */}
             <div className="modal fade" id="editModal" tabIndex={-1} aria-hidden="true">
-                <div className="modal-dialog modal-dialog-centered">
+                <div className="modal-dialog modal-xl modal-dialog-centered">
                     <div className="modal-content">
                         <div className="modal-header">
                             <h5 className="modal-title">Edit Applicant</h5>
@@ -233,27 +276,508 @@ const ApplicantsTable = () => {
                         </div>
                         <div className="modal-body">
                             {editApplicant ? (
-                                <form onSubmit={handleEditSubmit}>
-                                    <div className="mb-3">
-                                        <label className="form-label">First Name</label>
-                                        <input
-                                            type="text"
-                                            className="form-control"
-                                            value={editApplicant.first_name}
-                                            onChange={(e) => setEditApplicant({ ...editApplicant, first_name: e.target.value })}
-                                        />
-                                    </div>
-                                    <div className="mb-3">
-                                        <label className="form-label">Last Name</label>
-                                        <input
-                                            type="text"
-                                            className="form-control"
-                                            value={editApplicant.last_name}
-                                            onChange={(e) => setEditApplicant({ ...editApplicant, last_name: e.target.value })}
-                                        />
+                                <form >
+                                    {/* --- PERSONAL INFORMATION --- */}
+                                    <h5 className="mb-3">Personal Information</h5>
+                                    <div className="row">
+                                        <div className="col-md-4 mb-3">
+                                            <label className="form-label">First Name</label>
+                                            <input
+                                                type="text"
+                                                className="form-control form-control-sm"
+                                                value={editApplicant.first_name || ""}
+                                                onChange={(e) =>
+                                                    setEditApplicant({ ...editApplicant, first_name: e.target.value })
+                                                }
+                                            />
+                                        </div>
+                                        <div className="col-md-4 mb-3">
+                                            <label className="form-label">Middle Name</label>
+                                            <input
+                                                type="text"
+                                                className="form-control form-control-sm"
+                                                value={editApplicant.middle_name || ""}
+                                                onChange={(e) =>
+                                                    setEditApplicant({ ...editApplicant, middle_name: e.target.value })
+                                                }
+                                            />
+                                        </div>
+                                        <div className="col-md-4 mb-3">
+                                            <label className="form-label">Last Name</label>
+                                            <input
+                                                type="text"
+                                                className="form-control form-control-sm"
+                                                value={editApplicant.last_name || ""}
+                                                onChange={(e) =>
+                                                    setEditApplicant({ ...editApplicant, last_name: e.target.value })
+                                                }
+                                            />
+                                        </div>
+                                        <div className="col-md-2 mb-3">
+                                            <label className="form-label">Name Extension</label>
+                                            <input
+                                                type="text"
+                                                className="form-control form-control-sm"
+                                                value={editApplicant.name_extension || ""}
+                                                onChange={(e) =>
+                                                    setEditApplicant({
+                                                        ...editApplicant,
+                                                        name_extension: e.target.value,
+                                                    })
+                                                }
+                                            />
+                                        </div>
+                                        <div className="col-md-2 mb-3">
+                                            <label className="form-label">Student ID</label>
+                                            <input
+                                                type="text"
+                                                className="form-control form-control-sm"
+                                                value={editApplicant["students.student_id"] || ""}
+                                                onChange={(e) =>
+                                                    setEditApplicant({
+                                                        ...editApplicant,
+                                                        ["students.student_id"]: e.target.value,
+                                                    })
+                                                }
+                                            />
+                                        </div>
+                                        <div className="col-md-2 mb-3">
+                                            <label className="form-label">Birth Date</label>
+                                            <input
+                                                type="date"
+                                                className="form-control form-control-sm"
+                                                value={editApplicant.birth_date?.split("T")[0] || ""}
+                                                onChange={(e) =>
+                                                    setEditApplicant({ ...editApplicant, birth_date: e.target.value })
+                                                }
+                                            />
+                                        </div>
+                                        <div className="col-md-4 mb-3">
+                                            <label className="form-label">Gender</label>
+                                            <select
+                                                className="form-control form-control-sm"
+                                                value={editApplicant.gender || ""}
+                                                onChange={(e) =>
+                                                    setEditApplicant({ ...editApplicant, gender: e.target.value })
+                                                }
+                                            >
+                                                <option value="">Select</option>
+                                                <option value="Male">Male</option>
+                                                <option value="Female">Female</option>
+                                                <option value="Other">Other</option>
+                                            </select>
+                                        </div>
+                                        <div className="col-md-2 mb-3">
+                                            <label className="form-label">Citizenship</label>
+                                            <input
+                                                type="text"
+                                                className="form-control form-control-sm"
+                                                value={editApplicant.citizenship || ""}
+                                                onChange={(e) =>
+                                                    setEditApplicant({ ...editApplicant, citizenship: e.target.value })
+                                                }
+                                            />
+                                        </div>
+                                        <div className="col-md-2 mb-3">
+                                            <label className="form-label">Civil Status</label>
+                                            <input
+                                                type="text"
+                                                className="form-control form-control-sm"
+                                                value={editApplicant.civil_status || ""}
+                                                onChange={(e) =>
+                                                    setEditApplicant({ ...editApplicant, civil_status: e.target.value })
+                                                }
+                                            />
+                                        </div>
+                                        <div className="col-md-4 mb-3">
+                                            <label className="form-label">Contact Number</label>
+                                            <input
+                                                type="text"
+                                                className="form-control form-control-sm"
+                                                value={editApplicant.contact_number || ""}
+                                                onChange={(e) =>
+                                                    setEditApplicant({
+                                                        ...editApplicant,
+                                                        contact_number: e.target.value,
+                                                    })
+                                                }
+                                            />
+                                        </div>
+                                        <div className="col-md-4 mb-3">
+                                            <label className="form-label">Email Address</label>
+                                            <input
+                                                type="email"
+                                                className="form-control form-control-sm"
+                                                value={editApplicant.email || ""}
+                                                onChange={(e) =>
+                                                    setEditApplicant({ ...editApplicant, email: e.target.value })
+                                                }
+                                            />
+                                        </div>
                                     </div>
 
-                                    <button type="submit" className="btn btn-primary">Save Changes</button>
+                                    {/* --- ADDRESS --- */}
+                                    <h5 className="mb-3 mt-4">Address</h5>
+                                    <div className="mb-3">
+                                        <label className="form-label">Street</label>
+                                        <input
+                                            type="text"
+                                            className="form-control form-control-sm"
+                                            value={editApplicant.street || ""}
+                                            onChange={(e) =>
+                                                setEditApplicant({ ...editApplicant, street: e.target.value })
+                                            }
+                                        />
+                                    </div>
+                                    <div className="row">
+                                        <div className="col-md-3 mb-3">
+                                            <label className="form-label">Barangay</label>
+                                            <input
+                                                type="text"
+                                                className="form-control form-control-sm"
+                                                value={editApplicant.barangay_name || ""}
+                                                onChange={(e) =>
+                                                    setEditApplicant({
+                                                        ...editApplicant,
+                                                        barangay_name: e.target.value,
+                                                    })
+                                                }
+                                            />
+                                        </div>
+                                        <div className="col-md-3 mb-3">
+                                            <label className="form-label">Municipality</label>
+                                            <input
+                                                type="text"
+                                                className="form-control form-control-sm"
+                                                value={editApplicant.municipality_name || ""}
+                                                onChange={(e) =>
+                                                    setEditApplicant({
+                                                        ...editApplicant,
+                                                        municipality_name: e.target.value,
+                                                    })
+                                                }
+                                            />
+                                        </div>
+                                        <div className="col-md-3 mb-3">
+                                            <label className="form-label">Province</label>
+                                            <input
+                                                type="text"
+                                                className="form-control form-control-sm"
+                                                value={editApplicant.province_name || ""}
+                                                onChange={(e) =>
+                                                    setEditApplicant({
+                                                        ...editApplicant,
+                                                        province_name: e.target.value,
+                                                    })
+                                                }
+                                            />
+                                        </div>
+                                        <div className="col-md-3 mb-3">
+                                            <label className="form-label">ZIP Code</label>
+                                            <input
+                                                type="text"
+                                                className="form-control form-control-sm"
+                                                value={editApplicant.zip_code || ""}
+                                                onChange={(e) =>
+                                                    setEditApplicant({ ...editApplicant, zip_code: e.target.value })
+                                                }
+                                            />
+                                        </div>
+                                    </div>
+
+                                    {/* --- EDUCATIONAL INFORMATION --- */}
+                                    <h5 className="mb-3 mt-4">Educational Information</h5>
+                                    <div className="row">
+                                        <div className="col-md-3 mb-3">
+                                            <label className="form-label">Campus</label>
+                                            <input
+                                                type="text"
+                                                className="form-control form-control-sm"
+                                                value={editApplicant.campus || ""}
+                                                onChange={(e) =>
+                                                    setEditApplicant({ ...editApplicant, campus: e.target.value })
+                                                }
+                                            />
+                                        </div>
+                                        <div className="col-md-3 mb-3">
+                                            <label className="form-label">Department</label>
+                                            <input
+                                                type="text"
+                                                className="form-control form-control-sm"
+                                                value={editApplicant.department || ""}
+                                                onChange={(e) =>
+                                                    setEditApplicant({ ...editApplicant, department: e.target.value })
+                                                }
+                                            />
+                                        </div>
+                                        <div className="col-md-3 mb-3">
+                                            <label className="form-label">Course</label>
+                                            <input
+                                                type="text"
+                                                className="form-control form-control-sm"
+                                                value={editApplicant.course || ""}
+                                                onChange={(e) =>
+                                                    setEditApplicant({ ...editApplicant, course: e.target.value })
+                                                }
+                                            />
+                                        </div>
+                                        <div className="col-md-3 mb-3">
+                                            <label className="form-label">Year Level</label>
+                                            <input
+                                                type="text"
+                                                className="form-control form-control-sm"
+                                                value={editApplicant.year_level || ""}
+                                                onChange={(e) =>
+                                                    setEditApplicant({ ...editApplicant, year_level: e.target.value })
+                                                }
+                                            />
+                                        </div>
+                                        <div className="col-md-6 mb-3">
+                                            <label className="form-label">Enrollment Status</label>
+                                            <input
+                                                type="text"
+                                                className="form-control form-control-sm"
+                                                value={editApplicant.enrollment_status || ""}
+                                                onChange={(e) =>
+                                                    setEditApplicant({
+                                                        ...editApplicant,
+                                                        enrollment_status: e.target.value,
+                                                    })
+                                                }
+                                            />
+                                        </div>
+                                        <div className="col-md-6 mb-3">
+                                            <label className="form-label">Total Units</label>
+                                            <input
+                                                type="text"
+                                                className="form-control form-control-sm"
+                                                value={editApplicant.total_units || ""}
+                                                onChange={(e) =>
+                                                    setEditApplicant({ ...editApplicant, total_units: e.target.value })
+                                                }
+                                            />
+                                        </div>
+                                    </div>
+
+                                    {/* --- FAMILY BACKGROUND --- */}
+                                    <h5 className="mb-3 mt-4">Family Background</h5>
+                                    <div className="row">
+                                        <div className="col-md-6 mb-3">
+                                            <label className="form-label">Father's First Name</label>
+                                            <input
+                                                type="text"
+                                                className="form-control form-control-sm"
+                                                value={editApplicant.father_first_name || ""}
+                                                onChange={(e) =>
+                                                    setEditApplicant({
+                                                        ...editApplicant,
+                                                        father_first_name: e.target.value,
+                                                    })
+                                                }
+                                            />
+                                        </div>
+                                        <div className="col-md-6 mb-3">
+                                            <label className="form-label">Father's Middle Name</label>
+                                            <input
+                                                type="text"
+                                                className="form-control form-control-sm"
+                                                value={editApplicant.father_middle_name || ""}
+                                                onChange={(e) =>
+                                                    setEditApplicant({
+                                                        ...editApplicant,
+                                                        father_middle_name: e.target.value,
+                                                    })
+                                                }
+                                            />
+                                        </div>
+                                        <div className="col-md-6 mb-3">
+                                            <label className="form-label">Father's Last Name</label>
+                                            <input
+                                                type="text"
+                                                className="form-control form-control-sm"
+                                                value={editApplicant.father_last_name || ""}
+                                                onChange={(e) =>
+                                                    setEditApplicant({
+                                                        ...editApplicant,
+                                                        father_last_name: e.target.value,
+                                                    })
+                                                }
+                                            />
+                                        </div>
+                                        <div className="col-md-6 mb-3">
+                                            <label className="form-label">Father's Occupation</label>
+                                            <input
+                                                type="text"
+                                                className="form-control form-control-sm"
+                                                value={editApplicant.father_occupation || ""}
+                                                onChange={(e) =>
+                                                    setEditApplicant({
+                                                        ...editApplicant,
+                                                        father_occupation: e.target.value,
+                                                    })
+                                                }
+                                            />
+                                        </div>
+                                        <div className="col-md-6 mb-3">
+                                            <label className="form-label">Father's Income</label>
+                                            <input
+                                                type="text"
+                                                className="form-control form-control-sm"
+                                                value={editApplicant.father_income || ""}
+                                                onChange={(e) =>
+                                                    setEditApplicant({ ...editApplicant, father_income: e.target.value })
+                                                }
+                                            />
+                                        </div>
+                                        <div className="col-md-6 mb-3">
+                                            <label className="form-label">Mother's First Name</label>
+                                            <input
+                                                type="text"
+                                                className="form-control form-control-sm"
+                                                value={editApplicant.mother_first_name || ""}
+                                                onChange={(e) =>
+                                                    setEditApplicant({
+                                                        ...editApplicant,
+                                                        mother_first_name: e.target.value,
+                                                    })
+                                                }
+                                            />
+                                        </div>
+                                        <div className="col-md-6 mb-3">
+                                            <label className="form-label">Mother's Middle Name</label>
+                                            <input
+                                                type="text"
+                                                className="form-control form-control-sm"
+                                                value={editApplicant.mother_middle_name || ""}
+                                                onChange={(e) =>
+                                                    setEditApplicant({
+                                                        ...editApplicant,
+                                                        mother_middle_name: e.target.value,
+                                                    })
+                                                }
+                                            />
+                                        </div>
+                                        <div className="col-md-6 mb-3">
+                                            <label className="form-label">Mother's Last Name</label>
+                                            <input
+                                                type="text"
+                                                className="form-control form-control-sm"
+                                                value={editApplicant.mother_last_name || ""}
+                                                onChange={(e) =>
+                                                    setEditApplicant({
+                                                        ...editApplicant,
+                                                        mother_last_name: e.target.value,
+                                                    })
+                                                }
+                                            />
+                                        </div>
+                                        <div className="col-md-6 mb-3">
+                                            <label className="form-label">Mother's Occupation</label>
+                                            <input
+                                                type="text"
+                                                className="form-control form-control-sm"
+                                                value={editApplicant.mother_occupation || ""}
+                                                onChange={(e) =>
+                                                    setEditApplicant({
+                                                        ...editApplicant,
+                                                        mother_occupation: e.target.value,
+                                                    })
+                                                }
+                                            />
+                                        </div>
+                                        <div className="col-md-6 mb-3">
+                                            <label className="form-label">Mother's Income</label>
+                                            <input
+                                                type="text"
+                                                className="form-control form-control-sm"
+                                                value={editApplicant.mother_income || ""}
+                                                onChange={(e) =>
+                                                    setEditApplicant({ ...editApplicant, mother_income: e.target.value })
+                                                }
+                                            />
+                                        </div>
+                                    </div>
+
+                                    {/* --- OTHER INFORMATION --- */}
+                                    <h5 className="mb-3 mt-4">Other Information</h5>
+                                    <div className="row">
+                                        <div className="col-md-3 mb-3">
+                                            <label className="form-label">IP Affiliation</label>
+                                            <input
+                                                type="text"
+                                                className="form-control form-control-sm"
+                                                value={editApplicant.ip_affiliation || ""}
+                                                onChange={(e) =>
+                                                    setEditApplicant({
+                                                        ...editApplicant,
+                                                        ip_affiliation: e.target.value,
+                                                    })
+                                                }
+                                            />
+                                        </div>
+                                        <div className="col-md-2 mb-3">
+                                            <label className="form-label">4Ps Member</label>
+                                            <select
+                                                className="form-control form-control-sm"
+                                                value={editApplicant.is_4ps_member ? "Yes" : "No"}
+                                                onChange={(e) =>
+                                                    setEditApplicant({
+                                                        ...editApplicant,
+                                                        is_4ps_member: e.target.value === "Yes",
+                                                    })
+                                                }
+                                            >
+                                                <option value="Yes">Yes</option>
+                                                <option value="No">No</option>
+                                            </select>
+                                        </div>
+                                        <div className="col-md-2 mb-3">
+                                            <label className="form-label">Household Number</label>
+                                            <input
+                                                type="text"
+                                                className="form-control form-control-sm"
+                                                value={editApplicant.household_number || ""}
+                                                onChange={(e) =>
+                                                    setEditApplicant({
+                                                        ...editApplicant,
+                                                        household_number: e.target.value,
+                                                    })
+                                                }
+                                            />
+                                        </div>
+                                        <div className="col-md-2 mb-3">
+                                            <label className="form-label">Siblings</label>
+                                            <input
+                                                type="text"
+                                                className="form-control form-control-sm"
+                                                value={editApplicant.siblings || ""}
+                                                onChange={(e) =>
+                                                    setEditApplicant({
+                                                        ...editApplicant,
+                                                        siblings: e.target.value,
+                                                    })
+                                                }
+                                            />
+                                        </div>
+                                        <div className="col-md-2 mb-3">
+                                            <label className="form-label">Siblings Studying</label>
+                                            <input
+                                                type="text"
+                                                className="form-control form-control-sm"
+                                                value={editApplicant.sublings_studying || ""}
+                                                onChange={(e) =>
+                                                    setEditApplicant({
+                                                        ...editApplicant,
+                                                        sublings_studying: e.target.value,
+                                                    })
+                                                }
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <button type="submit" className="btn btn-primary mt-4">
+                                        Save Changes
+                                    </button>
                                 </form>
                             ) : <p>Loading...</p>}
                         </div>
@@ -261,35 +785,6 @@ const ApplicantsTable = () => {
                 </div>
             </div>
 
-
-            <div className="modal fade" id="filesModal" tabIndex={-1} aria-hidden="true">
-                <div className="modal-dialog modal-lg modal-dialog-centered">
-                    <div className="modal-content">
-                        <div className="modal-header">
-                            <h5 className="modal-title">Applicant Files</h5>
-                            <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                        </div>
-                        <div className="modal-body">
-                            {selectedApplicant ? (
-                                <div className="d-flex flex-column gap-3">
-                                    {selectedApplicant.itr_file && (
-                                        <FilePreview
-                                            label="ITR File"
-                                            filePath={selectedApplicant.itr_file}
-                                        />
-                                    )}
-                                    {selectedApplicant.grades_file && (
-                                        <FilePreview
-                                            label="Grades File"
-                                            filePath={selectedApplicant.grades_file}
-                                        />
-                                    )}
-                                </div>
-                            ) : <p>Loading files...</p>}
-                        </div>
-                    </div>
-                </div>
-            </div>
 
 
         </div>

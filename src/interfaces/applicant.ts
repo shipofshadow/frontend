@@ -1,3 +1,5 @@
+import type {GradeEntry} from "./GradeEntry.ts";
+
 export interface Applicant {
     id: number;
     uid: string;
@@ -59,6 +61,7 @@ export interface Applicant {
 
     // IP affiliation
     ip_affiliation: string;
+    is_4ps_member: number;
 
     // Submission
     submitted_at: string;
@@ -69,4 +72,9 @@ export interface Applicant {
 
     itr_file: string;
     grades_file: string;
+    grades: GradeEntry[];
+
+    score: number;
+    classification: string;
+    recommendations: [];
 }

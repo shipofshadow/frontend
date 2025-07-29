@@ -2,19 +2,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 import { API_BASE_URL } from "../config";
 import SessionModal from "../components/SessionModal";
 import { isTokenExpiredSoon } from "../utils/jwt";
-
-interface Profile {
-    first_name: string;
-    last_name: string;
-    middle_name: string;
-    student_id: string;
-    extension_name: string;
-
-    email: string;
-    contact_number: string;
-
-    birth_date: string;
-}
+import type {Profile} from "../interfaces/profile.ts";
 interface User {
     id: number;
     is_active: number;
@@ -115,7 +103,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                     logout();
                 }
             }
-        }, 30000); // every 30 seconds
+        }, 30000);
 
         return () => clearInterval(interval);
     }, [token, logout]);

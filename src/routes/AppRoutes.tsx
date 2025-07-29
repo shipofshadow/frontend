@@ -40,6 +40,8 @@ import ArchivedDocuments from "../pages/admin/documents/ArchivedDocuments.tsx";
 import SubmittedRequirements from "../pages/admin/documents/SubmittedRequirements.tsx";
 import FuzzyLogic from "../pages/admin/FuzzyLogic.tsx";
 import ImportStudents from "../pages/admin/ImportStudents.tsx";
+import ManageScholarships from "../pages/admin/scholarships/ManageScholarships.tsx";
+import ScholarshipRules from "../pages/admin/scholarships/ScholarshipRules.tsx";
 
 export function AuthRedirect() {
     const { isAuthenticated, isAdmin, isStudent } = useAuth();
@@ -82,6 +84,13 @@ const AppRoutes: React.FC = () => {
                         <Route path="not-applied" element={<NotApplied />} />
                     </Route>
 
+                    <Route path="scholarships">
+                        <Route path="manage" element={<ManageScholarships />} />
+                        <Route path="rules" element={<ScholarshipRules />} />
+                        <Route path="scholarship-summary" element={<ScholarshipSummary/>}/>
+
+                    </Route>
+
                     {/* Document Routes */}
                     <Route path="documents">
                         <Route index element={<Applicants />} />
@@ -92,7 +101,6 @@ const AppRoutes: React.FC = () => {
                     {/* Report Routes */}
                     <Route path="reports">
                         <Route path="applicants" element={<ApplicantsReport/>}/>
-                        <Route path="scholarship-summary" element={<ScholarshipSummary/>}/>
                         <Route path="department" element={<CampusReport/>}/>
                     </Route>
 
