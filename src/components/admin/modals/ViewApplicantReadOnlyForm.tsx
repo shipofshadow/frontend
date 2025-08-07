@@ -1,17 +1,72 @@
 import type {Applicant} from "../../../interfaces/applicant.ts";
-import React, {useState} from "react";
+import React, {useEffect, useState} from "react";
 import type {GradeEntry} from "../../../interfaces/GradeEntry.ts";
 import FilePreview from "../FilePreview.tsx";
-
+import axios from "axios";
+import {API_BASE_URL} from "../../../config.ts";
+import {useAuth} from "../../../context/AuthContext.tsx";
 interface Props {
-    applicant: Applicant;
-    onApplicationStatus?: (id: number, status: "approved" | "denied" | null, remarks?: string) => void;
+    applicant: Applicant | null;
+}
+interface RecommendedScholarship {
+    id: number;
+    scholarship_id: number
+    name: string;
+    description: string;
+    is_active: number;
+    created_at: string;
+    updated_at: string;
+    deleted_at: string | null;
+    selection_status: string | null;
+}
+interface ScholarshipRecommendationsResponse {
+    recommendations: RecommendedScholarship[];
+    selectedScholarships: number[];
 }
 
-const ViewApplicantReadOnlyForm : React.FC<Props> = ({ applicant, onApplicationStatus }) => {
-    const [showModal, setShowModal] = useState(false);
-    const [modalAction, setModalAction] = useState<'approved' | 'denied' | null>(null);
-    const [remarks, setRemarks] = useState('');
+
+const ViewApplicantReadOnlyForm : React.FC<Props> = ({ applicant }) => {
+
+    const [recommendedScholarships, setRecommendedScholarships] = useState<RecommendedScholarship[]>([]);
+    const { token } = useAuth();
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+
+
+    useEffect(() => {
+        const fetchRecommendations = async () => {
+            if (!applicant?.id) return;
+
+            setLoading(true);
+            setError(null);
+
+            try {
+                const response = await axios.post<ScholarshipRecommendationsResponse>(
+                    `${API_BASE_URL}/api/evaluations/recommendations`,
+                    { application_id: applicant.id },
+                    {
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                        },
+                    }
+                );
+
+                const scholarships: RecommendedScholarship[] = response.data.recommendations || [];
+
+                setRecommendedScholarships(scholarships);
+
+            } catch (error) {
+                console.error("Failed to fetch recommendations:", error);
+                setError("Failed to load scholarship recommendations");
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchRecommendations().catch((err) =>
+            console.error("Promise rejection in fetchRecommendations:", err)
+        );
+    }, [applicant, token]);
 
     if (!applicant) return (
         <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '200px' }}>
@@ -26,7 +81,85 @@ const ViewApplicantReadOnlyForm : React.FC<Props> = ({ applicant, onApplicationS
     const weightedSum = grades.reduce((acc, g) => acc + g.grade * g.units, 0);
     const gwa = totalUnits ? (weightedSum / totalUnits).toFixed(2) : "0.00";
 
-    const combinedIncome = parseFloat(applicant.father_income || 0) + parseFloat(applicant.mother_income || 0);
+    const combinedIncome = parseFloat(applicant.father_income || 0 as unknown as string) + parseFloat(applicant.mother_income || 0 as unknown as string);
+
+    const renderScholarshipRecommendations = () => {
+        if (loading) {
+            return (
+                <div className="d-flex justify-content-center py-4">
+                    <div className="spinner-border text-primary" role="status">
+                        <span className="visually-hidden">Loading recommendations...</span>
+                    </div>
+                </div>
+            );
+        }
+
+        if (error) {
+            return (
+                <div className="alert alert-warning">
+                    <i className="bi bi-exclamation-triangle me-2"></i>
+                    {error}
+                </div>
+            );
+        }
+
+        // Additional safety check
+        if (!Array.isArray(recommendedScholarships) || recommendedScholarships.length === 0) {
+            console.log('recommendedScholarships is not an array or is empty:', recommendedScholarships);
+            return (
+                <div className="alert alert-info">
+                    <i className="bi bi-info-circle me-2"></i>
+                    No scholarship recommendations available.
+                </div>
+            );
+        }
+
+        return (
+            <div className="row">
+                {recommendedScholarships.map((scholarship, index) => {
+
+                    if (!scholarship || typeof scholarship !== 'object') {
+                        console.warn('Invalid scholarship object:', scholarship);
+                        return null;
+                    }
+
+                    const isSelected = scholarship.selection_status === 'selected';
+                    return (
+                        <div className="col-md-6 col-lg-6 mb-4" key={scholarship.id || index}>
+                            <div className={`card h-100 border-0 shadow-sm rounded-4 position-relative ${isSelected ? 'border border-2 border-success' : ''}`}>
+                                {isSelected && (
+                                    <span className="badge bg-success position-absolute top-0 end-0 mt-2 me-2 rounded-pill px-3 py-1 shadow-sm">
+                            Selected
+                          </span>
+                                )}
+                                <div className="card-body d-flex flex-column justify-content-between">
+                                    <div>
+                                        <h5 className="fw-semibold text-dark mb-2">
+                                            {scholarship.name || 'Unnamed Scholarship'}
+                                        </h5>
+                                        <p className="text-muted small mb-3">
+                                            {scholarship.description || 'No description available.'}
+                                        </p>
+                                    </div>
+
+                                    <div className="d-flex justify-content-between align-items-center">
+                                        <small className="text-muted d-flex align-items-center">
+                                            <i className="bi bi-calendar me-1"></i>
+                                            {scholarship.created_at ? new Date(scholarship.created_at).toLocaleDateString() : 'N/A'}
+                                        </small>
+                                        <span className={`badge rounded-pill px-2 ${scholarship.is_active ? 'bg-success-subtle text-success' : 'bg-secondary-subtle text-secondary'}`}>
+          {scholarship.is_active ? 'Active' : 'Inactive'}
+        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    );
+                }).filter(Boolean)} {/* Filter out null values */}
+            </div>
+        );
+    };
 
     return (
         <>
@@ -37,11 +170,11 @@ const ViewApplicantReadOnlyForm : React.FC<Props> = ({ applicant, onApplicationS
                         <div className="row align-items-center">
                             <div className="col-md-8">
                                 <h4 className="mb-1">
-                                    <i className="bi bi-person-badge me-2"></i>
+                                    <i className="far fa-person me-2"></i>
                                     {`${applicant.first_name} ${applicant.middle_name || ''} ${applicant.last_name} ${applicant.name_extension || ''}`.trim()}
                                 </h4>
                                 <p className="mb-0 opacity-75">
-                                    <i className="bi bi-mortarboard me-1"></i>
+                                    <i className="far fa-mortar-board me-1"></i>
                                     {applicant.course} • {applicant.year_level} • {applicant.campus}
                                 </p>
                             </div>
@@ -257,7 +390,7 @@ const ViewApplicantReadOnlyForm : React.FC<Props> = ({ applicant, onApplicationS
                                             <div className="col-md-6">
                                                 <label className="form-label fw-semibold">Father's Monthly Income</label>
                                                 <input type="text" className="form-control"
-                                                       value={`₱${parseFloat(applicant.father_income || 0).toLocaleString()}`} readOnly/>
+                                                       value={`₱${parseFloat(applicant.father_income || 0 as unknown as string).toLocaleString()}`} readOnly/>
                                             </div>
                                             <div className="col-md-6">
                                                 <label className="form-label fw-semibold">Mother's Name</label>
@@ -272,7 +405,7 @@ const ViewApplicantReadOnlyForm : React.FC<Props> = ({ applicant, onApplicationS
                                             <div className="col-md-6">
                                                 <label className="form-label fw-semibold">Mother's Monthly Income</label>
                                                 <input type="text" className="form-control"
-                                                       value={`₱${parseFloat(applicant.mother_income || 0).toLocaleString()}`} readOnly/>
+                                                       value={`₱${parseFloat(applicant.mother_income || 0 as unknown as string).toLocaleString()}`} readOnly/>
                                             </div>
                                         </div>
                                     </div>
@@ -538,64 +671,17 @@ const ViewApplicantReadOnlyForm : React.FC<Props> = ({ applicant, onApplicationS
                                                                 </span>
                                                             </div>
                                                         </div>
+
                                                     </div>
                                                 </div>
                                             </div>
-                                        </div>
 
-                                        {/* Action Buttons */}
-                                        <div className="mt-4 pt-3 border-top">
-                                            {!applicant?.score ? (
-                                                <div className="d-flex justify-content-center">
-                                                    <button
-                                                        type="button"
-                                                        className="btn btn-primary btn-lg px-5"
-                                                        onClick={() => onApplicationStatus?.(applicant.id, 'evaluate')}
-                                                    >
-                                                        <i className="far fa-calculator me-2"></i>
-                                                        Evaluate Eligibility
-                                                    </button>
-                                                </div>
-                                            ) : applicant.status?.toLowerCase() !== "pending" ? (
-                                                <div className="text-center">
-                                                    <div
-                                                        className={`alert alert-${
-                                                            applicant.status === "approved" ? "success" : "danger"
-                                                        } d-inline-block px-5 py-3 mb-0`}
-                                                        role="alert"
-                                                    >
-                                                        <i className={`far ${
-                                                            applicant.status === "approved" ? "fa-check-circle" : "fa-circle-x"
-                                                        } me-2`}></i>
-                                                        <strong>Application {applicant.status.toUpperCase()}</strong>
-                                                    </div>
-                                                </div>
-                                            ) : (
-                                                <div className="d-flex justify-content-center gap-3">
-                                                    <button
-                                                        type="button"
-                                                        className="btn btn-danger btn-lg px-4"
-                                                        onClick={() => {
-                                                            setModalAction('denied');
-                                                            setShowModal(true);
-                                                        }}
-                                                    >
-                                                        <i className="far fa-circle-x me-2"></i>
-                                                        Deny Application
-                                                    </button>
-                                                    <button
-                                                        type="button"
-                                                        className="btn btn-success btn-lg px-4"
-                                                        onClick={() => {
-                                                            setModalAction('approved');
-                                                            setShowModal(true);
-                                                        }}
-                                                    >
-                                                        <i className="far fa-check-circle me-2"></i>
-                                                        Approve Application
-                                                    </button>
-                                                </div>
-                                            )}
+                                            <div className="col-md-12 mb-3">
+                                                <h5 className="border-bottom pb-2">
+                                                    <i className="bi bi-award-fill me-2"></i>Recommended Scholarships
+                                                </h5>
+                                                {renderScholarshipRecommendations()}
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -605,66 +691,6 @@ const ViewApplicantReadOnlyForm : React.FC<Props> = ({ applicant, onApplicationS
                 </div>
             </div>
 
-            {/* Decision Modal */}
-            {showModal && (
-                <div className="modal fade show d-block" tabIndex={-1} role="dialog" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
-                    <div className="modal-dialog modal-dialog-centered modal-lg" role="document">
-                        <div className="modal-content">
-                            <div className={`modal-header ${modalAction === 'approved' ? 'bg-success' : 'bg-danger'} text-white`}>
-                                <h5 className="modal-title text-capitalize">
-                                    <i className={`bi ${modalAction === 'approved' ? 'bi-check-circle' : 'bi-x-circle'} me-2`}></i>
-                                    {modalAction} Application
-                                </h5>
-                                <button type="button" className="btn-close btn-close-white" onClick={() => setShowModal(false)}></button>
-                            </div>
-                            <div className="modal-body p-4">
-                                <div className="alert alert-info border-0" role="alert">
-                                    <i className="bi bi-info-circle me-2"></i>
-                                    Please provide detailed remarks for your decision. This will be recorded and visible to the applicant.
-                                </div>
-
-                                <div className="mb-3">
-                                    <label htmlFor="remarks" className="form-label fw-semibold">
-                                        Remarks <span className="text-danger">*</span>
-                                    </label>
-                                    <textarea
-                                        id="remarks"
-                                        className="form-control form-control-lg"
-                                        rows={5}
-                                        placeholder={`Please provide detailed reasons for ${modalAction === 'approved' ? 'approving' : 'denying'} this application...`}
-                                        value={remarks}
-                                        onChange={(e) => setRemarks(e.target.value)}
-                                        required
-                                    ></textarea>
-                                    <div className="form-text">
-                                        Minimum 10 characters required. Be specific and professional.
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="modal-footer bg-light">
-                                <button type="button" className="btn btn-outline-secondary btn-lg" onClick={() => setShowModal(false)}>
-                                    <i className="bi bi-arrow-left me-2"></i>
-                                    Cancel
-                                </button>
-                                <button
-                                    type="button"
-                                    className={`btn ${modalAction === 'approved' ? 'btn-success' : 'btn-danger'} btn-lg px-4`}
-                                    disabled={!remarks.trim() || remarks.trim().length < 10}
-                                    onClick={() => {
-                                        onApplicationStatus?.(applicant.id, modalAction, remarks);
-                                        setShowModal(false);
-                                        setRemarks('');
-                                        setModalAction(null);
-                                    }}
-                                >
-                                    <i className={`bi ${modalAction === 'approved' ? 'bi-check-circle' : 'bi-x-circle'} me-2`}></i>
-                                    Confirm {modalAction === 'approved' ? 'Approval' : 'Denial'}
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
         </>
     );
 };

@@ -77,4 +77,5 @@ export interface Applicant {
     score: number;
     classification: string;
     recommendations: [];
+    "students.student_id": string
 }

@@ -33,6 +33,22 @@ const Sidebar: React.FC = () => {
                 Dashboard
               </NavLink>
 
+              <NavLink
+                  to="/admin/scholarships/dashboard"
+                  className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
+              >
+                <div className="nav-link-icon"><i className="far fa-hand-holding-dollar"></i></div>
+                Scholarship Dashboard
+              </NavLink>
+
+              <NavLink
+                  to="/admin/approved"
+                  className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
+              >
+                <div className="nav-link-icon"><i className="far fa-user-check"></i></div>
+                Approved Applicants
+              </NavLink>
+
               <div className="sidenav-menu-heading">Applicant Management</div>
 
               <SidebarCollapse
@@ -45,16 +61,6 @@ const Sidebar: React.FC = () => {
                       to: '/admin/applicants/manage',
                       label: 'Manage Applicants',
                       icon: 'far fa-user-check',
-                    },
-                    {
-                      to: '/admin/bulk-evaluation',
-                      label: 'Evaluation',
-                      icon: 'far fa-file-upload',
-                    },
-                    {
-                      to: '/admin/applicants/qualified',
-                      label: 'Qualified Applicants',
-                      icon: 'far fa-check-circle',
                     },
                     {
                       to: '/admin/applicants/not-applied',

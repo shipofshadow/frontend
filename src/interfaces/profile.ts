@@ -38,4 +38,9 @@ export interface Profile {
     siblings_studying: number;
     ip_affiliation: string;
     is_4ps_member: number;
+
+    citizenship: string;
+
+    emergency_contact_name: string;
+    emergency_contact_number: string;
 }

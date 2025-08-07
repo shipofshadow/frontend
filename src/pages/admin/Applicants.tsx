@@ -1,30 +1,33 @@
-import { useEffect, useRef, useState } from 'react';
-import { DataTable } from 'simple-datatables';
+import { useEffect, useRef, useState, type SetStateAction} from 'react';
+import {DataTable} from 'simple-datatables';
 import "simple-datatables/dist/style.css";
 import Swal from 'sweetalert2';
 import 'sweetalert2/dist/sweetalert2.min.css';
 import axios from 'axios';
-import { API_BASE_URL } from "../../config.ts";
-import { useAuth } from "../../context/AuthContext.tsx";
+import {API_BASE_URL} from "../../config.ts";
+import {useAuth} from "../../context/AuthContext.tsx";
 import ViewApplicantReadOnlyForm from '../../components/admin/modals/ViewApplicantReadOnlyForm.tsx';
 import type {Applicant} from "../../interfaces/applicant.ts";
-import FilePreview from "../../components/admin/FilePreview.tsx";
+
 
 const ApplicantsTable = () => {
     const tableRef = useRef(null);
     const [applicants, setApplicants] = useState<Applicant[]>([]);
-    const [selectedApplicant, setSelectedApplicant] = useState(null);
-    const [editApplicant, setEditApplicant] = useState(null);
-    const { token, user } = useAuth();
+    const [filteredApplicants, setFilteredApplicants] = useState<Applicant[]>([]);
+    const [selectedApplicant, setSelectedApplicant] = useState<Applicant | null>(null);
+    const [statusFilter, setStatusFilter] = useState('all');
+    const [sortBy, setSortBy] = useState('newest');
+    const {token} = useAuth();
 
     const fetchApplicants = async () => {
         try {
-            const response = await axios.get(`${API_BASE_URL}/api/applicants/`, {
+            const response = await axios.get<Applicant[]>(`${API_BASE_URL}/api/applicants/`, {
                 headers: {
                     Authorization: `Bearer ${token}`
                 }
             });
             setApplicants(response.data);
+            setFilteredApplicants(response.data);
         } catch (error) {
             console.error('Error fetching applicants:', error);
             await Swal.fire('Error', 'Failed to load applicants.', 'error');
@@ -32,34 +35,74 @@ const ApplicantsTable = () => {
     };
 
     useEffect(() => {
-        if (user?.role !== 'admin') {
-            Swal.fire('Access Denied', 'Admin access required.', 'error');
-            return;
+        let filtered = [...applicants];
+
+        if (statusFilter !== 'all') {
+            filtered = filtered.filter(applicant => applicant.status === statusFilter);
         }
-        fetchApplicants();
-    }, []);
+
+        filtered.sort((a, b) => {
+            switch (sortBy) {
+                case 'newest':
+                    return new Date(b.created_at || b.updated_at || 0).getTime() - new Date(a.created_at || a.updated_at || 0).getTime();
+                case 'oldest':
+                    return new Date(a.created_at || a.updated_at || 0).getTime() - new Date(b.created_at || b.updated_at || 0).getTime();
+                case 'name_asc':
+                    return (a.last_name || '').localeCompare(b.last_name || '');
+                case 'name_desc':
+                    return (b.last_name || '').localeCompare(a.last_name || '');
+
+                default:
+                    return 0;
+            }
+        });
+
+        setFilteredApplicants(filtered);
+    }, [applicants, statusFilter, sortBy]);
 
     useEffect(() => {
-        if (tableRef.current && applicants.length > 0) {
+        fetchApplicants().catch((err) =>
+            console.error("Promise rejection in fetchApplicants:", err)
+        );
+    },[]);
+
+    useEffect(() => {
+        if (tableRef.current && filteredApplicants.length > 0) {
+
+
             new DataTable(tableRef.current, {
-                perPage: 5,
+                perPage: 10,
                 searchable: true,
                 sortable: true,
+                labels: {
+                    placeholder: "Search applicants...",
+                    noRows: "No applicants found matching your criteria",
+                    info: "Showing {start} to {end} of {rows} applicants"
+                }
             });
         }
-    }, [applicants]);
+    }, [filteredApplicants]);
 
+    const handleStatusFilterChange = (e: { target: { value: SetStateAction<string>; }; }) => {
+        setStatusFilter(e.target.value);
+    };
 
+    const handleSortChange = (e: { target: { value: SetStateAction<string>; }; }) => {
+        setSortBy(e.target.value);
+    };
+
+    const getStatusCount = (status: string) => {
+        if (status === 'all') return applicants.length;
+        return applicants.filter(applicant => applicant.status === status).length;
+    };
 
     const viewApplicant = async (id: number): Promise<void> => {
         setSelectedApplicant(null);
-        setEditApplicant(null);
         try {
-            const response = await axios.get(`${API_BASE_URL}/api/applicants/${id}`, {
+            const response = await axios.get<Applicant>(`${API_BASE_URL}/api/applicants/${id}`, {
                 headers: { Authorization: `Bearer ${token}` },
             });
             setSelectedApplicant(response.data);
-            setEditApplicant(response.data);
             console.log(response.data);
         } catch (error) {
             console.error('Error viewing applicant:', error);
@@ -67,50 +110,7 @@ const ApplicantsTable = () => {
         }
     };
 
-    const handleApplicationStatus = async (
-        applicationId: number,
-        status: 'approved' | 'denied',
-        remarks?: string
-    ) => {
-        const confirm = await Swal.fire({
-            title: `Are you sure?`,
-            text: `You are about to ${status} this application.`,
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonText: 'Yes, proceed!',
-        });
-
-        if (!confirm.isConfirmed) return;
-
-        try {
-            await axios.put(
-                `${API_BASE_URL}/api/applicants/${applicationId}/status`,
-                {
-                    status,
-                    remarks,
-                },
-                {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                    },
-                }
-            );
-
-            await Swal.fire(
-                'Success',
-                `Application has been ${status}.`,
-                'success'
-            ).then(() => {
-                window.location.reload();
-            });
-
-        } catch (error) {
-            console.error(error);
-            Swal.fire('Error', 'Failed to update status.', 'error');
-        }
-    };
-
-    const handleDelete = async (applicantId) => {
+    const handleDelete = async (applicantId: number) => {
         const confirm = await Swal.fire({
             title: 'Are you sure?',
             text: "This action cannot be undone!",
@@ -123,11 +123,11 @@ const ApplicantsTable = () => {
 
         if (confirm.isConfirmed) {
             try {
-                await axios.delete(`${API_BASE_URL}/api/applicants/${applicantId}`, {
+                await axios.patch(`${API_BASE_URL}/api/applicants/${applicantId}`, {}, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
-                Swal.fire('Deleted!', 'The applicant has been deleted.', 'success');
-                fetchApplicants();
+                await Swal.fire('Deleted!', 'The applicant has been deleted.', 'success');
+                await fetchApplicants();
             } catch (error) {
                 console.error('Delete error:', error);
                 Swal.fire('Error', 'Failed to delete applicant.', 'error');
@@ -147,102 +147,262 @@ const ApplicantsTable = () => {
                                     Application Management
                                 </h1>
                             </div>
+                            <div className="col-auto mb-3">
+                                <div className="d-flex align-items-center gap-2">
+                                    <small className="text-muted">Total: {applicants.length} applicants</small>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
             </header>
 
             <div className="container-xl">
+                {/* Statistics Cards */}
+                <div className="row g-3 mb-4">
+                    <div className="col-md-3">
+                        <div className="card bg-primary text-white h-100">
+                            <div className="card-body d-flex align-items-center">
+                                <div className="me-3">
+                                    <i className="fas fa-users fa-2x opacity-75"></i>
+                                </div>
+                                <div>
+                                    <div className="fs-4 fw-bold">{getStatusCount('all')}</div>
+                                    <div className="small">Total Applications</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="col-md-3">
+                        <div className="card bg-warning text-white h-100">
+                            <div className="card-body d-flex align-items-center">
+                                <div className="me-3">
+                                    <i className="fas fa-clock fa-2x opacity-75"></i>
+                                </div>
+                                <div>
+                                    <div className="fs-4 fw-bold">{getStatusCount('pending')}</div>
+                                    <div className="small">Pending Review</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="col-md-3">
+                        <div className="card bg-success text-white h-100">
+                            <div className="card-body d-flex align-items-center">
+                                <div className="me-3">
+                                    <i className="fas fa-check-circle fa-2x opacity-75"></i>
+                                </div>
+                                <div>
+                                    <div className="fs-4 fw-bold">{getStatusCount('approved')}</div>
+                                    <div className="small">Approved</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="col-md-3">
+                        <div className="card bg-danger text-white h-100">
+                            <div className="card-body d-flex align-items-center">
+                                <div className="me-3">
+                                    <i className="fas fa-times-circle fa-2x opacity-75"></i>
+                                </div>
+                                <div>
+                                    <div className="fs-4 fw-bold">{getStatusCount('denied')}</div>
+                                    <div className="small">Denied</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <div className="card mb-4">
-                    <div className="card-header d-flex justify-content-end">
-                        <button className="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#addModal">
-                            Add New Applicant
-                        </button>
+                    <div className="card-header">
+                        <div className="row align-items-center">
+                            <div className="col-md-6">
+                                <h5 className="card-title mb-0">
+                                    <i className="fas fa-filter me-2"></i>
+                                    Manage Applications
+                                </h5>
+                            </div>
+
+                        </div>
                     </div>
 
                     <div className="card-body">
-                        <table ref={tableRef} className="table table-striped table-bordered">
-                            <thead>
-                            <tr>
-                                <th>Student ID</th>
-                                <th>Last Name</th>
-                                <th>First Name</th>
-                                <th>Middle Name</th>
-                                <th>Gender</th>
-                                <th>Campus</th>
-                                <th>Course</th>
-                                <th>Year Level</th>
-                                <th>Birthdate</th>
-                                <th>Status</th>
-                                <th>Actions</th>
-                            </tr>
-                            </thead>
-                            <tbody>
-                            {applicants.length > 0 ? (
-                                applicants.map((applicant) => (
-                                    <tr key={applicant.student_id}>
-                                        <td>{applicant.uid}</td>
-                                        <td>{applicant.last_name}</td>
-                                        <td>{applicant.first_name}</td>
-                                        <td>{applicant.middle_name || 'N/A'}</td>
-                                        <td>{applicant.gender}</td>
-                                        <td>{applicant.campus}</td>
-                                        <td>{applicant.course}</td>
-                                        <td>{applicant.year_level}</td>
-                                        <td>{new Date(applicant.birth_date).toLocaleDateString()}</td>
-                                        <td>
-                                            <div className={`badge rounded-pill text-capitalize ${
-                                                applicant.status === 'pending' ? 'bg-warning' :
-                                                applicant.status === 'approved' ? 'bg-success' :
-                                                'bg-danger'
-                                            }`}>
-                                                {applicant.status}
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <div className="btn-group">
-                                                <button
-                                                    className="btn btn-outline-success btn-sm"
-                                                    onClick={() => viewApplicant(applicant.student_id)}
-                                                    data-bs-toggle="modal"
-                                                    data-bs-target="#viewModal"
-                                                    title="View"
-                                                >
-                                                    <i className="fa-regular fa-eye"></i>
-                                                </button>
+                        {/* Filter and Sort Controls */}
+                        <div className="row g-3 mb-4 align-items-end">
+                            <div className="col-md-4">
+                                <label className="form-label fw-bold">
+                                    <i className="fas fa-filter me-1"></i>
+                                    Filter by Status
+                                </label>
+                                <select
+                                    className="form-select"
+                                    value={statusFilter}
+                                    onChange={handleStatusFilterChange}
+                                >
+                                    <option value="all">All Status ({getStatusCount('all')})</option>
+                                    <option value="pending">Pending ({getStatusCount('pending')})</option>
+                                    <option value="approved">Approved ({getStatusCount('approved')})</option>
+                                    <option value="denied">Denied ({getStatusCount('denied')})</option>
+                                </select>
+                            </div>
+                            <div className="col-md-4">
+                                <label className="form-label fw-bold">
+                                    <i className="fas fa-sort me-1"></i>
+                                    Sort by
+                                </label>
+                                <select
+                                    className="form-select"
+                                    value={sortBy}
+                                    onChange={handleSortChange}
+                                >
+                                    <option value="newest">Newest First</option>
+                                    <option value="oldest">Oldest First</option>
+                                    <option value="name_asc">Name (A-Z)</option>
+                                    <option value="name_desc">Name (Z-A)</option>
+                                    <option value="status_asc">Status (Pending First)</option>
+                                    <option value="status_desc">Status (Denied First)</option>
+                                </select>
+                            </div>
+                            <div className="col-md-4">
+                                <div className="d-flex gap-2">
+                                    <button
+                                        className="btn btn-outline-secondary"
+                                        onClick={() => {
+                                            setStatusFilter('all');
+                                            setSortBy('newest');
+                                        }}
+                                    >
+                                        <i className="fas fa-undo me-1"></i>
+                                        Reset Filters
+                                    </button>
+                                    <button
+                                        className="btn btn-outline-primary"
+                                        onClick={fetchApplicants}
+                                    >
+                                        <i className="fas fa-sync me-1"></i>
+                                        Refresh
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
 
-                                                <button
-                                                    className="btn btn-outline-secondary btn-sm"
-                                                    onClick={() => viewApplicant(applicant.student_id)}
-                                                    data-bs-toggle="modal"
-                                                    data-bs-target="#editModal"
-                                                    title="Edit"
-                                                >
-                                                    <i className="fa-regular fa-pen-to-square"></i>
-                                                </button>
+                        {/* Results Info */}
+                        <div className="alert alert-info d-flex align-items-center mb-3">
+                            <i className="fas fa-info-circle me-2"></i>
+                            <span>
+                                Showing <strong>{filteredApplicants.length}</strong> of <strong>{applicants.length}</strong> applications
+                                {statusFilter !== 'all' && (
+                                    <span> • Filtered by: <strong className="text-capitalize">{statusFilter}</strong></span>
+                                )}
+                            </span>
+                        </div>
 
-
-                                                <button
-                                                    className="btn btn-outline-danger btn-sm"
-                                                    title="Delete"
-                                                    onClick={() => handleDelete(applicant.id)}
-                                                >
-                                                    <i className="fa-regular fa-archive"></i>
-                                                </button>
-                                            </div>
-                                        </td>
-
-                                    </tr>
-                                ))
-                            ) : (
+                        <div className="table-responsive">
+                            <table ref={tableRef} className="table table-striped table-bordered table-hover">
+                                <thead className="table-dark">
                                 <tr>
-                                    <td colSpan="11">
-                                            <span>No applicants found.</span>
-                                    </td>
+                                    <th>Student ID</th>
+                                    <th>Last Name</th>
+                                    <th>First Name</th>
+                                    <th>Middle Name</th>
+                                    <th>Gender</th>
+                                    <th>Campus</th>
+                                    <th>Course</th>
+                                    <th>Year Level</th>
+                                    <th>Birthdate</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
                                 </tr>
-                            )}
-                        </tbody>
-                        </table>
+                                </thead>
+                                <tbody>
+                                {filteredApplicants.length > 0 ? (
+                                    filteredApplicants.map((applicant) => (
+                                        <tr key={applicant.student_id}>
+                                            <td>
+                                                <span className="fw-bold text-primary">{applicant.uid}</span>
+                                            </td>
+                                            <td>{applicant.last_name}</td>
+                                            <td>{applicant.first_name}</td>
+                                            <td>{applicant.middle_name || 'N/A'}</td>
+                                            <td>
+                                                <span className={`badge rounded-pill ${
+                                                    applicant.gender === 'Male' ? 'bg-info' :
+                                                        applicant.gender === 'Female' ? 'bg-pink' : 'bg-secondary'
+                                                }`}>
+                                                    {applicant.gender}
+                                                </span>
+                                            </td>
+                                            <td>{applicant.campus}</td>
+                                            <td>
+                                                <small className="text-muted">{applicant.course}</small>
+                                            </td>
+                                            <td>
+                                                <span className="badge bg-light text-dark">{applicant.year_level}</span>
+                                            </td>
+                                            <td>
+                                                <small>{new Date(applicant.birth_date).toLocaleDateString()}</small>
+                                            </td>
+                                            <td>
+                                                <div className={`badge rounded-pill text-capitalize fw-bold ${
+                                                    applicant.status === 'pending' ? 'bg-warning text-dark' :
+                                                        applicant.status === 'approved' ? 'bg-success' :
+                                                            'bg-danger'
+                                                }`}>
+                                                    <i className={`fas ${
+                                                        applicant.status === 'pending' ? 'fa-clock' :
+                                                            applicant.status === 'approved' ? 'fa-check' : 'fa-times'
+                                                    } me-1`}></i>
+                                                    {applicant.status}
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div className="btn-group" role="group">
+                                                    <button
+                                                        className="btn btn-outline-primary btn-sm"
+                                                        onClick={() => viewApplicant(applicant.id)}
+                                                        data-bs-toggle="modal"
+                                                        data-bs-target="#viewModal"
+                                                        title="View Details"
+                                                    >
+                                                        <i className="fa-regular fa-eye"></i>
+                                                    </button>
+
+                                                    <button
+                                                        className="btn btn-outline-secondary btn-sm"
+                                                        onClick={() => viewApplicant(applicant.id)}
+                                                        data-bs-toggle="modal"
+                                                        data-bs-target="#editModal"
+                                                        title="Edit Application"
+                                                    >
+                                                        <i className="fa-regular fa-pen-to-square"></i>
+                                                    </button>
+
+                                                    <button
+                                                        className="btn btn-outline-danger btn-sm"
+                                                        title="Archive Application"
+                                                        onClick={() => handleDelete(applicant.id)}
+                                                    >
+                                                        <i className="fa-regular fa-archive"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))
+                                ) : (
+                                    <tr>
+                                        <td colSpan={11} className="text-center py-4">
+                                            <div className="text-muted">
+                                                <i className="fas fa-search fa-2x mb-2 opacity-50"></i>
+                                                <p className="mb-0">No applicants found matching your criteria.</p>
+                                                <small>Try adjusting your filters or search terms.</small>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                )}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -252,18 +412,19 @@ const ApplicantsTable = () => {
                 <div className="modal-dialog modal-xl">
                     <div className="modal-content">
                         <div className="modal-header">
-                            <h5 className="modal-title">Applicant Details</h5>
+                            <h5 className="modal-title">
+                                <i className="fas fa-user-circle me-2"></i>
+                                Applicant Details
+                            </h5>
                             <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
                         <div className="modal-body">
                             <ViewApplicantReadOnlyForm
                                 applicant={selectedApplicant}
-                                onApplicationStatus={handleApplicationStatus}
                             />
-
                         </div>
+                    </div>
                 </div>
-            </div>
             </div>
 
             {/* Edit Modal */}
@@ -275,511 +436,7 @@ const ApplicantsTable = () => {
                             <button id="editModalClose" type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
                         <div className="modal-body">
-                            {editApplicant ? (
-                                <form >
-                                    {/* --- PERSONAL INFORMATION --- */}
-                                    <h5 className="mb-3">Personal Information</h5>
-                                    <div className="row">
-                                        <div className="col-md-4 mb-3">
-                                            <label className="form-label">First Name</label>
-                                            <input
-                                                type="text"
-                                                className="form-control form-control-sm"
-                                                value={editApplicant.first_name || ""}
-                                                onChange={(e) =>
-                                                    setEditApplicant({ ...editApplicant, first_name: e.target.value })
-                                                }
-                                            />
-                                        </div>
-                                        <div className="col-md-4 mb-3">
-                                            <label className="form-label">Middle Name</label>
-                                            <input
-                                                type="text"
-                                                className="form-control form-control-sm"
-                                                value={editApplicant.middle_name || ""}
-                                                onChange={(e) =>
-                                                    setEditApplicant({ ...editApplicant, middle_name: e.target.value })
-                                                }
-                                            />
-                                        </div>
-                                        <div className="col-md-4 mb-3">
-                                            <label className="form-label">Last Name</label>
-                                            <input
-                                                type="text"
-                                                className="form-control form-control-sm"
-                                                value={editApplicant.last_name || ""}
-                                                onChange={(e) =>
-                                                    setEditApplicant({ ...editApplicant, last_name: e.target.value })
-                                                }
-                                            />
-                                        </div>
-                                        <div className="col-md-2 mb-3">
-                                            <label className="form-label">Name Extension</label>
-                                            <input
-                                                type="text"
-                                                className="form-control form-control-sm"
-                                                value={editApplicant.name_extension || ""}
-                                                onChange={(e) =>
-                                                    setEditApplicant({
-                                                        ...editApplicant,
-                                                        name_extension: e.target.value,
-                                                    })
-                                                }
-                                            />
-                                        </div>
-                                        <div className="col-md-2 mb-3">
-                                            <label className="form-label">Student ID</label>
-                                            <input
-                                                type="text"
-                                                className="form-control form-control-sm"
-                                                value={editApplicant["students.student_id"] || ""}
-                                                onChange={(e) =>
-                                                    setEditApplicant({
-                                                        ...editApplicant,
-                                                        ["students.student_id"]: e.target.value,
-                                                    })
-                                                }
-                                            />
-                                        </div>
-                                        <div className="col-md-2 mb-3">
-                                            <label className="form-label">Birth Date</label>
-                                            <input
-                                                type="date"
-                                                className="form-control form-control-sm"
-                                                value={editApplicant.birth_date?.split("T")[0] || ""}
-                                                onChange={(e) =>
-                                                    setEditApplicant({ ...editApplicant, birth_date: e.target.value })
-                                                }
-                                            />
-                                        </div>
-                                        <div className="col-md-4 mb-3">
-                                            <label className="form-label">Gender</label>
-                                            <select
-                                                className="form-control form-control-sm"
-                                                value={editApplicant.gender || ""}
-                                                onChange={(e) =>
-                                                    setEditApplicant({ ...editApplicant, gender: e.target.value })
-                                                }
-                                            >
-                                                <option value="">Select</option>
-                                                <option value="Male">Male</option>
-                                                <option value="Female">Female</option>
-                                                <option value="Other">Other</option>
-                                            </select>
-                                        </div>
-                                        <div className="col-md-2 mb-3">
-                                            <label className="form-label">Citizenship</label>
-                                            <input
-                                                type="text"
-                                                className="form-control form-control-sm"
-                                                value={editApplicant.citizenship || ""}
-                                                onChange={(e) =>
-                                                    setEditApplicant({ ...editApplicant, citizenship: e.target.value })
-                                                }
-                                            />
-                                        </div>
-                                        <div className="col-md-2 mb-3">
-                                            <label className="form-label">Civil Status</label>
-                                            <input
-                                                type="text"
-                                                className="form-control form-control-sm"
-                                                value={editApplicant.civil_status || ""}
-                                                onChange={(e) =>
-                                                    setEditApplicant({ ...editApplicant, civil_status: e.target.value })
-                                                }
-                                            />
-                                        </div>
-                                        <div className="col-md-4 mb-3">
-                                            <label className="form-label">Contact Number</label>
-                                            <input
-                                                type="text"
-                                                className="form-control form-control-sm"
-                                                value={editApplicant.contact_number || ""}
-                                                onChange={(e) =>
-                                                    setEditApplicant({
-                                                        ...editApplicant,
-                                                        contact_number: e.target.value,
-                                                    })
-                                                }
-                                            />
-                                        </div>
-                                        <div className="col-md-4 mb-3">
-                                            <label className="form-label">Email Address</label>
-                                            <input
-                                                type="email"
-                                                className="form-control form-control-sm"
-                                                value={editApplicant.email || ""}
-                                                onChange={(e) =>
-                                                    setEditApplicant({ ...editApplicant, email: e.target.value })
-                                                }
-                                            />
-                                        </div>
-                                    </div>
-
-                                    {/* --- ADDRESS --- */}
-                                    <h5 className="mb-3 mt-4">Address</h5>
-                                    <div className="mb-3">
-                                        <label className="form-label">Street</label>
-                                        <input
-                                            type="text"
-                                            className="form-control form-control-sm"
-                                            value={editApplicant.street || ""}
-                                            onChange={(e) =>
-                                                setEditApplicant({ ...editApplicant, street: e.target.value })
-                                            }
-                                        />
-                                    </div>
-                                    <div className="row">
-                                        <div className="col-md-3 mb-3">
-                                            <label className="form-label">Barangay</label>
-                                            <input
-                                                type="text"
-                                                className="form-control form-control-sm"
-                                                value={editApplicant.barangay_name || ""}
-                                                onChange={(e) =>
-                                                    setEditApplicant({
-                                                        ...editApplicant,
-                                                        barangay_name: e.target.value,
-                                                    })
-                                                }
-                                            />
-                                        </div>
-                                        <div className="col-md-3 mb-3">
-                                            <label className="form-label">Municipality</label>
-                                            <input
-                                                type="text"
-                                                className="form-control form-control-sm"
-                                                value={editApplicant.municipality_name || ""}
-                                                onChange={(e) =>
-                                                    setEditApplicant({
-                                                        ...editApplicant,
-                                                        municipality_name: e.target.value,
-                                                    })
-                                                }
-                                            />
-                                        </div>
-                                        <div className="col-md-3 mb-3">
-                                            <label className="form-label">Province</label>
-                                            <input
-                                                type="text"
-                                                className="form-control form-control-sm"
-                                                value={editApplicant.province_name || ""}
-                                                onChange={(e) =>
-                                                    setEditApplicant({
-                                                        ...editApplicant,
-                                                        province_name: e.target.value,
-                                                    })
-                                                }
-                                            />
-                                        </div>
-                                        <div className="col-md-3 mb-3">
-                                            <label className="form-label">ZIP Code</label>
-                                            <input
-                                                type="text"
-                                                className="form-control form-control-sm"
-                                                value={editApplicant.zip_code || ""}
-                                                onChange={(e) =>
-                                                    setEditApplicant({ ...editApplicant, zip_code: e.target.value })
-                                                }
-                                            />
-                                        </div>
-                                    </div>
-
-                                    {/* --- EDUCATIONAL INFORMATION --- */}
-                                    <h5 className="mb-3 mt-4">Educational Information</h5>
-                                    <div className="row">
-                                        <div className="col-md-3 mb-3">
-                                            <label className="form-label">Campus</label>
-                                            <input
-                                                type="text"
-                                                className="form-control form-control-sm"
-                                                value={editApplicant.campus || ""}
-                                                onChange={(e) =>
-                                                    setEditApplicant({ ...editApplicant, campus: e.target.value })
-                                                }
-                                            />
-                                        </div>
-                                        <div className="col-md-3 mb-3">
-                                            <label className="form-label">Department</label>
-                                            <input
-                                                type="text"
-                                                className="form-control form-control-sm"
-                                                value={editApplicant.department || ""}
-                                                onChange={(e) =>
-                                                    setEditApplicant({ ...editApplicant, department: e.target.value })
-                                                }
-                                            />
-                                        </div>
-                                        <div className="col-md-3 mb-3">
-                                            <label className="form-label">Course</label>
-                                            <input
-                                                type="text"
-                                                className="form-control form-control-sm"
-                                                value={editApplicant.course || ""}
-                                                onChange={(e) =>
-                                                    setEditApplicant({ ...editApplicant, course: e.target.value })
-                                                }
-                                            />
-                                        </div>
-                                        <div className="col-md-3 mb-3">
-                                            <label className="form-label">Year Level</label>
-                                            <input
-                                                type="text"
-                                                className="form-control form-control-sm"
-                                                value={editApplicant.year_level || ""}
-                                                onChange={(e) =>
-                                                    setEditApplicant({ ...editApplicant, year_level: e.target.value })
-                                                }
-                                            />
-                                        </div>
-                                        <div className="col-md-6 mb-3">
-                                            <label className="form-label">Enrollment Status</label>
-                                            <input
-                                                type="text"
-                                                className="form-control form-control-sm"
-                                                value={editApplicant.enrollment_status || ""}
-                                                onChange={(e) =>
-                                                    setEditApplicant({
-                                                        ...editApplicant,
-                                                        enrollment_status: e.target.value,
-                                                    })
-                                                }
-                                            />
-                                        </div>
-                                        <div className="col-md-6 mb-3">
-                                            <label className="form-label">Total Units</label>
-                                            <input
-                                                type="text"
-                                                className="form-control form-control-sm"
-                                                value={editApplicant.total_units || ""}
-                                                onChange={(e) =>
-                                                    setEditApplicant({ ...editApplicant, total_units: e.target.value })
-                                                }
-                                            />
-                                        </div>
-                                    </div>
-
-                                    {/* --- FAMILY BACKGROUND --- */}
-                                    <h5 className="mb-3 mt-4">Family Background</h5>
-                                    <div className="row">
-                                        <div className="col-md-6 mb-3">
-                                            <label className="form-label">Father's First Name</label>
-                                            <input
-                                                type="text"
-                                                className="form-control form-control-sm"
-                                                value={editApplicant.father_first_name || ""}
-                                                onChange={(e) =>
-                                                    setEditApplicant({
-                                                        ...editApplicant,
-                                                        father_first_name: e.target.value,
-                                                    })
-                                                }
-                                            />
-                                        </div>
-                                        <div className="col-md-6 mb-3">
-                                            <label className="form-label">Father's Middle Name</label>
-                                            <input
-                                                type="text"
-                                                className="form-control form-control-sm"
-                                                value={editApplicant.father_middle_name || ""}
-                                                onChange={(e) =>
-                                                    setEditApplicant({
-                                                        ...editApplicant,
-                                                        father_middle_name: e.target.value,
-                                                    })
-                                                }
-                                            />
-                                        </div>
-                                        <div className="col-md-6 mb-3">
-                                            <label className="form-label">Father's Last Name</label>
-                                            <input
-                                                type="text"
-                                                className="form-control form-control-sm"
-                                                value={editApplicant.father_last_name || ""}
-                                                onChange={(e) =>
-                                                    setEditApplicant({
-                                                        ...editApplicant,
-                                                        father_last_name: e.target.value,
-                                                    })
-                                                }
-                                            />
-                                        </div>
-                                        <div className="col-md-6 mb-3">
-                                            <label className="form-label">Father's Occupation</label>
-                                            <input
-                                                type="text"
-                                                className="form-control form-control-sm"
-                                                value={editApplicant.father_occupation || ""}
-                                                onChange={(e) =>
-                                                    setEditApplicant({
-                                                        ...editApplicant,
-                                                        father_occupation: e.target.value,
-                                                    })
-                                                }
-                                            />
-                                        </div>
-                                        <div className="col-md-6 mb-3">
-                                            <label className="form-label">Father's Income</label>
-                                            <input
-                                                type="text"
-                                                className="form-control form-control-sm"
-                                                value={editApplicant.father_income || ""}
-                                                onChange={(e) =>
-                                                    setEditApplicant({ ...editApplicant, father_income: e.target.value })
-                                                }
-                                            />
-                                        </div>
-                                        <div className="col-md-6 mb-3">
-                                            <label className="form-label">Mother's First Name</label>
-                                            <input
-                                                type="text"
-                                                className="form-control form-control-sm"
-                                                value={editApplicant.mother_first_name || ""}
-                                                onChange={(e) =>
-                                                    setEditApplicant({
-                                                        ...editApplicant,
-                                                        mother_first_name: e.target.value,
-                                                    })
-                                                }
-                                            />
-                                        </div>
-                                        <div className="col-md-6 mb-3">
-                                            <label className="form-label">Mother's Middle Name</label>
-                                            <input
-                                                type="text"
-                                                className="form-control form-control-sm"
-                                                value={editApplicant.mother_middle_name || ""}
-                                                onChange={(e) =>
-                                                    setEditApplicant({
-                                                        ...editApplicant,
-                                                        mother_middle_name: e.target.value,
-                                                    })
-                                                }
-                                            />
-                                        </div>
-                                        <div className="col-md-6 mb-3">
-                                            <label className="form-label">Mother's Last Name</label>
-                                            <input
-                                                type="text"
-                                                className="form-control form-control-sm"
-                                                value={editApplicant.mother_last_name || ""}
-                                                onChange={(e) =>
-                                                    setEditApplicant({
-                                                        ...editApplicant,
-                                                        mother_last_name: e.target.value,
-                                                    })
-                                                }
-                                            />
-                                        </div>
-                                        <div className="col-md-6 mb-3">
-                                            <label className="form-label">Mother's Occupation</label>
-                                            <input
-                                                type="text"
-                                                className="form-control form-control-sm"
-                                                value={editApplicant.mother_occupation || ""}
-                                                onChange={(e) =>
-                                                    setEditApplicant({
-                                                        ...editApplicant,
-                                                        mother_occupation: e.target.value,
-                                                    })
-                                                }
-                                            />
-                                        </div>
-                                        <div className="col-md-6 mb-3">
-                                            <label className="form-label">Mother's Income</label>
-                                            <input
-                                                type="text"
-                                                className="form-control form-control-sm"
-                                                value={editApplicant.mother_income || ""}
-                                                onChange={(e) =>
-                                                    setEditApplicant({ ...editApplicant, mother_income: e.target.value })
-                                                }
-                                            />
-                                        </div>
-                                    </div>
-
-                                    {/* --- OTHER INFORMATION --- */}
-                                    <h5 className="mb-3 mt-4">Other Information</h5>
-                                    <div className="row">
-                                        <div className="col-md-3 mb-3">
-                                            <label className="form-label">IP Affiliation</label>
-                                            <input
-                                                type="text"
-                                                className="form-control form-control-sm"
-                                                value={editApplicant.ip_affiliation || ""}
-                                                onChange={(e) =>
-                                                    setEditApplicant({
-                                                        ...editApplicant,
-                                                        ip_affiliation: e.target.value,
-                                                    })
-                                                }
-                                            />
-                                        </div>
-                                        <div className="col-md-2 mb-3">
-                                            <label className="form-label">4Ps Member</label>
-                                            <select
-                                                className="form-control form-control-sm"
-                                                value={editApplicant.is_4ps_member ? "Yes" : "No"}
-                                                onChange={(e) =>
-                                                    setEditApplicant({
-                                                        ...editApplicant,
-                                                        is_4ps_member: e.target.value === "Yes",
-                                                    })
-                                                }
-                                            >
-                                                <option value="Yes">Yes</option>
-                                                <option value="No">No</option>
-                                            </select>
-                                        </div>
-                                        <div className="col-md-2 mb-3">
-                                            <label className="form-label">Household Number</label>
-                                            <input
-                                                type="text"
-                                                className="form-control form-control-sm"
-                                                value={editApplicant.household_number || ""}
-                                                onChange={(e) =>
-                                                    setEditApplicant({
-                                                        ...editApplicant,
-                                                        household_number: e.target.value,
-                                                    })
-                                                }
-                                            />
-                                        </div>
-                                        <div className="col-md-2 mb-3">
-                                            <label className="form-label">Siblings</label>
-                                            <input
-                                                type="text"
-                                                className="form-control form-control-sm"
-                                                value={editApplicant.siblings || ""}
-                                                onChange={(e) =>
-                                                    setEditApplicant({
-                                                        ...editApplicant,
-                                                        siblings: e.target.value,
-                                                    })
-                                                }
-                                            />
-                                        </div>
-                                        <div className="col-md-2 mb-3">
-                                            <label className="form-label">Siblings Studying</label>
-                                            <input
-                                                type="text"
-                                                className="form-control form-control-sm"
-                                                value={editApplicant.sublings_studying || ""}
-                                                onChange={(e) =>
-                                                    setEditApplicant({
-                                                        ...editApplicant,
-                                                        sublings_studying: e.target.value,
-                                                    })
-                                                }
-                                            />
-                                        </div>
-                                    </div>
-
-                                    <button type="submit" className="btn btn-primary mt-4">
-                                        Save Changes
-                                    </button>
-                                </form>
-                            ) : <p>Loading...</p>}
+                          
                         </div>
                     </div>
                 </div>

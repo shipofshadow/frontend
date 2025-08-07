@@ -9,6 +9,8 @@ interface User {
     role: string;
     username: string;
     profile?: Profile;
+    email: string;
+
 }
 
 interface AuthData {
