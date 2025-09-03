@@ -1,5 +1,5 @@
-import React, { useState, useMemo } from 'react';
-import { Plus, Edit3, Trash2, GraduationCap, DollarSign, Award, BookOpen, Users, Calculator } from 'lucide-react';
+import  { useState, useMemo } from 'react';
+import { Plus, Edit3, Trash2, GraduationCap, DollarSign, Award, BookOpen, Calculator } from 'lucide-react';
 
 // Simplified data structures with user-friendly names
 interface GradeRange {
@@ -234,7 +234,7 @@ const FuzzyLogic = () => {
 
     return (
         <>
-            <style jsx>{`
+            <style>{`
                 .bg-gradient-primary {
                     background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
                 }

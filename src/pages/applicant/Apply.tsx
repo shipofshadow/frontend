@@ -66,11 +66,12 @@ const Apply = () => {
     minimumFractionDigits: 2,
   });
 
-  function formatDate(dateStr: string | number | Date) {
+  function formatDate(dateStr?: string | number | Date): string {
     if (!dateStr) return "N/A";
     const d = new Date(dateStr);
-    return isNaN(d) ? "N/A" : d.toLocaleDateString();
+    return Number.isNaN(d.getTime()) ? "N/A" : d.toLocaleDateString();
   }
+
 
 
   const [formData, setFormData] = useState<ApplicationForm>({
@@ -98,14 +99,14 @@ const Apply = () => {
       middleName: user?.profile?.father_middle_name || '',
       extension: user?.profile?.father_extension || '',
       occupation: user?.profile?.father_occupation || '',
-      income: parseFloat(user?.profile?.father_income) || 0,
+      income: parseFloat(user?.profile?.father_income ?? '') || 0,
     },
     mother: {
       lastName: user?.profile?.mother_last_name || '',
       firstName: user?.profile?.mother_first_name || '',
       middleName: user?.profile?.mother_middle_name || '',
       occupation: user?.profile?.mother_occupation || '',
-      income: parseFloat(user?.profile?.mother_income) || 0,
+      income: parseFloat(user?.profile?.mother_income ?? '') || 0,
     },
     emergencyContactName: '',
     emergencyContactNumber: '',
@@ -253,7 +254,7 @@ const Apply = () => {
     }));
   };
 
-  const handleInputChange = (field: keyof ApplicationForm, value: any) => {
+  const handleInputChange = (field: keyof ApplicationForm, value: string | number) => {
     setFormData((prev) => ({
       ...prev,
       [field]: value,
@@ -263,7 +264,7 @@ const Apply = () => {
   const handleNestedInputChange = (
       parent: 'father' | 'mother',
       field: string,
-      value: any
+      value: string | number
   ) => {
     setFormData((prev) => ({
       ...prev,
@@ -305,14 +306,14 @@ const Apply = () => {
       }
     });
 
-    // Append nested fields manually
     Object.entries(formData.father).forEach(([key, value]) => {
-      data.append(`father[${key}]`, value ?? '');
+      data.append(`father[${key}]`, String(value ?? ''));
     });
 
     Object.entries(formData.mother).forEach(([key, value]) => {
-      data.append(`mother[${key}]`, value ?? '');
+      data.append(`mother[${key}]`, String(value ?? ''));
     });
+
 
     // Files
     if (formData.itr) data.append('itr', formData.itr);
@@ -348,7 +349,7 @@ const Apply = () => {
       console.log(result);
     } catch (error) {
       console.error('Submission error:', error);
-      Swal.fire({
+      await Swal.fire({
         icon: 'error',
         title: 'Submission Failed',
         text: 'There was an error submitting your application. Please try again later.',
@@ -407,7 +408,7 @@ const Apply = () => {
                 </div>
               </a>
 
-              {/* Shifted Review & Submit step */}
+              {/* Shifted a Review & Submit step */}
               <a
                   className={`nav-item nav-link ${step === "step5" ? "active" : ""}`}
                   onClick={() => setStep("step5")}
@@ -772,6 +773,7 @@ const Apply = () => {
                             value={formData.year_level}
                           onChange={(e)=> handleInputChange('year_level', e.target.value)}
                             >
+                            <option selected disabled>Select Year Level</option>
                             <option value="1">1st Year</option>
                             <option value="2">2nd Year</option>
                             <option value="3">3rd Year</option>
@@ -809,103 +811,103 @@ const Apply = () => {
 
                     </div>
 
-                    <h6 className="mt-4 mb-3 text-secondary">Scholarship Information</h6>
+                    {/*<h6 className="mt-4 mb-3 text-secondary">Scholarship Information</h6>*/}
 
-                    <div className="row mb-3">
-                      <div className="col-md-4">
-                        <label htmlFor="scholarshipName" className="form-label">Scholarship Name</label>
-                        <select
-                            id="scholarshipName"
-                            name="scholarshipName"
-                            className="form-select"
-                            value={formData.scholarshipName}
-                            onChange={(e)=> handleInputChange('scholarshipName', e.target.value)}
-                            required
-                        >
-                          <option value="">Select Scholarship</option>
-                          <option value="NONE">NONE</option>
-                          <option value="ATI-CAR EDUCATIONAL ASSISTANCE FOR THE YOUTH IN AGRICULTURE (EASY-AGRI)">ATI-CAR EDUCATIONAL ASSISTANCE FOR THE YOUTH IN AGRICULTURE (EASY-AGRI)</option>
-                          <option value="ANSWERING THE CRY OF THE P0OR (ANCOP)">ANSWERING THE CRY OF THE P0OR (ANCOP)</option>
-                          <option value="ASA PHILIPPINES">ASA PHILIPPINES</option>
-                          <option value="BACNOTAN COMPREHENSIVE EDUCATIONAL ASSISTANCE PROGRAM">BACNOTAN COMPREHENSIVE EDUCATIONAL ASSISTANCE PROGRAM </option>
-                          <option value="BUREAU OF FISHERIES AND AQUATIC RESOURCES">BUREAU OF FISHERIES AND AQUATIC RESOURCES</option>
-                          <option value="CANDON CITY SCHOLARSHIP">CANDON CITY SCHOLARSHIP</option>
-                          <option value="CANDONIANS OF SOUTHERN CALIFORNIA">CANDONIANS OF SOUTHERN CALIFORNIA</option>
-                          <option value="CARITAS NUEVA SEGOVIA">CARITAS NUEVA SEGOVIA</option>
-                          <option value="CERVANTES EDUCATIONAL ASSISTANCE PROGRAM">CERVANTES EDUCATIONAL ASSISTANCE PROGRAM</option>
-                          <option value="COLLEGE EDUCATIONAL ASSISTANCE PROGRAM (CEAP)">COLLEGE EDUCATIONAL ASSISTANCE PROGRAM (CEAP)</option>
-                          <option value="CONGRESMAN ERIC D. SINGSON SCHOLARSHIP GRANT (CEDSSG)">CONGRESMAN ERIC D. SINGSON SCHOLARSHIP GRANT (CEDSSG)</option>
-                          <option value="CHAVIT SINGSON SCHOLARSHIP">CHAVIT SINGSON SCHOLARSHIP</option>
-                          <option value="CHED-FULL">CHED-FULL</option>
-                          <option value="CHED-HALF">CHED-HALF</option>
-                          <option value="CHED-SMART">CHED-SMART</option>
-                          <option value="CHED-TULONG AGRI PROGRAM (CHED-TAP)">CHED-TULONG AGRI PROGRAM (CHED-TAP)</option>
-                          <option value="CHED-TULONG DUNONG PROGRAM (CHED-TDP)">CHED-TULONG DUNONG PROGRAM (CHED-TDP)</option>
-                          <option value="CHED-TERTIARY EDUCATION SUBSIDY (CHED-TES)">CHED-TERTIARY EDUCATION SUBSIDY (CHED-TES)</option>
-                          <option value="CITIZEN'S BATTLE AGAINST CORRUPTION (CIBAC) SCHOLARSHIP">CITIZEN'S BATTLE AGAINST CORRUPTION (CIBAC) SCHOLARSHIP</option>
-                          <option value="DA-AGRICULTURAL COMPETITIVENESS ENHANCEMENT FUND (DA-ACEF)">DA-AGRICULTURAL COMPETITIVENESS ENHANCEMENT FUND (DA-ACEF)</option>
-                          <option value="DEPARTMENT OF HEALTH SCHOLARSHIP">DEPARTMENT OF HEALTH SCHOLARSHIP</option>
-                          <option value="DEPARTMENT OF SCIENCE AND TECHNOLOGY (DOST)">DEPARTMENT OF SCIENCE AND TECHNOLOGY (DOST)</option>
-                          <option value="DEPARTMENT OF SOCIAL WELFARE AND DEVELOPMENT (DSWD)">DEPARTMENT OF SOCIAL WELFARE AND DEVELOPMENT (DSWD)</option>
-                          <option value="EDUCATIONAL ASSISTANCE AND SCHOLARSHIP EMERGENCIES (EASE-AGRI)">EDUCATIONAL ASSISTANCE AND SCHOLARSHIP EMERGENCIES (EASE-AGRI)</option>
-                          <option value="EVA AND EDUARDSON FOUNDATION INC.">EVA AND EDUARDSON FOUNDATION INC.</option>
-                          <option value="ILOCOS SUR AGRICULTURE COLLEGE BATCH 1971 (ISAC BATCH'71)">ILOCOS SUR AGRICULTURE COLLEGE BATCH 1971 (ISAC BATCH'71)</option>
-                          <option value="ILOCOS SUR EDUCATIONAL ASSISTANCE AND SCHOLARSHIP PROGRAM (ISEASP)">ILOCOS SUR EDUCATIONAL ASSISTANCE AND SCHOLARSHIP PROGRAM (ISEASP)</option>
-                          <option value="ILOCOS SUR ELECTRIC COOPERATIVE (ISECO)">ILOCOS SUR ELECTRIC COOPERATIVE (ISECO)</option>
-                          <option value="LA UNION EDUCATIONAL ASSISTANCE">LA UNION EDUCATIONAL ASSISTANCE</option>
-                          <option value="LEPANTO EDUCATIONAL ASSISTANCE PROGRAM (LEAP)">LEPANTO EDUCATIONAL ASSISTANCE PROGRAM (LEAP)</option>
-                          <option value="MANILA TEACHERS MUTUAL AIDE SYSTEM (MTMAS)">MANILA TEACHERS MUTUAL AIDE SYSTEM (MTMAS)</option>
-                          <option value="MSJAB SCHOLARSHIP">MSJAB SCHOLARSHIP</option>
-                          <option value="MUNICIPAL SCHOLARS">MUNICIPAL SCHOLARS</option>
-                          <option value="NATIONAL COMMISSION IN INDIGENOUS PEOPLE (NCIP)">NATIONAL COMMISSION IN INDIGENOUS PEOPLE (NCIP)</option>
-                          <option value="NATIONAL TOBACCO ADMINISTRATION (NTA)">NATIONAL TOBACCO ADMINISTRATION (NTA)</option>
-                          <option value="ONE TIME EDUC ATIONAL ASSISTANCE PROGRAM (OTAP)">ONE TIME EDUCATIONAL ASSISTANCE PROGRAM (OTAP)  </option>
-                          <option value="OVERSEAS WORKERS WELFARE ADMINISTRATION (OWWA)">OVERSEAS WORKERS WELFARE ADMINISTRATION (OWWA)</option>
-                          <option value="PHILIPPINE CHARITY SWEEPSTAKE OFFICE STUDENT PROGRAM">PHILIPPINE CHARITY SWEEPSTAKE OFFICE STUDENT PROGRAM</option>
-                          <option value="PRIVATE/INDIVIDUAL SCHOLARSHIP">PRIVATE/INDIVIDUAL SCHOLARSHIP</option>
-                          <option value="PROVINCIAL GOVERNMENT OF LA UNION (PGLU)">PROVINCIAL GOVERNMENT OF LA UNION (PGLU)</option>
-                          <option value="RANIAG SCHOLARSHIP PROGRAM">RANIAG SCHOLARSHIP PROGRAM</option>
-                          <option value="SCHOLARSHIP PROGRAM FOR COCONUT FARMERS AND FAMILIES (CoScho)">SCHOLARSHIP PROGRAM FOR COCONUT FARMERS AND FAMILIES (CoScho)</option>
-                          <option value="SONS AND DAUGHTERS OF NAGBUKEL">SONS AND DAUGHTERS OF NAGBUKEL</option>
-                          <option value="TECHNICAL EDUCATIONAL SKILL DEVELOPMENT AUTHORITY (TESDA)">TECHNICAL EDUCATIONAL SKILL DEVELOPMENT AUTHORITY (TESDA)</option>
-                          <option value="UNIVERSAL LEAF PHILIPPINES INC. (ULPI)">UNIVERSAL LEAF PHILIPPINES INC. (ULPI)</option>
-                          <option value="U-GO SCHOLARSHIP">U-GO SCHOLARSHIP</option>
-                          <option value="VIGAN CITY SCHOLARSHIP">VIGAN CITY SCHOLARSHIP</option>
-                          <option value="OTHERS">OTHERS</option>
-                        </select>
-                      </div>
+                    {/*<div className="row mb-3">*/}
+                    {/*  <div className="col-md-4">*/}
+                    {/*    <label htmlFor="scholarshipName" className="form-label">Scholarship Name</label>*/}
+                    {/*    <select*/}
+                    {/*        id="scholarshipName"*/}
+                    {/*        name="scholarshipName"*/}
+                    {/*        className="form-select"*/}
+                    {/*        value={formData.scholarshipName}*/}
+                    {/*        onChange={(e)=> handleInputChange('scholarshipName', e.target.value)}*/}
+                    {/*        required*/}
+                    {/*    >*/}
+                    {/*      <option value="">Select Scholarship</option>*/}
+                    {/*      <option value="NONE">NONE</option>*/}
+                    {/*      <option value="ATI-CAR EDUCATIONAL ASSISTANCE FOR THE YOUTH IN AGRICULTURE (EASY-AGRI)">ATI-CAR EDUCATIONAL ASSISTANCE FOR THE YOUTH IN AGRICULTURE (EASY-AGRI)</option>*/}
+                    {/*      <option value="ANSWERING THE CRY OF THE P0OR (ANCOP)">ANSWERING THE CRY OF THE P0OR (ANCOP)</option>*/}
+                    {/*      <option value="ASA PHILIPPINES">ASA PHILIPPINES</option>*/}
+                    {/*      <option value="BACNOTAN COMPREHENSIVE EDUCATIONAL ASSISTANCE PROGRAM">BACNOTAN COMPREHENSIVE EDUCATIONAL ASSISTANCE PROGRAM </option>*/}
+                    {/*      <option value="BUREAU OF FISHERIES AND AQUATIC RESOURCES">BUREAU OF FISHERIES AND AQUATIC RESOURCES</option>*/}
+                    {/*      <option value="CANDON CITY SCHOLARSHIP">CANDON CITY SCHOLARSHIP</option>*/}
+                    {/*      <option value="CANDONIANS OF SOUTHERN CALIFORNIA">CANDONIANS OF SOUTHERN CALIFORNIA</option>*/}
+                    {/*      <option value="CARITAS NUEVA SEGOVIA">CARITAS NUEVA SEGOVIA</option>*/}
+                    {/*      <option value="CERVANTES EDUCATIONAL ASSISTANCE PROGRAM">CERVANTES EDUCATIONAL ASSISTANCE PROGRAM</option>*/}
+                    {/*      <option value="COLLEGE EDUCATIONAL ASSISTANCE PROGRAM (CEAP)">COLLEGE EDUCATIONAL ASSISTANCE PROGRAM (CEAP)</option>*/}
+                    {/*      <option value="CONGRESMAN ERIC D. SINGSON SCHOLARSHIP GRANT (CEDSSG)">CONGRESMAN ERIC D. SINGSON SCHOLARSHIP GRANT (CEDSSG)</option>*/}
+                    {/*      <option value="CHAVIT SINGSON SCHOLARSHIP">CHAVIT SINGSON SCHOLARSHIP</option>*/}
+                    {/*      <option value="CHED-FULL">CHED-FULL</option>*/}
+                    {/*      <option value="CHED-HALF">CHED-HALF</option>*/}
+                    {/*      <option value="CHED-SMART">CHED-SMART</option>*/}
+                    {/*      <option value="CHED-TULONG AGRI PROGRAM (CHED-TAP)">CHED-TULONG AGRI PROGRAM (CHED-TAP)</option>*/}
+                    {/*      <option value="CHED-TULONG DUNONG PROGRAM (CHED-TDP)">CHED-TULONG DUNONG PROGRAM (CHED-TDP)</option>*/}
+                    {/*      <option value="CHED-TERTIARY EDUCATION SUBSIDY (CHED-TES)">CHED-TERTIARY EDUCATION SUBSIDY (CHED-TES)</option>*/}
+                    {/*      <option value="CITIZEN'S BATTLE AGAINST CORRUPTION (CIBAC) SCHOLARSHIP">CITIZEN'S BATTLE AGAINST CORRUPTION (CIBAC) SCHOLARSHIP</option>*/}
+                    {/*      <option value="DA-AGRICULTURAL COMPETITIVENESS ENHANCEMENT FUND (DA-ACEF)">DA-AGRICULTURAL COMPETITIVENESS ENHANCEMENT FUND (DA-ACEF)</option>*/}
+                    {/*      <option value="DEPARTMENT OF HEALTH SCHOLARSHIP">DEPARTMENT OF HEALTH SCHOLARSHIP</option>*/}
+                    {/*      <option value="DEPARTMENT OF SCIENCE AND TECHNOLOGY (DOST)">DEPARTMENT OF SCIENCE AND TECHNOLOGY (DOST)</option>*/}
+                    {/*      <option value="DEPARTMENT OF SOCIAL WELFARE AND DEVELOPMENT (DSWD)">DEPARTMENT OF SOCIAL WELFARE AND DEVELOPMENT (DSWD)</option>*/}
+                    {/*      <option value="EDUCATIONAL ASSISTANCE AND SCHOLARSHIP EMERGENCIES (EASE-AGRI)">EDUCATIONAL ASSISTANCE AND SCHOLARSHIP EMERGENCIES (EASE-AGRI)</option>*/}
+                    {/*      <option value="EVA AND EDUARDSON FOUNDATION INC.">EVA AND EDUARDSON FOUNDATION INC.</option>*/}
+                    {/*      <option value="ILOCOS SUR AGRICULTURE COLLEGE BATCH 1971 (ISAC BATCH'71)">ILOCOS SUR AGRICULTURE COLLEGE BATCH 1971 (ISAC BATCH'71)</option>*/}
+                    {/*      <option value="ILOCOS SUR EDUCATIONAL ASSISTANCE AND SCHOLARSHIP PROGRAM (ISEASP)">ILOCOS SUR EDUCATIONAL ASSISTANCE AND SCHOLARSHIP PROGRAM (ISEASP)</option>*/}
+                    {/*      <option value="ILOCOS SUR ELECTRIC COOPERATIVE (ISECO)">ILOCOS SUR ELECTRIC COOPERATIVE (ISECO)</option>*/}
+                    {/*      <option value="LA UNION EDUCATIONAL ASSISTANCE">LA UNION EDUCATIONAL ASSISTANCE</option>*/}
+                    {/*      <option value="LEPANTO EDUCATIONAL ASSISTANCE PROGRAM (LEAP)">LEPANTO EDUCATIONAL ASSISTANCE PROGRAM (LEAP)</option>*/}
+                    {/*      <option value="MANILA TEACHERS MUTUAL AIDE SYSTEM (MTMAS)">MANILA TEACHERS MUTUAL AIDE SYSTEM (MTMAS)</option>*/}
+                    {/*      <option value="MSJAB SCHOLARSHIP">MSJAB SCHOLARSHIP</option>*/}
+                    {/*      <option value="MUNICIPAL SCHOLARS">MUNICIPAL SCHOLARS</option>*/}
+                    {/*      <option value="NATIONAL COMMISSION IN INDIGENOUS PEOPLE (NCIP)">NATIONAL COMMISSION IN INDIGENOUS PEOPLE (NCIP)</option>*/}
+                    {/*      <option value="NATIONAL TOBACCO ADMINISTRATION (NTA)">NATIONAL TOBACCO ADMINISTRATION (NTA)</option>*/}
+                    {/*      <option value="ONE TIME EDUC ATIONAL ASSISTANCE PROGRAM (OTAP)">ONE TIME EDUCATIONAL ASSISTANCE PROGRAM (OTAP)  </option>*/}
+                    {/*      <option value="OVERSEAS WORKERS WELFARE ADMINISTRATION (OWWA)">OVERSEAS WORKERS WELFARE ADMINISTRATION (OWWA)</option>*/}
+                    {/*      <option value="PHILIPPINE CHARITY SWEEPSTAKE OFFICE STUDENT PROGRAM">PHILIPPINE CHARITY SWEEPSTAKE OFFICE STUDENT PROGRAM</option>*/}
+                    {/*      <option value="PRIVATE/INDIVIDUAL SCHOLARSHIP">PRIVATE/INDIVIDUAL SCHOLARSHIP</option>*/}
+                    {/*      <option value="PROVINCIAL GOVERNMENT OF LA UNION (PGLU)">PROVINCIAL GOVERNMENT OF LA UNION (PGLU)</option>*/}
+                    {/*      <option value="RANIAG SCHOLARSHIP PROGRAM">RANIAG SCHOLARSHIP PROGRAM</option>*/}
+                    {/*      <option value="SCHOLARSHIP PROGRAM FOR COCONUT FARMERS AND FAMILIES (CoScho)">SCHOLARSHIP PROGRAM FOR COCONUT FARMERS AND FAMILIES (CoScho)</option>*/}
+                    {/*      <option value="SONS AND DAUGHTERS OF NAGBUKEL">SONS AND DAUGHTERS OF NAGBUKEL</option>*/}
+                    {/*      <option value="TECHNICAL EDUCATIONAL SKILL DEVELOPMENT AUTHORITY (TESDA)">TECHNICAL EDUCATIONAL SKILL DEVELOPMENT AUTHORITY (TESDA)</option>*/}
+                    {/*      <option value="UNIVERSAL LEAF PHILIPPINES INC. (ULPI)">UNIVERSAL LEAF PHILIPPINES INC. (ULPI)</option>*/}
+                    {/*      <option value="U-GO SCHOLARSHIP">U-GO SCHOLARSHIP</option>*/}
+                    {/*      <option value="VIGAN CITY SCHOLARSHIP">VIGAN CITY SCHOLARSHIP</option>*/}
+                    {/*      <option value="OTHERS">OTHERS</option>*/}
+                    {/*    </select>*/}
+                    {/*  </div>*/}
 
-                      {formData.scholarshipName === 'OTHERS' && (
-                          <div className="col-md-4">
-                            <label htmlFor="other_scholarship" className="form-label">Other Scholarship(s)</label>
-                            <input
-                                type="text"
-                                id="other_scholarship"
-                                name="other_scholarship"
-                                className="form-control"
-                                placeholder="e.g., DOST, CHED"
-                                value={formData.otherScholarship}
-                                onChange={(e)=> handleInputChange('scholarshipName', e.target.value)}
-                            />
-                          </div>
-                      )}
+                    {/*  {formData.scholarshipName === 'OTHERS' && (*/}
+                    {/*      <div className="col-md-4">*/}
+                    {/*        <label htmlFor="other_scholarship" className="form-label">Other Scholarship(s)</label>*/}
+                    {/*        <input*/}
+                    {/*            type="text"*/}
+                    {/*            id="other_scholarship"*/}
+                    {/*            name="other_scholarship"*/}
+                    {/*            className="form-control"*/}
+                    {/*            placeholder="e.g., DOST, CHED"*/}
+                    {/*            value={formData.otherScholarship}*/}
+                    {/*            onChange={(e)=> handleInputChange('scholarshipName', e.target.value)}*/}
+                    {/*        />*/}
+                    {/*      </div>*/}
+                    {/*  )}*/}
 
 
-                      <div className="col-md-4">
-                        <label htmlFor="scholarshipAmount" className="form-label">Amount (₱)</label>
-                        <input
-                            type="number"
-                            id="scholarshipAmount"
-                            name="scholarshipAmount"
-                            className="form-control"
-                            placeholder="e.g., 15000"
-                            min="0"
-                            step="0.01"
-                            value={formData.scholarshipAmount}
-                            onChange={(e)=> handleInputChange('scholarshipAmount', e.target.value)}
-                        />
-                      </div>
-                    </div>
+                    {/*  <div className="col-md-4">*/}
+                    {/*    <label htmlFor="scholarshipAmount" className="form-label">Amount (₱)</label>*/}
+                    {/*    <input*/}
+                    {/*        type="number"*/}
+                    {/*        id="scholarshipAmount"*/}
+                    {/*        name="scholarshipAmount"*/}
+                    {/*        className="form-control"*/}
+                    {/*        placeholder="e.g., 15000"*/}
+                    {/*        min="0"*/}
+                    {/*        step="0.01"*/}
+                    {/*        value={formData.scholarshipAmount}*/}
+                    {/*        onChange={(e)=> handleInputChange('scholarshipAmount', e.target.value)}*/}
+                    {/*    />*/}
+                    {/*  </div>*/}
+                    {/*</div>*/}
 
 
                     <div className="d-flex justify-content-between mt-4">
@@ -1239,29 +1241,29 @@ const Apply = () => {
                   </div>
 
                   {/* Scholarship Info */}
-                  <div className="card mb-4">
-                    <div className="card-header">
-                      <h6 className="mb-0">Scholarship</h6>
-                    </div>
-                    <div className="card-body">
-                      <div className="row small mb-2">
-                        <div className="col-sm-3 text-muted">Scholarship Type:</div>
-                        <div className="col">
-                          {formData.scholarshipName === "others"
-                              ? formData.otherScholarship || "N/A"
-                              : formData.scholarshipName || "N/A"}
-                        </div>
-                      </div>
-                      <div className="row small mb-2">
-                        <div className="col-sm-3 text-muted">Scholarship Amount:</div>
-                        <div className="col">
-                          {formData.scholarshipAmount
-                              ? numberFormatter.format(formData.scholarshipAmount)
-                              : "N/A"}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+                  {/*<div className="card mb-4">*/}
+                  {/*  <div className="card-header">*/}
+                  {/*    <h6 className="mb-0">Scholarship</h6>*/}
+                  {/*  </div>*/}
+                  {/*  <div className="card-body">*/}
+                  {/*    <div className="row small mb-2">*/}
+                  {/*      <div className="col-sm-3 text-muted">Scholarship Type:</div>*/}
+                  {/*      <div className="col">*/}
+                  {/*        {formData.scholarshipName === "others"*/}
+                  {/*            ? formData.otherScholarship || "N/A"*/}
+                  {/*            : formData.scholarshipName || "N/A"}*/}
+                  {/*      </div>*/}
+                  {/*    </div>*/}
+                  {/*    <div className="row small mb-2">*/}
+                  {/*      <div className="col-sm-3 text-muted">Scholarship Amount:</div>*/}
+                  {/*      <div className="col">*/}
+                  {/*        {formData.scholarshipAmount*/}
+                  {/*            ? numberFormatter.format(formData.scholarshipAmount)*/}
+                  {/*            : "N/A"}*/}
+                  {/*      </div>*/}
+                  {/*    </div>*/}
+                  {/*  </div>*/}
+                  {/*</div>*/}
 
                   {/* Documents & Grades Preview */}
                   <div className="card mb-4">
@@ -1297,18 +1299,30 @@ const Apply = () => {
                         <div className="col-sm-3 text-muted">Grades / Transcript:</div>
                         <div className="col">
                           {Array.isArray(grades) && grades.length > 0 ? (
-                              <ul className="mb-0 ps-3">
-                                {grades.map((g, i) => (
-                                    <li key={i}>
-                                      <strong>{g.subject || "N/A"}:</strong> {g.grade || "N/A"}
-                                    </li>
-                                ))}
-                              </ul>
+                              <div className="table-responsive">
+                                <table className="table table-sm table-bordered mb-0">
+                                  <thead className="table-light">
+                                  <tr>
+                                    <th>Subject</th>
+                                    <th>Grade</th>
+                                  </tr>
+                                  </thead>
+                                  <tbody>
+                                  {grades.map((g, i) => (
+                                      <tr key={i}>
+                                        <td>{g.subject || "N/A"}</td>
+                                        <td>{g.grade || "N/A"}</td>
+                                      </tr>
+                                  ))}
+                                  </tbody>
+                                </table>
+                              </div>
                           ) : (
                               <span className="badge bg-warning">No grades details available</span>
                           )}
                         </div>
                       </div>
+
 
                     </div>
                   </div>

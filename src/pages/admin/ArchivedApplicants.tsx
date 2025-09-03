@@ -8,17 +8,16 @@ import { API_BASE_URL } from "../../config.ts";
 import { useAuth } from "../../context/AuthContext.tsx";
 import ViewApplicantReadOnlyForm from '../../components/admin/modals/ViewApplicantReadOnlyForm.tsx';
 import type {Applicant} from "../../interfaces/applicant.ts";
-import FilePreview from "../../components/admin/FilePreview.tsx";
 
 const ArchivedApplicants = () => {
     const tableRef = useRef(null);
     const [applicants, setApplicants] = useState<Applicant[]>([]);
-    const [selectedApplicant, setSelectedApplicant] = useState(null);
+    const [selectedApplicant, setSelectedApplicant] = useState<Applicant>();
     const { token, user } = useAuth();
 
     const fetchApplicants = async () => {
         try {
-            const response = await axios.get(`${API_BASE_URL}/api/applicants/archived`, {
+            const response = await axios.get<Applicant[]>(`${API_BASE_URL}/api/applicants/archived`, {
                 headers: {
                     Authorization: `Bearer ${token}`
                 }
@@ -50,10 +49,9 @@ const ArchivedApplicants = () => {
 
 
 
-    const viewApplicant = async (id: number): Promise<void> => {
-        setSelectedApplicant(null);
+    const viewApplicant = async (id: number) => {
         try {
-            const response = await axios.get(`${API_BASE_URL}/api/applicants/${id}`, {
+            const response = await axios.get<Applicant>(`${API_BASE_URL}/api/applicants/${id}`, {
                 headers: { Authorization: `Bearer ${token}` },
             });
             setSelectedApplicant(response.data);
@@ -149,7 +147,7 @@ const ArchivedApplicants = () => {
                                 ))
                             ) : (
                                 <tr>
-                                    <td colSpan="11">
+                                    <td colSpan={11}>
                                         <span>No applicants found.</span>
                                     </td>
                                 </tr>
@@ -169,9 +167,9 @@ const ArchivedApplicants = () => {
                             <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
                         <div className="modal-body">
-                            <ViewApplicantReadOnlyForm
-                                applicant={selectedApplicant}
-                            />
+                            {selectedApplicant && (
+                                <ViewApplicantReadOnlyForm applicant={selectedApplicant} />
+                            )}
 
                         </div>
                     </div>

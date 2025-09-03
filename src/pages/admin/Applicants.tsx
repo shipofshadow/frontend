@@ -8,6 +8,7 @@ import {API_BASE_URL} from "../../config.ts";
 import {useAuth} from "../../context/AuthContext.tsx";
 import ViewApplicantReadOnlyForm from '../../components/admin/modals/ViewApplicantReadOnlyForm.tsx';
 import type {Applicant} from "../../interfaces/applicant.ts";
+import EditApplicantModal from "../../components/admin/modals/EditApplicantModal.tsx";
 
 
 const ApplicantsTable = () => {
@@ -419,9 +420,10 @@ const ApplicantsTable = () => {
                             <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
                         <div className="modal-body">
-                            <ViewApplicantReadOnlyForm
-                                applicant={selectedApplicant}
-                            />
+                            {selectedApplicant && (
+                                <ViewApplicantReadOnlyForm applicant={selectedApplicant} />
+                            )}
+
                         </div>
                     </div>
                 </div>
@@ -436,7 +438,7 @@ const ApplicantsTable = () => {
                             <button id="editModalClose" type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
                         <div className="modal-body">
-                          
+                            <EditApplicantModal applicant={selectedApplicant}/>
                         </div>
                     </div>
                 </div>

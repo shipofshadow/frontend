@@ -1,7 +1,8 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import  { useEffect, useState, useMemo } from 'react';
 import Chart from 'react-apexcharts';
 import { API_BASE_URL } from '../../config';
-import { BarChart3, Users, Building, GraduationCap, BookOpen, Award, RefreshCw, AlertCircle, TrendingUp } from 'lucide-react';
+import { BarChart3, Users, Building, GraduationCap, BookOpen, Award, RefreshCw, AlertCircle } from 'lucide-react';
+import type {ApexOptions} from "apexcharts";
 
 interface ApplicantData {
     course: string;
@@ -380,7 +381,7 @@ const ApplicantsBarChart = () => {
         return filters.length > 0 ? filters.join(' • ') : 'All Data';
     };
 
-    const chartOptions = useMemo(
+    const chartOptions = useMemo<ApexOptions>(
         () => ({
             chart: {
                 type: 'bar',
@@ -491,9 +492,6 @@ const ApplicantsBarChart = () => {
                 horizontalAlign: 'left',
                 fontSize: '13px',
                 fontWeight: 500,
-                markers: {
-                    radius: 6
-                }
             },
             tooltip: {
                 theme: 'light',

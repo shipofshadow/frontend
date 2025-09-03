@@ -44,7 +44,7 @@ export interface Applicant {
     mother_occupation: string;
     mother_income: string;
     siblings: number;
-    sublings_studying: number;
+    siblings_studying: number;
     household_number: number;
 
     // Education Info

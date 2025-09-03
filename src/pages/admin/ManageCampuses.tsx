@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import axios from "axios";
 import { API_BASE_URL } from "../../config.ts";
 
@@ -22,10 +22,11 @@ const ManageCampuses = () => {
     const fetchCampuses = () => {
         setLoading(true);
         axios
-            .get(`${API_BASE_URL}/api/campus`)
+            .get<Campus[]>(`${API_BASE_URL}/api/campus`)
             .then((res) => setCampuses(res.data))
             .catch((err) => console.error("Failed to load campuses", err))
-            .finally(() => setLoading(false));
+        setLoading(false);
+
     };
 
     const openModal = (campus: Campus | null = null) => {

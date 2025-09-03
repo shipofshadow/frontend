@@ -391,7 +391,9 @@ const ApprovedApplication = () => {
                                 ></button>
                             </div>
                             <div className="modal-body">
-                                <ViewApplicantReadOnlyForm applicant={selectedApplicant} />
+                                {selectedApplicant && (
+                                    <ViewApplicantReadOnlyForm applicant={selectedApplicant} />
+                                )}
                             </div>
                         </div>
                     </div>

@@ -37,19 +37,17 @@ const NotApplied = () => {
             setLoading(true);
             setError(null);
 
-            const response = await axios.get(`${API_BASE_URL}/api/applicants/not-applied`, {
+            const response = await axios.get<NotAppliedStudent[]>(`${API_BASE_URL}/api/applicants/not-applied`, {
                 headers: {
                     Authorization: `Bearer ${token}`
                 },
                 timeout: 10000 // 10 second timeout
             });
 
-            setStudents(response.data || []);
+            setStudents(response.data);
         } catch (error) {
             console.error('Error fetching students:', error);
-            const errorMessage = axios.isAxiosError(error)
-                ? error.response?.data?.message || error.message || 'Failed to load students'
-                : 'An unexpected error occurred';
+            const errorMessage =  'Failed to load students';
 
             setError(errorMessage);
             await Swal.fire({

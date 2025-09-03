@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import {useCallback, useEffect, useState} from 'react';
 import Chart from 'react-apexcharts';
 import { API_BASE_URL } from "../../config.ts";
 import { TrendingUp, AlertCircle, RefreshCw, BarChart3, GraduationCap, BookOpen, Building, Users, Award } from 'lucide-react';
+import type {ApexOptions} from "apexcharts";
 
 interface AcademicYear {
     id: number;
@@ -43,6 +44,11 @@ interface TrendData {
     total: number;
 }
 
+interface ChartSeries {
+    name: string;
+    data: number[];
+}
+
 const ApplicationsTrendChart = () => {
     const [selectedAcademicYearId, setSelectedAcademicYearId] = useState<number | null>(null);
     const [selectedSemesterId, setSelectedSemesterId] = useState<number | null>(null);
@@ -63,14 +69,14 @@ const ApplicationsTrendChart = () => {
     const [availableDepartments, setAvailableDepartments] = useState<Department[]>([]);
     const [availableCourses, setAvailableCourses] = useState<Course[]>([]);
 
-    // Chart data
-    const [series, setSeries] = useState([
+    const [series, setSeries] = useState<ChartSeries[]>([
         { name: 'Total Applications', data: [] },
         { name: 'Approved', data: [] },
         { name: 'Pending', data: [] },
         { name: 'Denied', data: [] }
     ]);
-    const [categories, setCategories] = useState<never>([]);
+
+    const [categories, setCategories] = useState<string[]>([]);
 
     // Loading and error states
     const [loading, setLoading] = useState(true);
@@ -81,12 +87,25 @@ const ApplicationsTrendChart = () => {
     const [departmentsLoading, setDepartmentsLoading] = useState(true);
     const [coursesLoading, setCoursesLoading] = useState(true);
 
-    // Fetch initial data
     useEffect(() => {
-        fetchSemesters();
-        fetchCampuses();
-        fetchDepartments();
-        fetchCourses();
+
+       fetchSemesters().catch((err) =>
+           console.error("Promise rejection in fetchSemesters:", err)
+       );
+
+        fetchCampuses().catch((err) =>
+           console.error("Promise rejection in fetchCampuses:", err)
+       );
+
+        fetchDepartments().catch((err) =>
+           console.error("Promise rejection in fetchDepartments:", err)
+       );
+
+        fetchCourses().catch((err) =>
+           console.error("Promise rejection in fetchCourses:", err)
+       );
+
+
     }, []);
 
     // Update available semesters when academic year changes
@@ -144,16 +163,6 @@ const ApplicationsTrendChart = () => {
         }
     }, [selectedDepartmentId, courses]);
 
-    // Fetch trend data when selections change
-    useEffect(() => {
-        if (selectedAcademicYearId) {
-            if (viewMode === 'academic_year') {
-                fetchTrendData('academic_year', selectedAcademicYearId);
-            } else if (viewMode === 'semester' && selectedSemesterId) {
-                fetchTrendData('semester', selectedSemesterId);
-            }
-        }
-    }, [selectedAcademicYearId, selectedSemesterId, selectedCampusId, selectedDepartmentId, selectedCourseId, viewMode]);
 
     const fetchSemesters = async () => {
         setSemestersLoading(true);
@@ -188,7 +197,9 @@ const ApplicationsTrendChart = () => {
             }
         } catch (error) {
             console.error('Error fetching semesters:', error);
-            setError(error.message || 'Failed to load semester data');
+            // Fixed TypeScript error by properly handling error typing
+            const errorMessage = error instanceof Error ? error.message : 'Failed to load semester data';
+            setError(errorMessage);
         } finally {
             setSemestersLoading(false);
         }
@@ -206,7 +217,8 @@ const ApplicationsTrendChart = () => {
             setCampuses(data);
         } catch (error) {
             console.error('Error fetching campuses:', error);
-            setError(error.message || 'Failed to load campus data');
+            const errorMessage = error instanceof Error ? error.message : 'Failed to load campus data';
+            setError(errorMessage);
         } finally {
             setCampusesLoading(false);
         }
@@ -224,7 +236,8 @@ const ApplicationsTrendChart = () => {
             setDepartments(data);
         } catch (error) {
             console.error('Error fetching departments:', error);
-            setError(error.message || 'Failed to load department data');
+            const errorMessage = error instanceof Error ? error.message : 'Failed to load department data';
+            setError(errorMessage);
         } finally {
             setDepartmentsLoading(false);
         }
@@ -242,52 +255,84 @@ const ApplicationsTrendChart = () => {
             setCourses(data);
         } catch (error) {
             console.error('Error fetching courses:', error);
-            setError(error.message || 'Failed to load course data');
+            const errorMessage = error instanceof Error ? error.message : 'Failed to load course data';
+            setError(errorMessage);
         } finally {
             setCoursesLoading(false);
         }
     };
 
-    const fetchTrendData = async (mode: 'academic_year' | 'semester', id: number, showRefresh = false) => {
-        if (showRefresh) {
-            setIsRefreshing(true);
-        } else {
-            setLoading(true);
-        }
-        setError(null);
-
-        try {
-            // Build query parameters
-            const params = new URLSearchParams();
-
-            if (mode === 'academic_year') {
-                params.append('academic_year_id', id.toString());
+    const fetchTrendData = useCallback(
+        async (
+            mode: 'academic_year' | 'semester',
+            id: number,
+            showRefresh = false
+        ) => {
+            if (showRefresh) {
+                setIsRefreshing(true);
             } else {
-                params.append('semester_id', id.toString());
+                setLoading(true);
             }
+            setError(null);
 
-            if (selectedCampusId) {
-                params.append('campus_id', selectedCampusId.toString());
-            }
+            try {
+                const params = new URLSearchParams();
 
-            if (selectedDepartmentId) {
-                params.append('department_id', selectedDepartmentId.toString());
-            }
+                if (mode === 'academic_year') {
+                    params.append('academic_year_id', id.toString());
+                } else {
+                    params.append('semester_id', id.toString());
+                }
 
-            if (selectedCourseId) {
-                params.append('course_id', selectedCourseId.toString());
-            }
+                if (selectedCampusId) {
+                    params.append('campus_id', selectedCampusId.toString());
+                }
 
-            const endpoint = `${API_BASE_URL}/api/dashboard/applications-trend?${params.toString()}`;
-            const res = await fetch(endpoint);
+                if (selectedDepartmentId) {
+                    params.append('department_id', selectedDepartmentId.toString());
+                }
 
-            if (!res.ok) {
-                throw new Error(`Failed to fetch trend data: ${res.status} ${res.statusText}`);
-            }
+                if (selectedCourseId) {
+                    params.append('course_id', selectedCourseId.toString());
+                }
 
-            const data: TrendData[] = await res.json();
+                const endpoint = `${API_BASE_URL}/api/dashboard/applications-trend?${params.toString()}`;
+                const res = await fetch(endpoint);
 
-            if (!Array.isArray(data) || data.length === 0) {
+                if (!res.ok) {
+                    throw new Error(`Failed to fetch trend data: ${res.status} ${res.statusText}`);
+                }
+
+                const data: TrendData[] = await res.json();
+
+                if (!Array.isArray(data) || data.length === 0) {
+                    setCategories([]);
+                    setSeries([
+                        { name: 'Total Applications', data: [] },
+                        { name: 'Approved', data: [] },
+                        { name: 'Pending', data: [] },
+                        { name: 'Denied', data: [] }
+                    ]);
+                    return;
+                }
+
+                const semesterNames = data.map(item => item.semester);
+                const totalData = data.map(item => parseInt(item.total.toString()) || 0);
+                const approvedData = data.map(item => parseInt(item.approved) || 0);
+                const pendingData = data.map(item => parseInt(item.pending) || 0);
+                const deniedData = data.map(item => parseInt(item.denied) || 0);
+
+                setCategories(semesterNames);
+                setSeries([
+                    { name: 'Total Applications', data: totalData },
+                    { name: 'Approved', data: approvedData },
+                    { name: 'Pending', data: pendingData },
+                    { name: 'Denied', data: deniedData }
+                ]);
+            } catch (error) {
+                console.error('Error fetching trend data:', error);
+                const errorMessage = error instanceof Error ? error.message : 'Failed to load trend data';
+                setError(errorMessage);
                 setCategories([]);
                 setSeries([
                     { name: 'Total Applications', data: [] },
@@ -295,38 +340,18 @@ const ApplicationsTrendChart = () => {
                     { name: 'Pending', data: [] },
                     { name: 'Denied', data: [] }
                 ]);
-                return;
+            } finally {
+                setLoading(false);
+                setIsRefreshing(false);
             }
+        },
+        [
+            selectedCampusId,
+            selectedDepartmentId,
+            selectedCourseId
+        ]
+    );
 
-            // For academic year view: show semesters, for semester view: show single semester
-            const semesterNames = data.map(item => item.semester);
-            const totalData = data.map(item => parseInt(item.total.toString()) || 0);
-            const approvedData = data.map(item => parseInt(item.approved) || 0);
-            const pendingData = data.map(item => parseInt(item.pending) || 0);
-            const deniedData = data.map(item => parseInt(item.denied) || 0);
-
-            setCategories(semesterNames);
-            setSeries([
-                { name: 'Total Applications', data: totalData },
-                { name: 'Approved', data: approvedData },
-                { name: 'Pending', data: pendingData },
-                { name: 'Denied', data: deniedData }
-            ]);
-        } catch (error) {
-            console.error('Error fetching trend data:', error);
-            setError(error.message || 'Failed to load trend data');
-            setCategories([]);
-            setSeries([
-                { name: 'Total Applications', data: [] },
-                { name: 'Approved', data: [] },
-                { name: 'Pending', data: [] },
-                { name: 'Denied', data: [] }
-            ]);
-        } finally {
-            setLoading(false);
-            setIsRefreshing(false);
-        }
-    };
 
     const handleRefresh = () => {
         if (viewMode === 'academic_year' && selectedAcademicYearId) {
@@ -335,6 +360,35 @@ const ApplicationsTrendChart = () => {
             fetchTrendData('semester', selectedSemesterId, true);
         }
     };
+
+    useEffect(() => {
+        const runFetch = async () => {
+            try {
+                if (selectedAcademicYearId) {
+                    if (viewMode === 'academic_year') {
+                        await fetchTrendData('academic_year', selectedAcademicYearId);
+                    } else if (viewMode === 'semester' && selectedSemesterId) {
+                        await fetchTrendData('semester', selectedSemesterId);
+                    }
+                }
+            } catch (err) {
+                console.error("Promise rejection in fetchTrendData:", err);
+            }
+        };
+
+        runFetch().catch((err) =>
+            console.error("Promise rejection in fetchRecommendations:", err)
+        );
+    }, [
+        selectedAcademicYearId,
+        selectedSemesterId,
+        selectedCampusId,
+        selectedDepartmentId,
+        selectedCourseId,
+        viewMode,
+        fetchTrendData
+    ]);
+
 
     const handleViewModeChange = (newMode: 'academic_year' | 'semester') => {
         setViewMode(newMode);
@@ -415,7 +469,8 @@ const ApplicationsTrendChart = () => {
         return filters.length > 0 ? filters.join(' • ') : 'All Data';
     };
 
-    const options = {
+    // Fixed ApexCharts options typing
+    const options: ApexOptions  = {
         chart: {
             type: 'bar',
             toolbar: {
@@ -441,7 +496,6 @@ const ApplicationsTrendChart = () => {
             fontFamily: 'inherit',
             animations: {
                 enabled: true,
-                easing: 'easeinout',
                 speed: 800
             },
             stacked: false
@@ -499,7 +553,7 @@ const ApplicationsTrendChart = () => {
                 }
             },
             labels: {
-                formatter: function (val) {
+                formatter: function (val: number) {
                     return Math.floor(val).toString();
                 },
                 style: {
@@ -525,7 +579,7 @@ const ApplicationsTrendChart = () => {
                 fontSize: '12px'
             },
             y: {
-                formatter: function (val) {
+                formatter: function (val: number) {
                     return val.toLocaleString() + " applications"
                 }
             },
@@ -538,9 +592,6 @@ const ApplicationsTrendChart = () => {
             horizontalAlign: 'left',
             fontSize: '13px',
             fontWeight: 500,
-            markers: {
-                radius: 6
-            }
         },
         responsive: [{
             breakpoint: 768,
@@ -952,7 +1003,7 @@ const ApplicationsTrendChart = () => {
                 )}
             </div>
 
-            <style jsx>{`
+            <style>{`
                 .spin {
                     animation: spin 1s linear infinite;
                 }

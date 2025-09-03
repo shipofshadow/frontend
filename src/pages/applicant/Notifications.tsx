@@ -65,7 +65,7 @@ const Notifications: React.FC = () => {
         return notif.category === filter;
     });
 
-    const getNotificationIcon = (type: Notification['type'], category: Notification['category']) => {
+    const getNotificationIcon = (_type: Notification['type'], category: Notification['category']) => {
         const icons = {
             scholarship: 'bi-award',
             documents: 'bi-file-earmark-text',

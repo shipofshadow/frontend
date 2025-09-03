@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import  { useEffect, useState } from "react";
 import axios from "axios";
 import { API_BASE_URL } from "../../config.ts";
 
@@ -41,7 +41,7 @@ const ManageCourses = () => {
 
     const fetchCampuses = () => {
         axios
-            .get(`${API_BASE_URL}/api/campus`)
+            .get<Campus[]>(`${API_BASE_URL}/api/campus`)
             .then((res) => setCampuses(res.data))
             .catch((err) => console.error("Failed to load campuses", err));
     };
@@ -52,7 +52,7 @@ const ManageCourses = () => {
             return;
         }
         axios
-            .get(`${API_BASE_URL}/api/campus/department?campus_id=${campusId}`)
+            .get<Department[]>(`${API_BASE_URL}/api/campus/department?campus_id=${campusId}`)
             .then((res) => setDepartments(res.data))
             .catch((err) => console.error("Failed to load departments", err));
     };
@@ -60,10 +60,11 @@ const ManageCourses = () => {
     const fetchCourses = () => {
         setLoading(true);
         axios
-            .get(`${API_BASE_URL}/api/campus/course`)
+            .get<Course[]>(`${API_BASE_URL}/api/campus/course`)
             .then((res) => setCourses(res.data))
             .catch((err) => console.error("Failed to load courses", err))
-            .finally(() => setLoading(false));
+        setLoading(false);
+
     };
 
     const openModal = (course: Course | null = null) => {

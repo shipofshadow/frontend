@@ -3,8 +3,6 @@ import { useNavigate, Link } from 'react-router-dom';
 import { loginUser } from '../services/authService';
 import { useAuth } from '../context/AuthContext';
 import { notyf } from '../utils/utils';
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-expect-error
 import "notyf/notyf.min.css";
 
 const Login: React.FC = () => {

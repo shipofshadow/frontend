@@ -1,3 +1,4 @@
+
 import { useRef, useState, useEffect } from "react";
 import { useAuth } from "../../../context/AuthContext.tsx";
 import axios from "axios";
@@ -39,37 +40,39 @@ interface Scholarship {
     rules?: ScholarshipRules | null;
 }
 
-interface NewScholarshipForm {
+// Updated form interface to match the actual usage
+interface ScholarshipForm {
+    id: number | null;
     name: string;
     description: string;
     is_active: boolean;
-    grant_amount: number;
+    grant_amount: string | number; // Keep as string for form input
     rules: {
-        min_gwa: string;
-        max_gwa: string;
-        min_income: string;
-        max_income: string;
+        min_gwa?: string | number;
+        max_gwa?: string | number;
+        min_income?: string | number;
+        max_income?: string | number;
         priorities: ScholarshipPriorities;
         preferred_course_ids: number[];
         preferred_department_ids: number[];
         preferred_campus_ids: number[];
         preferred_year_levels: number[];
-        min_units_enrolled: string;
-        max_units_enrolled: string;
+        min_units_enrolled?: string | number;
+        max_units_enrolled?: string | number;
     };
 }
 
 const ManageScholarships = () => {
     const { token } = useAuth();
     const tableRef = useRef<HTMLTableElement>(null);
-    const [scholarships, setScholarships] = useState<Scholarship>();
+    const [scholarships, setScholarships] = useState<Scholarship[]>([]);
     const [datatable, setDatatable] = useState<DataTable | null>(null);
-    const [editScholarship, setEditScholarship] = useState<Scholarship>();
 
-    const [newScholarship, setNewScholarship] = useState<NewScholarshipForm>({
+    const [newScholarship, setNewScholarship] = useState<ScholarshipForm>({
+        id: null,
         name: "",
         description: "",
-        grant_amount: 0,
+        grant_amount: "",
         is_active: true,
         rules: {
             min_gwa: "",
@@ -91,12 +94,14 @@ const ManageScholarships = () => {
         }
     });
 
+    const [editScholarship, setEditScholarship] = useState<ScholarshipForm | null>(null);
 
     const fetchScholarships = async () => {
         try {
-            const response = await axios.get<Scholarship>(`${API_BASE_URL}/api/scholarships/`, {
+            const response = await axios.get<Scholarship[]>(`${API_BASE_URL}/api/scholarships/`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
+
             setScholarships(response.data);
 
             if (datatable) {
@@ -109,28 +114,32 @@ const ManageScholarships = () => {
         }
     };
 
+    // Helper function to convert form values to API format
+    const convertToApiFormat = (form: ScholarshipForm) => {
+        return {
+            name: form.name,
+            description: form.description || null,
+            grant_amount: form.grant_amount ? Number(form.grant_amount) : 0,
+            is_active: form.is_active,
+            rules: {
+                min_gwa: form.rules.min_gwa ? Number(form.rules.min_gwa) : null,
+                max_gwa: form.rules.max_gwa ? Number(form.rules.max_gwa) : null,
+                min_income: form.rules.min_income ? Number(form.rules.min_income) : null,
+                max_income: form.rules.max_income ? Number(form.rules.max_income) : null,
+                priorities: form.rules.priorities,
+                preferred_course_ids: form.rules.preferred_course_ids,
+                preferred_department_ids: form.rules.preferred_department_ids,
+                preferred_campus_ids: form.rules.preferred_campus_ids,
+                preferred_year_levels: form.rules.preferred_year_levels,
+                min_units_enrolled: form.rules.min_units_enrolled ? Number(form.rules.min_units_enrolled) : null,
+                max_units_enrolled: form.rules.max_units_enrolled ? Number(form.rules.max_units_enrolled) : null,
+            }
+        };
+    };
+
     const handleAddScholarship = async () => {
         try {
-            // Convert form data to API format
-            const payload = {
-                name: newScholarship.name,
-                description: newScholarship.description || null,
-                grant_amount: newScholarship.grant_amount || 0,
-                is_active: newScholarship.is_active,
-                rules: {
-                    min_gwa: newScholarship.rules.min_gwa ? parseFloat(newScholarship.rules.min_gwa) : null,
-                    max_gwa: newScholarship.rules.max_gwa ? parseFloat(newScholarship.rules.max_gwa) : null,
-                    min_income: newScholarship.rules.min_income ? parseInt(newScholarship.rules.min_income) : null,
-                    max_income: newScholarship.rules.max_income ? parseInt(newScholarship.rules.max_income) : null,
-                    priorities: newScholarship.rules.priorities,
-                    preferred_course_ids: newScholarship.rules.preferred_course_ids,
-                    preferred_department_ids: newScholarship.rules.preferred_department_ids,
-                    preferred_campus_ids: newScholarship.rules.preferred_campus_ids,
-                    preferred_year_levels: newScholarship.rules.preferred_year_levels,
-                    min_units_enrolled: newScholarship.rules.min_units_enrolled ? parseInt(newScholarship.rules.min_units_enrolled) : null,
-                    max_units_enrolled: newScholarship.rules.max_units_enrolled ? parseInt(newScholarship.rules.max_units_enrolled) : null,
-                }
-            };
+            const payload = convertToApiFormat(newScholarship);
 
             await axios.post(`${API_BASE_URL}/api/scholarships/`, payload, {
                 headers: { Authorization: `Bearer ${token}` }
@@ -140,9 +149,10 @@ const ManageScholarships = () => {
 
             // Reset form
             setNewScholarship({
+                id: null,
                 name: "",
                 description: "",
-                grant_amount: 0,
+                grant_amount: "",
                 is_active: true,
                 rules: {
                     min_gwa: "",
@@ -168,51 +178,31 @@ const ManageScholarships = () => {
             await Swal.fire("Success", "Scholarship created successfully!", "success");
         } catch (error) {
             console.error("Add error:", error);
-            const errorMessage = error.response?.data?.error || "Could not add scholarship.";
+            const errorMessage = "Could not add scholarship.";
             await Swal.fire("Error", errorMessage, "error");
         }
     };
 
     const handleEditScholarship = async () => {
+        if (!editScholarship) {
+            await Swal.fire("Error", "No scholarship selected for editing.", "error");
+            return;
+        }
+
         try {
+            const payload = convertToApiFormat(editScholarship);
 
-            const payload = {
-                name: editScholarship.name,
-                description: editScholarship.description || null,
-                grant_amount: editScholarship.grant_amount || 0,
-                is_active: editScholarship.is_active,
-                rules: {
-                    min_gwa: editScholarship.rules?.min_gwa || null,
-                    max_gwa: editScholarship.rules?.max_gwa || null,
-                    min_income: editScholarship.rules?.min_income || null,
-                    max_income: editScholarship.rules?.max_income || null,
-                    priorities: editScholarship.rules?.priorities || {
-                        must_be_ofw: false,
-                        prefer_farmers_child: false,
-                        require_ip: false,
-                        prefer_pwd: false,
-                    },
-                    preferred_course_ids: editScholarship.rules?.preferred_course_ids || [],
-                    preferred_department_ids: editScholarship.rules?.preferred_department_ids || [],
-                    preferred_campus_ids: editScholarship.rules?.preferred_campus_ids || [],
-                    preferred_year_levels: editScholarship.rules?.preferred_year_levels || [],
-                    min_units_enrolled: editScholarship.rules?.min_units_enrolled || null,
-                    max_units_enrolled: editScholarship.rules?.max_units_enrolled || null,
-                }
-            };
-
-            await axios.put<NewScholarshipForm>(`${API_BASE_URL}/api/scholarships/${editScholarship.id}`, payload, {
+            await axios.put(`${API_BASE_URL}/api/scholarships/${editScholarship.id}`, payload, {
                 headers: { Authorization: `Bearer ${token}` }
             });
 
             await fetchScholarships();
-            setEditScholarship(null);
             (document.getElementById("editModalClose") as HTMLButtonElement)?.click();
             await Swal.fire("Success", "Scholarship updated successfully!", "success");
-        } catch (error: any) {
+        } catch (error) {
             console.error("Edit error:", error);
-            const errorMessage = error.response?.data?.error || "Could not update scholarship.";
-            Swal.fire("Error", errorMessage, "error");
+            const errorMessage = "Could not update scholarship.";
+            await Swal.fire("Error", errorMessage, "error");
         }
     };
 
@@ -233,10 +223,10 @@ const ManageScholarships = () => {
                 });
                 await fetchScholarships();
                 await Swal.fire("Deleted!", "Scholarship has been deleted.", "success");
-            } catch (error: any) {
+            } catch (error) {
                 console.error("Delete error:", error);
-                const errorMessage = error.response?.data?.error || "Could not delete scholarship.";
-                Swal.fire("Error", errorMessage, "error");
+                const errorMessage =  "Could not delete scholarship.";
+                await Swal.fire("Error", errorMessage, "error");
             }
         }
     };
@@ -246,32 +236,33 @@ const ManageScholarships = () => {
             id: scholarship.id,
             name: scholarship.name,
             description: scholarship.description || "",
-            grant_amount: scholarship.grant_amount || 0,
+            grant_amount: scholarship.grant_amount || "",
             is_active: scholarship.is_active,
-            rules: scholarship.rules || {
-                min_gwa: null,
-                max_gwa: null,
-                min_income: null,
-                max_income: null,
-                priorities: {
+            rules: {
+                min_gwa: scholarship.rules?.min_gwa || "",
+                max_gwa: scholarship.rules?.max_gwa || "",
+                min_income: scholarship.rules?.min_income || "",
+                max_income: scholarship.rules?.max_income || "",
+                priorities: scholarship.rules?.priorities || {
                     must_be_ofw: false,
                     prefer_farmers_child: false,
                     require_ip: false,
                     prefer_pwd: false,
                 },
-                preferred_course_ids: [],
-                preferred_department_ids: [],
-                preferred_campus_ids: [],
-                preferred_year_levels: [],
-                min_units_enrolled: null,
-                max_units_enrolled: null,
+                preferred_course_ids: scholarship.rules?.preferred_course_ids || [],
+                preferred_department_ids: scholarship.rules?.preferred_department_ids || [],
+                preferred_campus_ids: scholarship.rules?.preferred_campus_ids || [],
+                preferred_year_levels: scholarship.rules?.preferred_year_levels || [],
+                min_units_enrolled: scholarship.rules?.min_units_enrolled || "",
+                max_units_enrolled: scholarship.rules?.max_units_enrolled || "",
             }
         });
-
     };
 
     useEffect(() => {
-        fetchScholarships();
+        fetchScholarships().catch((err) =>
+            console.error("Promise rejection in fetchScholarships:", err)
+        );
     }, []);
 
     useEffect(() => {
@@ -874,7 +865,7 @@ const ManageScholarships = () => {
                                                     ...editScholarship,
                                                     rules: {
                                                         ...editScholarship.rules,
-                                                        min_gwa: e.target.value ? parseFloat(e.target.value) : null
+                                                        min_gwa: e.target.value
                                                     }
                                                 })}
                                             />
@@ -897,7 +888,7 @@ const ManageScholarships = () => {
                                                     ...editScholarship,
                                                     rules: {
                                                         ...editScholarship.rules,
-                                                        max_gwa: e.target.value ? parseFloat(e.target.value) : null
+                                                        max_gwa: e.target.value
                                                     }
                                                 })}
                                             />
@@ -919,7 +910,7 @@ const ManageScholarships = () => {
                                                     ...editScholarship,
                                                     rules: {
                                                         ...editScholarship.rules,
-                                                        min_units_enrolled: e.target.value ? parseInt(e.target.value) : null
+                                                        min_units_enrolled: e.target.value
                                                     }
                                                 })}
                                             />
@@ -941,7 +932,7 @@ const ManageScholarships = () => {
                                                     ...editScholarship,
                                                     rules: {
                                                         ...editScholarship.rules,
-                                                        max_units_enrolled: e.target.value ? parseInt(e.target.value) : null
+                                                        max_units_enrolled: e.target.value
                                                     }
                                                 })}
                                             />
@@ -972,7 +963,7 @@ const ManageScholarships = () => {
                                                         ...editScholarship,
                                                         rules: {
                                                             ...editScholarship.rules,
-                                                            min_income: e.target.value ? parseInt(e.target.value) : null
+                                                            min_income: e.target.value
                                                         }
                                                     })}
                                                 />
@@ -996,7 +987,7 @@ const ManageScholarships = () => {
                                                         ...editScholarship,
                                                         rules: {
                                                             ...editScholarship.rules,
-                                                            max_income: e.target.value ? parseInt(e.target.value) : null
+                                                            max_income: e.target.value
                                                         }
                                                     })}
                                                 />

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import  { useEffect, useState } from "react";
 import axios from "axios";
 import { API_BASE_URL } from "../../config.ts";
 
@@ -17,7 +17,7 @@ const ManageDepartments = () => {
     const [departments, setDepartments] = useState<Department[]>([]);
     const [campuses, setCampuses] = useState<Campus[]>([]);
 
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(false);
     const [showModal, setShowModal] = useState(false);
     const [editing, setEditing] = useState<Department | null>(null);
 
@@ -31,7 +31,7 @@ const ManageDepartments = () => {
 
     const fetchCampuses = () => {
         axios
-            .get(`${API_BASE_URL}/api/campus/`)
+            .get<Campus[]>(`${API_BASE_URL}/api/campus/`)
             .then((res) => setCampuses(res.data))
             .catch((err) => console.error("Failed to load campuses", err));
     };
@@ -39,10 +39,11 @@ const ManageDepartments = () => {
     const fetchDepartments = () => {
         setLoading(true);
         axios
-            .get(`${API_BASE_URL}/api/campus/department`)
+            .get<Department[]>(`${API_BASE_URL}/api/campus/department`)
             .then((res) => setDepartments(res.data))
             .catch((err) => console.error("Failed to load departments", err))
-            .finally(() => setLoading(false));
+        setLoading(false);
+
     };
 
     const openModal = (dept: Department | null = null) => {

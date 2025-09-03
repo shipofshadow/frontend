@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Users, Clock, CheckCircle, Award, Star, Filter, Search, Download, AlertCircle, Eye, FileText } from "lucide-react";
+import { Users, Clock, CheckCircle, Award, Star, Search, Download, AlertCircle, Eye, FileText } from "lucide-react";
 import {API_BASE_URL} from "../../../config.ts";
 import axios from "axios";
 import {useAuth} from "../../../context/AuthContext.tsx";
 import ViewApplicantReadOnlyForm from "../../../components/admin/modals/ViewApplicantReadOnlyForm.tsx";
 import Swal from "sweetalert2";
 import type {Applicant} from "../../../interfaces/applicant.ts";
+import type {Scholarship} from "../../../interfaces/scholarship.ts";
 
 export interface GradeEntry {
     grade: number;
@@ -24,27 +25,53 @@ export interface ApplicantData {
     is_farmers_child: boolean;
     is_ip: boolean;
     is_ofw: boolean;
+    is_pwd?: boolean;
     name: string;
     status: 'pending' | 'approved' | 'denied' | string;
     user_id: number;
     year_level: string;
 }
 
+interface EvaluationResult {
+    gwa: number;
+    score: number;
+    classification: string;
+}
+
+interface Recommendation {
+    scholarship_id: number;
+    name: string;
+    description: string;
+    amount: number;
+    score: number;
+    classification: string;
+    reasons: string[];
+}
+
+interface Selection {
+    scholarship_name?: string;
+    awarded_amount?: string | number;
+    final_score?: number;
+    selected_date?: string;
+    selection_reason?: string;
+}
+
+
 const ScholarshipDashboard = () => {
     const [activeTab, setActiveTab] = useState('evaluate');
     const [searchTerm, setSearchTerm] = useState('');
-    const [filterStatus, setFilterStatus] = useState('all');
+    const [filterStatus] = useState('all');
     const {token} = useAuth();
-    const [applications, setApplications] = useState([]);
-    const [scholarships, setScholarships] = useState([]);
-    const [selectedApplicant, setSelectedApplicant] = useState();
-    const [evaluationResults, setEvaluationResults] = useState({});
-    const [recommendations, setRecommendations] = useState({});
-    const [selections, setSelections] = useState({});
+    const [applications, setApplications] = useState<ApplicantData[]>([]);
+    const [scholarships, setScholarships] = useState<Scholarship[]>([]);
+    const [selectedApplicant, setSelectedApplicant] = useState<Applicant | null>(null);
+    const [evaluationResults, setEvaluationResults] = useState<Record<number, EvaluationResult>>({});
+    const [recommendations, setRecommendations] = useState<Record<number, Recommendation[]>>({});
+    const [selections, setSelections] = useState<Record<number, Selection>>({});
     const [loadingId, setLoadingId] = useState(null);
 
     const fetchEvaluatees = () => {
-        axios.get<ApplicantData>(`${API_BASE_URL}/api/evaluations/`, {
+        axios.get<ApplicantData[]>(`${API_BASE_URL}/api/evaluations/`, {
             headers: {
                 Authorization: `Bearer ${token}`
             }
@@ -58,7 +85,7 @@ const ScholarshipDashboard = () => {
     };
 
     const fetchScholarships = () => {
-        axios.get(`${API_BASE_URL}/api/scholarships/`, {
+        axios.get<Scholarship[]>(`${API_BASE_URL}/api/scholarships/`, {
             headers: {
                 Authorization: `Bearer ${token}`
             }
@@ -72,9 +99,9 @@ const ScholarshipDashboard = () => {
     };
 
     // Fetch evaluation results for an application
-    const fetchEvaluationResults = async (applicationId) => {
+    const fetchEvaluationResults = async (applicationId: number): Promise<EvaluationResult | null> => {
         try {
-            const response = await axios.get(`${API_BASE_URL}/api/evaluations/${applicationId}/results`, {
+            const response = await axios.get<EvaluationResult>(`${API_BASE_URL}/api/evaluations/${applicationId}/results`, {
                 headers: {
                     Authorization: `Bearer ${token}`
                 }
@@ -93,9 +120,9 @@ const ScholarshipDashboard = () => {
     };
 
     // Fetch recommendations for an application
-    const fetchRecommendations = async (applicationId) => {
+    const fetchRecommendations = async (applicationId: number): Promise<Recommendation[]> => {
         try {
-            const response = await axios.get(`${API_BASE_URL}/api/evaluations/${applicationId}/recommendations`, {
+            const response = await axios.get<Recommendation[]>(`${API_BASE_URL}/api/evaluations/${applicationId}/recommendations`, {
                 headers: {
                     Authorization: `Bearer ${token}`
                 }
@@ -117,9 +144,9 @@ const ScholarshipDashboard = () => {
     };
 
     // Fixed fetchSelections function
-    const fetchSelections = async (applicationId) => {
+    const fetchSelections = async (applicationId: number): Promise<Selection | null> => {
         try {
-            const response = await axios.get(`${API_BASE_URL}/api/evaluations/${applicationId}/selection`, {
+            const response = await axios.get<Selection>(`${API_BASE_URL}/api/evaluations/${applicationId}/selection`, {
                 headers: {
                     Authorization: `Bearer ${token}`
                 }
@@ -182,7 +209,7 @@ const ScholarshipDashboard = () => {
     };
 
     // Helper function to calculate GWA from grades array
-    const calculateGWA = (grades) => {
+    const calculateGWA = (grades: GradeEntry[]): number => {
         if (!grades || grades.length === 0) return 0;
 
         let totalGradePoints = 0;
@@ -196,7 +223,7 @@ const ScholarshipDashboard = () => {
         return totalUnits > 0 ? totalGradePoints / totalUnits : 0;
     };
 
-    const getTotalUnits = (grades) => {
+    const getTotalUnits = (grades: GradeEntry[]): number => {
         if (!grades || grades.length === 0) return 0;
 
         return grades.reduce((sum, grade) => sum + grade.units, 0);
@@ -204,20 +231,20 @@ const ScholarshipDashboard = () => {
 
 
     // Helper function to get course name from IDs (mock data)
-    const getCourseInfo = (courseId) => {
-        const courses = {
+    const getCourseInfo = (courseId: number): { name: string; email_domain: string } => {
+        const courses: Record<number, { name: string; email_domain: string }> = {
             1: { name: "Computer Science", email_domain: "cs" },
             2: { name: "Information Technology", email_domain: "it" },
             3: { name: "Engineering", email_domain: "eng" }
         };
+
         return courses[courseId] || { name: "Unknown Course", email_domain: "student" };
     };
 
     // API call to evaluate and generate recommendations
-    const handleEvaluate = async (applicationId) => {
+    const handleEvaluate = async (applicationId: number): Promise<void> => {
         const applicant = applications.find(a => a.id === applicationId);
-
-        setLoadingId(applicationId);
+        if (!applicant) return;
 
         const confirm = await Swal.fire({
             title: 'Evaluate Applicant',
@@ -236,7 +263,7 @@ const ScholarshipDashboard = () => {
             const income = parseFloat(applicant.family_income || '0');
             const total_units = getTotalUnits(applicant.grades);
             // Call backend to evaluate the application
-            const evaluationResponse = await axios.post(
+            const evaluationResponse = await axios.post<EvaluationResult>(
                 `${API_BASE_URL}/api/evaluations/${applicationId}/evaluate`,
                 {
                     gwa,
@@ -257,7 +284,7 @@ const ScholarshipDashboard = () => {
             }));
 
             // Call backend to generate recommendations
-            const recommendationsResponse = await axios.post(
+            const recommendationsResponse = await axios.post<Recommendation[]>(
                 `${API_BASE_URL}/api/evaluations/${applicationId}/recommend`,
                 {},
                 {
@@ -294,11 +321,12 @@ const ScholarshipDashboard = () => {
     };
 
     // API call to select final scholarship
-    const handleSelectScholarship = async (applicationId, scholarshipId) => {
+    const handleSelectScholarship = async (applicationId: number, scholarshipId: number): Promise<void> => {
+
         const applicant = applications.find(a => a.id === applicationId);
         const recommendation = recommendations[applicationId]?.find(r => r.scholarship_id === scholarshipId);
 
-        if (!recommendation) {
+        if (!recommendation || !applicant) {
             await Swal.fire({
                 title: 'Error!',
                 text: 'Could not find scholarship recommendation details.',
@@ -327,7 +355,7 @@ const ScholarshipDashboard = () => {
         if (!confirm.isConfirmed) return;
 
         try {
-            const response = await axios.post(
+            const response = await axios.post<Selection>(
                 `${API_BASE_URL}/api/evaluations/${applicationId}/select`,
                 {
                     scholarship_id: scholarshipId,
@@ -371,12 +399,7 @@ const ScholarshipDashboard = () => {
 
         } catch (error) {
             console.error("Error selecting scholarship:", error);
-
             let errorMessage = 'Failed to award scholarship. Please try again.';
-            if (error.response?.data?.error) {
-                errorMessage = error.response.data.error;
-            }
-
             await Swal.fire({
                 title: 'Error!',
                 text: errorMessage,
@@ -385,8 +408,8 @@ const ScholarshipDashboard = () => {
         }
     };
 
-    const getStatusBadge = (status) => {
-        const variants = {
+    const getStatusBadge = (status: string) => {
+        const variants: Record<string, { class: string; text: string; icon: React.ComponentType<any> }> = {
             pending: { class: 'text-bg-warning', text: 'Pending', icon: Clock },
             approved: { class: 'text-bg-success', text: 'Approved', icon: CheckCircle },
             rejected: { class: 'text-bg-danger', text: 'Rejected', icon: AlertCircle }
@@ -403,22 +426,21 @@ const ScholarshipDashboard = () => {
         );
     };
 
-    const getClassificationBadge = (classification) => {
-        const variants = {
-            'High Eligibility': { class: 'text-bg-success', icon: '⭐⭐⭐' },
-            'Medium Eligibility': { class: 'text-bg-warning', icon: '⭐⭐' },
-            'Low Eligibility': { class: 'text-bg-danger', icon: '⭐' },
-            'Somewhat Eligible': { class: 'text-bg-info', icon: '⭐' }
+    const getClassificationBadge = (classification: string) => {
+        const badgeClasses: Record<string, string> = {
+            'High Eligibility': 'text-bg-success',
+            'Medium Eligibility': 'text-bg-warning',
+            'Low Eligibility': 'text-bg-danger',
+            'Somewhat Eligible': 'text-bg-info'
         };
 
-        const config = variants[classification] || { class: 'text-bg-secondary', icon: '' };
-
         return (
-            <span className={`badge rounded-pill ${config.class} px-3 py-2`}>
-                {config.icon} {classification}
-            </span>
+            <span className={`badge rounded-pill ${badgeClasses[classification] || 'text-bg-secondary'} px-3 py-2`}>
+            {classification}
+        </span>
         );
     };
+
 
     const filteredApplications = applications.filter(app => {
         const courseInfo = getCourseInfo(app.course_id);
@@ -789,7 +811,7 @@ const ScholarshipDashboard = () => {
                                                             <div className="row g-3">
                                                                 {appRecommendations.map((rec, index) => (
                                                                     <div key={index} className="col-lg-6">
-                                                                        <div className="card border border-success border-opacity-25 bg-success bg-opacity-5 h-100">
+                                                                        <div className="card border border-dark-subtle border-opacity-25  bg-opacity-5 h-100">
                                                                             <div className="card-body p-4">
                                                                                 <div className="d-flex justify-content-between align-items-start mb-3">
                                                                                     <div className="flex-grow-1">
@@ -797,9 +819,6 @@ const ScholarshipDashboard = () => {
                                                                                         <p className="text-muted small mb-3">{rec.description}</p>
                                                                                     </div>
                                                                                     <div className="text-end ms-3">
-                                                                                        <div className="badge bg-primary rounded-pill px-3 py-2 mb-2">
-                                                                                            Score: {rec.score.toFixed(3)}
-                                                                                        </div>
                                                                                         <div className="fw-bold text-success">₱{rec.amount.toLocaleString()}</div>
                                                                                     </div>
                                                                                 </div>
@@ -838,7 +857,7 @@ const ScholarshipDashboard = () => {
                                                             <div className="row g-2 justify-content-center">
                                                                 <div className="col-auto">
                                                                     <div className="badge bg-info bg-opacity-10 text-info px-3 py-2">
-                                                                        Score: {evaluation.score.toFixed(3)}
+                                                                        Score: {(evaluation.score * 100).toFixed(3)}%
                                                                     </div>
                                                                 </div>
                                                                 <div className="col-auto">
@@ -920,7 +939,7 @@ const ScholarshipDashboard = () => {
                                                                 <div className="col-md-3">
                                                                     <div className="bg-white rounded-3 p-3 text-center">
                                                                         <div className="fw-bold text-primary mb-1">
-                                                                            ₱{appSelection.awarded_amount ? parseFloat(appSelection.awarded_amount).toLocaleString() : 'N/A'}
+                                                                            ₱{appSelection.awarded_amount ? parseFloat(appSelection.awarded_amount as string).toLocaleString() : 'N/A'}
                                                                         </div>
                                                                         <div className="small text-muted">Award Amount</div>
                                                                     </div>
@@ -928,7 +947,7 @@ const ScholarshipDashboard = () => {
                                                                 <div className="col-md-3">
                                                                     <div className="bg-white rounded-3 p-3 text-center">
                                                                         <div className="fw-bold text-info mb-1">
-                                                                            {appSelection.final_score ? parseFloat(appSelection.final_score).toFixed(3) : 'N/A'}
+                                                                            {appSelection.final_score ? parseFloat(String(appSelection.final_score * 100)).toFixed(3) : 'N/A'}
                                                                         </div>
                                                                         <div className="small text-muted">Final Score</div>
                                                                     </div>
@@ -993,7 +1012,7 @@ const ScholarshipDashboard = () => {
                                                                                                 <div className="row g-2 mb-3">
                                                                                                     <div className="col-auto">
                                                                                 <span className="badge bg-primary bg-opacity-10 text-primary px-3 py-2">
-                                                                                    Score: {rec.score ? parseFloat(rec.score).toFixed(3) : 'N/A'}
+                                                                                    Score: {rec.score ? parseFloat(String(rec.score * 100)).toFixed(2) + '%' : 'N/A'}
                                                                                 </span>
                                                                                                     </div>
                                                                                                     <div className="col-auto">
@@ -1001,7 +1020,7 @@ const ScholarshipDashboard = () => {
                                                                                                     </div>
                                                                                                     <div className="col-auto">
                                                                                 <span className="badge bg-success bg-opacity-10 text-success px-3 py-2">
-                                                                                    ₱{rec.amount ? parseFloat(rec.amount).toLocaleString() : 'N/A'}
+                                                                                    ₱{rec.amount ? parseFloat(String(rec.amount)).toLocaleString() : 'N/A'}
                                                                                 </span>
                                                                                                     </div>
                                                                                                 </div>
@@ -1011,7 +1030,7 @@ const ScholarshipDashboard = () => {
                                                                                                         <strong>Eligibility Details:</strong>
                                                                                                         {rec.reasons && rec.reasons.length > 0 ? (
                                                                                                             <ul className="mt-2 mb-0">
-                                                                                                                {rec.reasons.map((reason, idx) => (
+                                                                                                                {rec.reasons.map((reason: string, idx: number) => (
                                                                                                                     <li key={idx} className="mb-1">
                                                                                                                         {reason.startsWith('✓') ?
                                                                                                                             <span className="text-success">{reason}</span> :
@@ -1114,9 +1133,11 @@ const ScholarshipDashboard = () => {
                             <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
                         <div className="modal-body">
-                            <ViewApplicantReadOnlyForm
-                                applicant={selectedApplicant}
-                            />
+                            {selectedApplicant && (
+                                <ViewApplicantReadOnlyForm
+                                    applicant={selectedApplicant}
+                                />
+                            )}
                         </div>
                     </div>
                 </div>

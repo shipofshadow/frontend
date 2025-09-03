@@ -6,7 +6,7 @@ import axios from "axios";
 import {API_BASE_URL} from "../../../config.ts";
 import {useAuth} from "../../../context/AuthContext.tsx";
 interface Props {
-    applicant: Applicant | null;
+    applicant: Applicant;
 }
 interface RecommendedScholarship {
     id: number;
@@ -25,7 +25,7 @@ interface ScholarshipRecommendationsResponse {
 }
 
 
-const ViewApplicantReadOnlyForm : React.FC<Props> = ({ applicant }) => {
+const ViewApplicantReadOnlyForm: React.FC<Props> = ({ applicant }) => {
 
     const [recommendedScholarships, setRecommendedScholarships] = useState<RecommendedScholarship[]>([]);
     const { token } = useAuth();
@@ -249,7 +249,22 @@ const ViewApplicantReadOnlyForm : React.FC<Props> = ({ applicant }) => {
                                     aria-selected="false"
                                 >
                                     <i className="bi bi-award me-2"></i>
-                                    Eligibility
+                                    Scholarship Eligibility
+                                </button>
+                            </li>
+                            <li className="nav-item" role="presentation">
+                                <button
+                                    className="nav-link rounded-pill mx-1"
+                                    id="tab-history"
+                                    data-bs-toggle="pill"
+                                    data-bs-target="#pane-history"
+                                    type="button"
+                                    role="tab"
+                                    aria-controls="pane-history"
+                                    aria-selected="false"
+                                >
+                                    <i className="bi bi-award me-2"></i>
+                                    Scholarship History
                                 </button>
                             </li>
                         </ul>
@@ -440,7 +455,7 @@ const ViewApplicantReadOnlyForm : React.FC<Props> = ({ applicant }) => {
                                             </div>
                                             <div className="col-md-6">
                                                 <label className="form-label fw-semibold">Siblings Currently Studying</label>
-                                                <input type="text" className="form-control" value={applicant.sublings_studying || '0'} readOnly/>
+                                                <input type="text" className="form-control" value={applicant.siblings_studying || '0'} readOnly/>
                                             </div>
                                         </div>
                                     </div>
@@ -687,10 +702,29 @@ const ViewApplicantReadOnlyForm : React.FC<Props> = ({ applicant }) => {
                                 </div>
                             </div>
                         </div>
+
+                        {/* Scholarship History Tab */}
+                        <div
+                            className="tab-pane fade"
+                            id="pane-history"
+                            role="tabpanel"
+                            aria-labelledby="tab-history"
+                        >
+                            <div className="card border-0">
+                                <div className="card-header">
+                                    <h6 className="mb-0">
+                                        <i className="far fa-medal me-2"></i>
+                                        Scholarship History
+                                    </h6>
+                                </div>
+                                <div className="card-body">
+
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
-
         </>
     );
 };

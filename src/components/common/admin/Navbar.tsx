@@ -5,7 +5,7 @@ import {useAuth} from "../../../context/AuthContext.tsx";
 
 const Navbar: React.FC = () => {
   const navigate = useNavigate();
-  const { isAuthenticated, logout, user } = useAuth();
+  const {logout } = useAuth();
 
   useEffect(() => {
   feather.replace();
