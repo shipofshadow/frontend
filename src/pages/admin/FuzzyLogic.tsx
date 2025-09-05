@@ -1,7 +1,7 @@
-import  { useState, useMemo } from 'react';
+import  { useState, useMemo, useEffect } from 'react';
 import { Plus, Edit3, Trash2, GraduationCap, DollarSign, Award, BookOpen, Calculator } from 'lucide-react';
+import {API_BASE_URL} from "../../config.ts";
 
-// Simplified data structures with user-friendly names
 interface GradeRange {
     [categoryName: string]: [number, number, number]; // [min, peak, max]
 }
@@ -15,6 +15,7 @@ interface EligibilityRule {
     incomeCategory: string;
     scholarshipChance: number; // 0-1 scale
 }
+
 
 const FuzzyLogic = () => {
     // Default grade categories (GPA scale)
@@ -53,6 +54,30 @@ const FuzzyLogic = () => {
     // Get category names for dropdowns
     const gradeNames = useMemo(() => Object.keys(gradeCategories), [gradeCategories]);
     const incomeNames = useMemo(() => Object.keys(incomeCategories), [incomeCategories]);
+
+    const fetchFuzzyConfig = async () => {
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/fuzzy/fuzzy-config`)
+            if (!response.ok) {
+                throw new Error(response.statusText);
+            }
+            const data = await response.json();
+
+
+            console.log(data);
+
+        } catch (err) {
+            console.error('Error fetching config:', err);
+        }
+
+    };
+
+    useEffect(() => {
+        fetchFuzzyConfig().catch((err) =>
+            console.error("Promise rejection in fetchFuzzyConfig:", err)
+        );
+    }, [])
 
     // Helper functions for styling
     const getGradeBadgeStyle = (categoryName: string) => {

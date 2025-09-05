@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import type { Campus } from '../../interfaces/meta';
+import type { Campus } from '../../interfaces/meta.ts';
 import { API_BASE_URL } from '../../config.ts';
 
 interface Props {
