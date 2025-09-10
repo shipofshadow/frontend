@@ -33,7 +33,6 @@ import Courses from '../pages/admin/ManageCourses.tsx';
 import Applications from "../pages/applicant/Applications.tsx";
 import Notifications from "../pages/applicant/Notifications.tsx";
 import QualifiedStudents from "../pages/admin/QualifiedStudents.tsx";
-import ScholarshipSummary from "../pages/admin/reports/ScholarshipSummary.tsx";
 import CampusReport from "../pages/admin/reports/CampusReport.tsx";
 import ApplicantsReport from "../pages/admin/reports/ApplicantsReport.tsx";
 import ArchivedDocuments from "../pages/admin/documents/ArchivedDocuments.tsx";
@@ -42,6 +41,8 @@ import FuzzyLogic from "../pages/admin/FuzzyLogic.tsx";
 import ImportStudents from "../pages/admin/ImportStudents.tsx";
 import ManageScholarships from "../pages/admin/scholarships/ManageScholarships.tsx";
 import ScholarshipDashboard from "../pages/admin/scholarships/ScholarshipDashboard.tsx";
+import StudentScholarshipReport from "../pages/admin/reports/StudentScholarshipReport.tsx";
+import Prequalify from "../pages/applicant/Prequalify.tsx";
 
 export function AuthRedirect() {
     const { isAuthenticated, isAdmin, isStudent } = useAuth();
@@ -87,7 +88,7 @@ const AppRoutes: React.FC = () => {
                     <Route path="scholarships">
                         <Route path="manage" element={<ManageScholarships />} />
                         <Route path="dashboard" element={<ScholarshipDashboard/>} />
-                        <Route path="scholarship-summary" element={<ScholarshipSummary/>}/>
+                        <Route path="scholarship-report" element={<StudentScholarshipReport/>}/>
 
                     </Route>
 
@@ -125,6 +126,7 @@ const AppRoutes: React.FC = () => {
                     <Route path="profile" element={<Profile />} />
                     <Route path="settings" element={<Settings />} />
                     <Route path="notifications" element={<Notifications/>} />
+                    <Route path="prequalify" element={<Prequalify />} />
                 </Route>
             </Route>
 

@@ -54,6 +54,16 @@ const Navbar: React.FC = () => {
               {isAuthenticated && (
                   <>
                     <li className="nav-item">
+                      <Link
+                          to="/applicant/prequalify"
+                          className={`nav-link ${location.pathname === '/applicant/prequalify' ? 'active' : ''}`}
+                      >
+                        <i className="bi bi-calculator"></i>
+                        Prequalification
+                      </Link>
+                    </li>
+
+                    <li className="nav-item">
                       <Link to="/applicant/status" className="nav-link">Application Status</Link>
                     </li>
 

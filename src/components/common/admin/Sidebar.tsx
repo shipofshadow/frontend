@@ -113,7 +113,7 @@ const Sidebar: React.FC = () => {
                       icon: 'fas fa-hand-holding-usd',
                     },
                     {
-                      to: '/admin/scholarships/scholarship-summary',
+                      to: '/admin/scholarships/scholarship-report',
                       label: 'Scholarship Summary',
                       icon: 'far fa-medal',
                     },

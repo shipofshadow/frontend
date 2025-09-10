@@ -7,6 +7,7 @@ import ViewApplicantReadOnlyForm from "../../../components/admin/modals/ViewAppl
 import Swal from "sweetalert2";
 import type {Applicant} from "../../../interfaces/applicant.ts";
 import type {Scholarship} from "../../../interfaces/scholarship.ts";
+import type {Course} from "../../../interfaces/meta.ts";
 
 export interface GradeEntry {
     grade: number;
@@ -69,6 +70,8 @@ const ScholarshipDashboard = () => {
     const [recommendations, setRecommendations] = useState<Record<number, Recommendation[]>>({});
     const [selections, setSelections] = useState<Record<number, Selection>>({});
     const [loadingId, setLoadingId] = useState(null);
+    const [courses, setCourses] = useState<Record<number, Course>>({});
+
 
     const fetchEvaluatees = () => {
         axios.get<ApplicantData[]>(`${API_BASE_URL}/api/evaluations/`, {
@@ -78,6 +81,7 @@ const ScholarshipDashboard = () => {
         })
             .then(response => {
                 setApplications(response.data)
+                console.log("lol", response.data)
             })
             .catch(error => {
                 console.error("Error fetching evaluatees:", error);
@@ -194,6 +198,23 @@ const ScholarshipDashboard = () => {
     }, [applications]);
 
 
+    useEffect(() => {
+        fetch(`${API_BASE_URL}/api/courses`)
+            .then((res) => res.json())
+            .then((data: Course[]) => {
+                const mapped: Record<number, Course> = {};
+                data.forEach((course) => {
+                    mapped[course.id] = {
+                        ...course,
+                    };
+                });
+                setCourses(mapped);
+            })
+            .catch((err) => console.error("Failed to fetch courses", err));
+    }, []);
+
+
+
     const viewApplicant = async (id: number): Promise<void> => {
         setSelectedApplicant(null);
         try {
@@ -230,14 +251,8 @@ const ScholarshipDashboard = () => {
     };
 
 
-    // Helper function to get course name from IDs (mock data)
-    const getCourseInfo = (courseId: number): { name: string; email_domain: string } => {
-        const courses: Record<number, { name: string; email_domain: string }> = {
-            1: { name: "Computer Science", email_domain: "cs" },
-            2: { name: "Information Technology", email_domain: "it" },
-            3: { name: "Engineering", email_domain: "eng" }
-        };
-
+    const getCourseInfo = (courseId: number) => {
+        console.log(courseId);
         return courses[courseId] || { name: "Unknown Course", email_domain: "student" };
     };
 
@@ -399,7 +414,7 @@ const ScholarshipDashboard = () => {
 
         } catch (error) {
             console.error("Error selecting scholarship:", error);
-            let errorMessage = 'Failed to award scholarship. Please try again.';
+            const errorMessage = 'Failed to award scholarship. Please try again.';
             await Swal.fire({
                 title: 'Error!',
                 text: errorMessage,
@@ -426,20 +441,24 @@ const ScholarshipDashboard = () => {
         );
     };
 
+
     const getClassificationBadge = (classification: string) => {
         const badgeClasses: Record<string, string> = {
-            'High Eligibility': 'text-bg-success',
-            'Medium Eligibility': 'text-bg-warning',
+            'Eligible': 'text-bg-success',
+            'Conditionally Eligible': 'text-bg-warning',
+            'Somewhat Eligible': 'text-bg-warning text-dark',
+            'Barely Eligible': 'text-bg-info',
             'Low Eligibility': 'text-bg-danger',
-            'Somewhat Eligible': 'text-bg-info'
+            'Not Eligible': 'text-bg-secondary'
         };
 
         return (
-            <span className={`badge rounded-pill ${badgeClasses[classification] || 'text-bg-secondary'} px-3 py-2`}>
+            <span className={`badge rounded-pill ${badgeClasses[classification] || 'text-bg-light text-dark'} px-3 py-2`}>
             {classification}
         </span>
         );
     };
+
 
 
     const filteredApplications = applications.filter(app => {
@@ -470,8 +489,8 @@ const ScholarshipDashboard = () => {
                                         <Award className="text-primary" size={32} />
                                     </div>
                                     <div>
-                                        <h1 className="h3 mb-1 fw-bold">Scholarship Management System</h1>
-                                        <p className="text-muted mb-0">Evaluate, recommend, and select scholarship recipients</p>
+                                        <h1 className="h3 mb-1 fw-bold text-primary">iScholar Management</h1>
+                                        <p className="text-muted mb-0 small">Evaluate, recommend, and select scholarship recipients intelligently</p>
                                     </div>
                                 </div>
                             </div>
@@ -481,71 +500,71 @@ const ScholarshipDashboard = () => {
 
                 <div className="container-fluid px-4 py-4">
                     {/* Statistics Cards */}
-                    <div className="row g-4 mb-4">
-                        <div className="col-md-3">
-                            <div className="card border-0 shadow-sm h-100 card-hover">
-                                <div className="card-body">
+                    <div className="row g-3 mb-4">
+                        <div className="col-6 col-md-3">
+                            <div className="card border-0 shadow-sm h-100">
+                                <div className="card-body p-3">
                                     <div className="d-flex align-items-center justify-content-between">
                                         <div>
-                                            <div className="text-muted fw-medium mb-1">Total Applications</div>
-                                            <div className="h2 fw-bold text-primary mb-0">{stats.total}</div>
-                                            <div className="small text-success">
-                                                <i className="bi bi-arrow-up"></i> Active applications
+                                            <div className="text-muted small fw-medium mb-1">Total Applications</div>
+                                            <div className="h4 fw-bold text-primary mb-0">{stats.total}</div>
+                                            <div className="small text-success mt-1">
+                                                <i className="bi bi-arrow-up me-1"></i>Active
                                             </div>
                                         </div>
-                                        <div className="bg-primary bg-opacity-10 p-3 rounded-3">
-                                            <Users className="text-primary" size={24} />
+                                        <div className="bg-primary bg-opacity-15 p-2 rounded-3">
+                                            <Users className="text-primary" size={20} />
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                        <div className="col-md-3">
-                            <div className="card border-0 shadow-sm h-100 card-hover">
-                                <div className="card-body">
+                        <div className="col-6 col-md-3">
+                            <div className="card border-0 shadow-sm h-100">
+                                <div className="card-body p-3">
                                     <div className="d-flex align-items-center justify-content-between">
                                         <div>
-                                            <div className="text-muted fw-medium mb-1">Pending Review</div>
-                                            <div className="h2 fw-bold text-warning mb-0">{stats.pending}</div>
-                                            <div className="small text-muted">Awaiting evaluation</div>
+                                            <div className="text-muted small fw-medium mb-1">Pending Review</div>
+                                            <div className="h4 fw-bold text-warning mb-0">{stats.pending}</div>
+                                            <div className="small text-muted mt-1">Awaiting evaluation</div>
                                         </div>
-                                        <div className="bg-warning bg-opacity-10 p-3 rounded-3">
-                                            <Clock className="text-warning" size={24} />
+                                        <div className="bg-warning bg-opacity-15 p-2 rounded-3">
+                                            <Clock className="text-warning" size={20} />
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                        <div className="col-md-3">
-                            <div className="card border-0 shadow-sm h-100 card-hover">
-                                <div className="card-body">
+                        <div className="col-6 col-md-3">
+                            <div className="card border-0 shadow-sm h-100">
+                                <div className="card-body p-3">
                                     <div className="d-flex align-items-center justify-content-between">
                                         <div>
-                                            <div className="text-muted fw-medium mb-1">Approved</div>
-                                            <div className="h2 fw-bold text-success mb-0">{stats.approved}</div>
-                                            <div className="small text-success">Successfully awarded</div>
+                                            <div className="text-muted small fw-medium mb-1">Approved</div>
+                                            <div className="h4 fw-bold text-success mb-0">{stats.approved}</div>
+                                            <div className="small text-success mt-1">Successfully awarded</div>
                                         </div>
-                                        <div className="bg-success bg-opacity-10 p-3 rounded-3">
-                                            <CheckCircle className="text-success" size={24} />
+                                        <div className="bg-success bg-opacity-15 p-2 rounded-3">
+                                            <CheckCircle className="text-success" size={20} />
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                        <div className="col-md-3">
-                            <div className="card border-0 shadow-sm h-100 card-hover">
-                                <div className="card-body">
+                        <div className="col-6 col-md-3">
+                            <div className="card border-0 shadow-sm h-100">
+                                <div className="card-body p-3">
                                     <div className="d-flex align-items-center justify-content-between">
                                         <div>
-                                            <div className="text-muted fw-medium mb-1">Available Scholarships</div>
-                                            <div className="h2 fw-bold text-info mb-0">{stats.scholarships}</div>
-                                            <div className="small text-muted">Active programs</div>
+                                            <div className="text-muted small fw-medium mb-1">Active Scholarships</div>
+                                            <div className="h4 fw-bold text-info mb-0">{stats.scholarships}</div>
+                                            <div className="small text-muted mt-1">Available programs</div>
                                         </div>
-                                        <div className="bg-info bg-opacity-10 p-3 rounded-3">
-                                            <Award className="text-info" size={24} />
+                                        <div className="bg-info bg-opacity-15 p-2 rounded-3">
+                                            <Award className="text-info" size={20} />
                                         </div>
                                     </div>
                                 </div>
@@ -553,81 +572,80 @@ const ScholarshipDashboard = () => {
                         </div>
                     </div>
 
-                    {/* Search and Filter Bar */}
+                    {/* Search and Filter */}
                     <div className="card border-0 shadow-sm mb-4">
-                        <div className="card-body">
+                        <div className="card-body p-3">
                             <div className="row g-3 align-items-center">
-                                <div className="col-md-9">
+                                <div className="col-lg-9">
                                     <div className="input-group">
-                                        <span className="input-group-text bg-light border-end-0">
-                                            <Search size={16} className="text-muted" />
-                                        </span>
+                                <span className="input-group-text bg-light border-end-0">
+                                    <Search size={16} className="text-muted" />
+                                </span>
                                         <input
                                             type="text"
                                             className="form-control border-start-0"
-                                            placeholder="Search by name or course..."
+                                            placeholder="Search by student name or course..."
                                             value={searchTerm}
                                             onChange={(e) => setSearchTerm(e.target.value)}
                                         />
                                     </div>
                                 </div>
-
-                                <div className="col-md-3">
-                                    <div className="text-muted small">
+                                <div className="col-lg-3 text-end">
+                                    <small className="text-muted">
                                         Showing {filteredApplications.length} of {applications.length} applications
-                                    </div>
+                                    </small>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    {/* Navigation Tabs */}
+                    {/* Process Tabs */}
                     <div className="card border-0 shadow-sm mb-4">
-                        <div className="card-body p-0">
-                            <ul className="nav nav-pills nav-fill bg-light m-3 rounded-3 p-1">
-                                <li className="nav-item">
-                                    <button
-                                        className={`nav-link rounded-3 fw-medium d-flex align-items-center justify-content-center gap-2 ${
-                                            activeTab === 'evaluate' ? 'active' : ''
-                                        }`}
-                                        onClick={() => setActiveTab('evaluate')}
-                                    >
-                                        <div className="bg-primary bg-opacity-20 text-primary rounded-circle d-flex align-items-center justify-content-center"
-                                             style={{width: '24px', height: '24px', fontSize: '12px', fontWeight: 'bold'}}>
-                                            1
-                                        </div>
-                                        Evaluate Applications
-                                    </button>
-                                </li>
-                                <li className="nav-item">
-                                    <button
-                                        className={`nav-link rounded-3 fw-medium d-flex align-items-center justify-content-center gap-2 ${
-                                            activeTab === 'recommend' ? 'active' : ''
-                                        }`}
-                                        onClick={() => setActiveTab('recommend')}
-                                    >
-                                        <div className="bg-success bg-opacity-20 text-success rounded-circle d-flex align-items-center justify-content-center"
-                                             style={{width: '24px', height: '24px', fontSize: '12px', fontWeight: 'bold'}}>
-                                            2
-                                        </div>
-                                        Review Recommendations
-                                    </button>
-                                </li>
-                                <li className="nav-item">
-                                    <button
-                                        className={`nav-link rounded-3 fw-medium d-flex align-items-center justify-content-center gap-2 ${
-                                            activeTab === 'select' ? 'active' : ''
-                                        }`}
-                                        onClick={() => setActiveTab('select')}
-                                    >
-                                        <div className="bg-warning bg-opacity-20 text-warning rounded-circle d-flex align-items-center justify-content-center"
-                                             style={{width: '24px', height: '24px', fontSize: '12px', fontWeight: 'bold'}}>
-                                            3
-                                        </div>
-                                        Final Selection
-                                    </button>
-                                </li>
-                            </ul>
+                        <div className="card-body p-2">
+                            <div className="nav nav-pills nav-fill bg-light rounded-3 p-1" role="tablist">
+                                <button
+                                    className={`nav-link rounded-3 fw-medium px-3 py-2 ${
+                                        activeTab === 'evaluate' ? 'active' : ''
+                                    }`}
+                                    onClick={() => setActiveTab('evaluate')}
+                                    type="button"
+                                    role="tab"
+                                >
+                                    <div className="d-flex align-items-center justify-content-center gap-2 flex-wrap">
+                                        <span className="badge bg-primary bg-opacity-25 text-primary rounded-pill px-2 py-1 small">1</span>
+                                        <span className="d-none d-sm-inline">Evaluate Applications</span>
+                                        <span className="d-sm-none">Evaluate</span>
+                                    </div>
+                                </button>
+                                <button
+                                    className={`nav-link rounded-3 fw-medium px-3 py-2 ${
+                                        activeTab === 'recommend' ? 'active' : ''
+                                    }`}
+                                    onClick={() => setActiveTab('recommend')}
+                                    type="button"
+                                    role="tab"
+                                >
+                                    <div className="d-flex align-items-center justify-content-center gap-2 flex-wrap">
+                                        <span className="badge bg-success bg-opacity-25 text-success rounded-pill px-2 py-1 small">2</span>
+                                        <span className="d-none d-sm-inline">Review Recommendations</span>
+                                        <span className="d-sm-none">Recommend</span>
+                                    </div>
+                                </button>
+                                <button
+                                    className={`nav-link rounded-3 fw-medium px-3 py-2 ${
+                                        activeTab === 'select' ? 'active' : ''
+                                    }`}
+                                    onClick={() => setActiveTab('select')}
+                                    type="button"
+                                    role="tab"
+                                >
+                                    <div className="d-flex align-items-center justify-content-center gap-2 flex-wrap">
+                                        <span className="badge bg-warning bg-opacity-25 text-warning rounded-pill px-2 py-1 small">3</span>
+                                        <span className="d-none d-sm-inline">Final Selection</span>
+                                        <span className="d-sm-none">Select</span>
+                                    </div>
+                                </button>
+                            </div>
                         </div>
                     </div>
 
@@ -635,7 +653,7 @@ const ScholarshipDashboard = () => {
                     <div className="tab-content">
                         {/* PHASE 1: EVALUATION */}
                         {activeTab === 'evaluate' && (
-                            <div className="row g-4">
+                            <div className="row g-3">
                                 {filteredApplications.map((app) => {
                                     const evaluation = evaluationResults[app.id];
                                     const hasBeenEvaluated = !!evaluation;
@@ -646,115 +664,129 @@ const ScholarshipDashboard = () => {
 
                                     return (
                                         <div key={app.id} className="col-12">
-                                            <div className="card border-0 shadow-sm hover-shadow">
+                                            <div className="card border-0 shadow-sm">
                                                 <div className="card-body p-4">
-                                                    <div className="row align-items-center">
+                                                    <div className="row">
                                                         <div className="col-lg-8">
-                                                            <div className="d-flex align-items-start gap-3 mb-3">
+                                                            {/* Student Header */}
+                                                            <div className="d-flex align-items-center gap-3 mb-3">
                                                                 <div className="bg-primary bg-opacity-10 p-2 rounded-3">
                                                                     <Users className="text-primary" size={20} />
                                                                 </div>
                                                                 <div className="flex-grow-1">
-                                                                    <h5 className="card-title mb-1 fw-bold">{app.name}</h5>
-                                                                    <div className="text-muted small mb-2">{courseInfo.name} • Year {app.year_level}</div>
-                                                                    <div className="text-muted small">{app.name.toLowerCase().replace(' ', '.')}.{courseInfo.email_domain}@university.edu</div>
+                                                                    <h5 className="fw-bold mb-1">{app.name}</h5>
+                                                                    <div className="text-muted small mb-1">{courseInfo.name} • Year {app.year_level}</div>
+                                                                </div>
+                                                                <div className="d-flex d-lg-none">
+                                                                    {getStatusBadge(app.status)}
                                                                 </div>
                                                             </div>
 
-                                                            <div className="row g-3 mb-3">
-                                                                <div className="col-sm-6 col-lg-3">
+                                                            {/* Academic Metrics */}
+                                                            <div className="row g-2 mb-3">
+                                                                <div className="col-6 col-sm-3">
                                                                     <div className="bg-light rounded-3 p-3 text-center">
-                                                                        <div className="fw-bold text-primary h5 mb-1">{gwa.toFixed(2)}</div>
+                                                                        <div className="fw-bold text-primary h6 mb-1">{gwa.toFixed(2)}</div>
                                                                         <div className="small text-muted">GWA</div>
                                                                     </div>
                                                                 </div>
-                                                                <div className="col-sm-6 col-lg-3">
+                                                                <div className="col-6 col-sm-3">
                                                                     <div className="bg-light rounded-3 p-3 text-center">
-                                                                        <div className="fw-bold text-success h5 mb-1">₱{income.toLocaleString()}</div>
+                                                                        <div className="fw-bold text-success h6 mb-1">₱{income.toLocaleString()}</div>
                                                                         <div className="small text-muted">Family Income</div>
                                                                     </div>
                                                                 </div>
-                                                                <div className="col-sm-6 col-lg-3">
+                                                                <div className="col-6 col-sm-3">
                                                                     <div className="bg-light rounded-3 p-3 text-center">
                                                                         {hasBeenEvaluated ? (
                                                                             <>
-                                                                                <div className="fw-bold text-info h5 mb-1">{evaluation.score.toFixed(3)}</div>
-                                                                                <div className="small text-muted">Eligibility Score</div>
+                                                                                <div className="fw-bold text-info h6 mb-1">{(evaluation.score * 100).toFixed(1)}%</div>
+                                                                                <div className="small text-muted">Score</div>
                                                                             </>
                                                                         ) : (
                                                                             <>
-                                                                                <div className="fw-bold text-muted h5 mb-1">---</div>
+                                                                                <div className="fw-bold text-muted h6 mb-1">---</div>
                                                                                 <div className="small text-muted">Not Evaluated</div>
                                                                             </>
                                                                         )}
                                                                     </div>
                                                                 </div>
-                                                                <div className="col-sm-6 col-lg-3">
+                                                                <div className="col-6 col-sm-3">
                                                                     <div className="bg-light rounded-3 p-3 text-center">
-                                                                        <div className="fw-bold text-warning h5 mb-1">{totalUnits}</div>
-                                                                        <div className="small text-muted">Total Units</div>
+                                                                        <div className="fw-bold text-warning h6 mb-1">{totalUnits}</div>
+                                                                        <div className="small text-muted">Units</div>
                                                                     </div>
                                                                 </div>
                                                             </div>
 
+                                                            {/* Grades Detail */}
                                                             {hasBeenEvaluated && (
-                                                                <div className="mt-2">
+                                                                <div className="mb-3">
                                                                     <div className="small text-muted">
-                                                                        <strong>Grades:</strong>
-                                                                        {app.grades.map((grade, idx) => (
-                                                                            <span key={idx} className="ms-1">
-                                                                                {grade.subject_name}: {grade.grade} ({grade.units}u)
-                                                                                {idx < app.grades.length - 1 ? ', ' : ''}
-                                                                            </span>
-                                                                        ))}
+                                                                        <strong>Subjects:</strong>
+                                                                        <div className="mt-1">
+                                                                            {app.grades.map((grade, idx) => (
+                                                                                <span key={idx} className="badge bg-secondary bg-opacity-10 text-dark me-1 mb-1">
+                                                                            {grade.subject_name}: {grade.grade} ({grade.units}u)
+                                                                        </span>
+                                                                            ))}
+                                                                        </div>
                                                                     </div>
                                                                 </div>
                                                             )}
 
-                                                            <div className="d-flex flex-wrap gap-2 mt-2">
-                                                                {app.is_ofw && <span className="badge bg-info bg-opacity-10 text-info px-3 py-2">OFW Dependent</span>}
-                                                                {app.is_farmers_child && <span className="badge bg-success bg-opacity-10 text-success px-3 py-2">Farmer's Child</span>}
-                                                                {app.is_ip && <span className="badge bg-warning bg-opacity-10 text-warning px-3 py-2">Indigenous Person</span>}
-                                                                {app.is_pwd && <span className="badge bg-purple bg-opacity-10 text-purple px-3 py-2">Person with Disability</span>}
+                                                            {/* Special Categories */}
+                                                            <div className="d-flex flex-wrap gap-2 mb-lg-0 mb-3">
+                                                                {app.is_ofw && <span className="badge bg-info text-dark px-2 py-1">OFW Dependent</span>}
+                                                                {app.is_farmers_child && <span className="badge bg-success text-dark px-2 py-1">Farmer's Child</span>}
+                                                                {app.is_ip && <span className="badge bg-warning text-dark px-2 py-1">Indigenous Person</span>}
+                                                                {app.is_pwd && <span className="badge bg-purple text-dark px-2 py-1">PWD</span>}
                                                             </div>
                                                         </div>
 
-                                                        <div className="col-lg-4 text-lg-end mt-3 mt-lg-0">
-                                                            <div className="d-flex flex-column align-items-lg-end gap-3">
+                                                        <div className="col-lg-4">
+                                                            <div className="d-flex flex-column gap-2 h-100 justify-content-between">
+                                                                <div className="d-none d-lg-block">
+                                                                    {getStatusBadge(app.status)}
+                                                                </div>
 
-                                                                {getStatusBadge(app.status)}
+                                                                {hasBeenEvaluated && (
+                                                                    <div className="text-center">
+                                                                        {getClassificationBadge(evaluation.classification)}
+                                                                    </div>
+                                                                )}
 
-                                                                <button
-                                                                    className="btn btn-outline-primary btn-sm"
-                                                                    onClick={() => viewApplicant(app.id)}
-                                                                    data-bs-toggle="modal"
-                                                                    data-bs-target="#viewModal"
-                                                                    title="View Details"
-                                                                >
-                                                                    <i className="fa-regular fa-eye"></i> View Applicant Details
-                                                                </button>
+                                                                <div className="d-flex flex-column gap-2">
+                                                                    <button
+                                                                        className="btn btn-outline-primary btn-sm"
+                                                                        onClick={() => viewApplicant(app.id)}
+                                                                        data-bs-toggle="modal"
+                                                                        data-bs-target="#viewModal"
+                                                                    >
+                                                                        <Eye size={14} className="me-2" />
+                                                                        View Details
+                                                                    </button>
 
-                                                                {hasBeenEvaluated && getClassificationBadge(evaluation.classification)}
-
-                                                                <button
-                                                                    className={`btn d-flex align-items-center gap-2 px-4 py-2 ${
-                                                                        hasBeenEvaluated ? 'btn-outline-primary' : 'btn-primary'
-                                                                    }`}
-                                                                    onClick={() => handleEvaluate(app.id)}
-                                                                    disabled={loadingId === app.id}
-                                                                >
-                                                                    {loadingId === app.id ? (
-                                                                        <>
-                                                                            <div className="spinner-border spinner-border-sm" role="status"></div>
-                                                                            Evaluating...
-                                                                        </>
-                                                                    ) : (
-                                                                        <>
-                                                                            <Star size={16} />
-                                                                            {hasBeenEvaluated ? 'Re-evaluate' : 'Evaluate & Recommend'}
-                                                                        </>
-                                                                    )}
-                                                                </button>
+                                                                    <button
+                                                                        className={`btn d-flex align-items-center justify-content-center gap-2 ${
+                                                                            hasBeenEvaluated ? 'btn-outline-primary' : 'btn-primary'
+                                                                        }`}
+                                                                        onClick={() => handleEvaluate(app.id)}
+                                                                        disabled={loadingId === app.id}
+                                                                    >
+                                                                        {loadingId === app.id ? (
+                                                                            <>
+                                                                                <div className="spinner-border spinner-border-sm" role="status"></div>
+                                                                                <span>Evaluating...</span>
+                                                                            </>
+                                                                        ) : (
+                                                                            <>
+                                                                                <Star size={16} />
+                                                                                <span>{hasBeenEvaluated ? 'Re-evaluate' : 'Evaluate'}</span>
+                                                                            </>
+                                                                        )}
+                                                                    </button>
+                                                                </div>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -768,124 +800,218 @@ const ScholarshipDashboard = () => {
 
                         {/* PHASE 2: RECOMMENDATIONS */}
                         {activeTab === 'recommend' && (
-                            <div className="row g-4">
-                                {filteredApplications.map((app) => {
-                                    const appRecommendations = recommendations[app.id] || [];
-                                    const evaluation = evaluationResults[app.id];
-                                    const courseInfo = getCourseInfo(app.course_id);
-                                    const gwa = evaluation?.gwa || calculateGWA(app.grades);
-                                    const income = parseFloat(app.family_income);
+                            <div className="container-fluid px-0">
+                                <div className="row g-4">
+                                    {filteredApplications.map((app) => {
+                                        const appRecommendations = recommendations[app.id] || [];
+                                        const evaluation = evaluationResults[app.id];
+                                        const courseInfo = getCourseInfo(app.course_id);
+                                        const gwa = evaluation?.gwa || calculateGWA(app.grades);
+                                        const income = parseFloat(app.family_income);
 
-                                    return (
-                                        <div key={app.id} className="col-12">
-                                            <div className="card border-0 shadow-sm">
-                                                <div className="card-header bg-light border-0 py-3">
-                                                    <div className="row align-items-center">
-                                                        <div className="col">
-                                                            <h6 className="fw-bold mb-1">{app.name}</h6>
-                                                            <div className="text-muted small">
-                                                                {courseInfo.name} • GWA: {gwa.toFixed(2)} • Income: ₱{income.toLocaleString()}
-                                                                {evaluation && (
-                                                                    <>
-                                                                        • Score: {evaluation.score.toFixed(3)} • {evaluation.classification}
-                                                                    </>
-                                                                )}
+                                        return (
+                                            <div key={app.id} className="col-12">
+                                                <div className="card border-0 shadow-lg hover-shadow transition-all">
+                                                    {/* Enhanced Card Header */}
+                                                    <div className="card-header bg-gradient bg-primary bg-opacity-20 border-0 py-4">
+                                                        <div className="row align-items-center g-3">
+                                                            <div className="col-12 col-lg-8">
+                                                                <div className="d-flex align-items-center gap-3">
+                                                                    <div className="bg-primary bg-opacity-16 rounded-circle d-flex align-items-center justify-content-center" style={{width: '50px', height: '50px'}}>
+                                                                        <i className="far fa-user fs-4 text-white"></i>
+                                                                    </div>
+                                                                    <div>
+                                                                        <h5 className="fw-bold text-white mb-1">{app.name}</h5>
+                                                                        <div className="d-flex flex-wrap gap-3 align-items-center">
+                                                    <span className="badge bg-info bg-opacity-15 text-dark px-3 py-2 rounded-pill">
+                                                        <i className="far fa-mortar-board"></i>
+                                                        {courseInfo.name}
+                                                    </span>
+                                                                            <span className="badge bg-success bg-opacity-15 text-dark px-3 py-2 rounded-pill">
+                                                        <i className="far fa-up-to-line me-1"></i>
+                                                        GWA: {gwa.toFixed(2)}
+                                                    </span>
+                                                                            <span className="badge bg-warning bg-opacity-15 text-dark px-3 py-2 rounded-pill">
+                                                        <i className="far fa-dollar-sign me-1"></i>
+                                                        ₱{income.toLocaleString()}
+                                                    </span>
+                                                                            {evaluation && (
+                                                                                <span className="badge bg-secondary bg-opacity-15 text-white px-3 py-2 rounded-pill">
+                                                            <i className="far fa-star-circle me-1"></i>
+                                                                                    {(evaluation.score * 100).toFixed(1)}%
+                                                        </span>
+                                                                            )}
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
                                                             </div>
-                                                        </div>
-                                                        <div className="col-auto">
-                                                            {getStatusBadge(app.status)}
+                                                            <div className="col-12 col-lg-4 text-lg-end">
+                                                                <div className="d-flex flex-wrap gap-2 justify-content-lg-end text-dark">
+
+                                                                    {getStatusBadge(app.status)}
+                                                                    {evaluation && getClassificationBadge(evaluation.classification)}
+                                                                </div>
+                                                            </div>
                                                         </div>
                                                     </div>
-                                                </div>
 
-                                                <div className="card-body p-4">
-                                                    {appRecommendations.length > 0 ? (
-                                                        <div>
-                                                            <div className="d-flex align-items-center gap-2 mb-4">
-                                                                <CheckCircle className="text-success" size={20} />
-                                                                <h6 className="text-success mb-0 fw-bold">
-                                                                    Recommended Scholarships ({appRecommendations.length})
-                                                                </h6>
-                                                            </div>
+                                                    <div className="card-body p-4">
+                                                        {appRecommendations.length > 0 ? (
+                                                            <div>
+                                                                {/* Success Alert */}
+                                                                <div className="alert alert-success border-0 bg-success bg-opacity-10 mb-4">
+                                                                    <div className="d-flex align-items-center gap-3">
+                                                                        <div className="bg-success rounded-circle d-flex align-items-center justify-content-center" style={{width: '40px', height: '40px'}}>
+                                                                            <CheckCircle className="text-dark" size={20} />
+                                                                        </div>
+                                                                        <div>
+                                                                            <h6 className="text-success mb-1 fw-bold">
+                                                                                {appRecommendations.length} Scholarship{appRecommendations.length !== 1 ? 's' : ''} Recommended
+                                                                            </h6>
+                                                                            <p className="text-success mb-0 small opacity-75">
+                                                                                Based on academic performance and eligibility criteria
+                                                                            </p>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
 
-                                                            <div className="row g-3">
-                                                                {appRecommendations.map((rec, index) => (
-                                                                    <div key={index} className="col-lg-6">
-                                                                        <div className="card border border-dark-subtle border-opacity-25  bg-opacity-5 h-100">
-                                                                            <div className="card-body p-4">
-                                                                                <div className="d-flex justify-content-between align-items-start mb-3">
-                                                                                    <div className="flex-grow-1">
-                                                                                        <h6 className="card-title fw-bold mb-2">{rec.name}</h6>
-                                                                                        <p className="text-muted small mb-3">{rec.description}</p>
+                                                                {/* Scholarship Recommendations Grid */}
+                                                                <div className="row g-4">
+                                                                    {appRecommendations.map((rec, index) => (
+                                                                        <div key={index} className="col-12 col-xl-6">
+                                                                            <div className="card h-100 border-2 border-primary border-opacity-25 hover-border-primary transition-all">
+                                                                                <div className="card-body p-4">
+                                                                                    {/* Scholarship Header */}
+                                                                                    <div className="d-flex justify-content-between align-items-start mb-3">
+                                                                                        <div className="flex-grow-1 me-3">
+                                                                                            <h6 className="card-title fw-bold text-dark mb-2 lh-base">
+                                                                                                {rec.name}
+                                                                                            </h6>
+                                                                                        </div>
+                                                                                        <div className="text-end">
+                                                                    <span className="badge bg-success text-dark px-3 py-2 rounded-pill fs-6">
+                                                                        <i className="bi bi-currency-dollar me-1"></i>
+                                                                        {rec.amount.toLocaleString()}
+                                                                    </span>
+                                                                                        </div>
                                                                                     </div>
-                                                                                    <div className="text-end ms-3">
-                                                                                        <div className="fw-bold text-success">₱{rec.amount.toLocaleString()}</div>
+
+                                                                                    {/* Description */}
+                                                                                    <p className="text-muted mb-3 lh-base">{rec.description}</p>
+
+                                                                                    {/* Classification Badge */}
+                                                                                    <div className="mb-4">
+                                                                                        {getClassificationBadge(rec.classification)}
                                                                                     </div>
-                                                                                </div>
 
-                                                                                {getClassificationBadge(rec.classification)}
-
-                                                                                <div className="mt-3">
-                                                                                    <div className="small text-muted fw-medium mb-2">Eligibility Assessment:</div>
-                                                                                    <ul className="list-unstyled mb-0">
-                                                                                        {rec.reasons.map((reason, idx) => (
-                                                                                            <li key={idx} className="small text-muted mb-1 d-flex align-items-center gap-2">
-                                                                                                {reason.startsWith('✓') ?
-                                                                                                    <span className="text-success">{reason}</span> :
-                                                                                                    <span className="text-danger">{reason}</span>
-                                                                                                }
-                                                                                            </li>
-                                                                                        ))}
-                                                                                    </ul>
+                                                                                    {/* Eligibility Details Accordion */}
+                                                                                    <div className="accordion accordion-flush" id={`accordion-${app.id}-${index}`}>
+                                                                                        <div className="accordion-item border-0">
+                                                                                            <h6 className="accordion-header">
+                                                                                                <button
+                                                                                                    className="accordion-button collapsed p-0 bg-transparent border-0 shadow-none text-primary fw-semibold d-flex align-items-center gap-2"
+                                                                                                    type="button"
+                                                                                                    data-bs-toggle="collapse"
+                                                                                                    data-bs-target={`#collapse-${app.id}-${index}`}
+                                                                                                    aria-expanded="false"
+                                                                                                    aria-controls={`collapse-${app.id}-${index}`}
+                                                                                                >
+                                                                                                    <i className="bi bi-list-check"></i>
+                                                                                                    View Eligibility Details
+                                                                                                </button>
+                                                                                            </h6>
+                                                                                            <div
+                                                                                                id={`collapse-${app.id}-${index}`}
+                                                                                                className="accordion-collapse collapse"
+                                                                                                data-bs-parent={`#accordion-${app.id}-${index}`}
+                                                                                            >
+                                                                                                <div className="accordion-body p-0 pt-3">
+                                                                                                    <div className="bg-light bg-opacity-50 rounded-3 p-3">
+                                                                                                        <ul className="list-unstyled mb-0">
+                                                                                                            {rec.reasons.map((reason, idx) => (
+                                                                                                                <li key={idx} className="mb-2 d-flex align-items-start gap-3">
+                                                                                                                    <div className="flex-shrink-0 mt-1">
+                                                                                                                        {reason.startsWith('✓') ? (
+                                                                                                                            <div className="bg-success bg-opacity-15 rounded-circle d-flex align-items-center justify-content-center" style={{width: '24px', height: '24px'}}>
+                                                                                                                                <i className="bi bi-check-circle-fill text-success"></i>
+                                                                                                                            </div>
+                                                                                                                        ) : (
+                                                                                                                            <div className="bg-danger bg-opacity-15 rounded-circle d-flex align-items-center justify-content-center" style={{width: '24px', height: '24px'}}>
+                                                                                                                                <i className="bi bi-x-circle-fill text-danger"></i>
+                                                                                                                            </div>
+                                                                                                                        )}
+                                                                                                                    </div>
+                                                                                                                    <span className={`lh-base ${reason.startsWith('✓') ? 'text-success' : 'text-danger'}`}>
+                                                                                                {reason.substring(2)}
+                                                                                            </span>
+                                                                                                                </li>
+                                                                                                            ))}
+                                                                                                        </ul>
+                                                                                                    </div>
+                                                                                                </div>
+                                                                                            </div>
+                                                                                        </div>
+                                                                                    </div>
                                                                                 </div>
                                                                             </div>
                                                                         </div>
-                                                                    </div>
-                                                                ))}
-                                                            </div>
-                                                        </div>
-                                                    ) : evaluation ? (
-                                                        <div className="text-center py-5">
-                                                            <div className="bg-warning bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-3"
-                                                                 style={{width: '80px', height: '80px'}}>
-                                                                <AlertCircle className="text-warning" size={32} />
-                                                            </div>
-                                                            <h6 className="text-warning mb-2">No Eligible Scholarships Found</h6>
-                                                            <p className="text-muted small mb-3">
-                                                                This applicant has been evaluated but doesn't meet the criteria for any available scholarships.
-                                                            </p>
-                                                            <div className="row g-2 justify-content-center">
-                                                                <div className="col-auto">
-                                                                    <div className="badge bg-info bg-opacity-10 text-info px-3 py-2">
-                                                                        Score: {(evaluation.score * 100).toFixed(3)}%
-                                                                    </div>
-                                                                </div>
-                                                                <div className="col-auto">
-                                                                    {getClassificationBadge(evaluation.classification)}
+                                                                    ))}
                                                                 </div>
                                                             </div>
-                                                        </div>
-                                                    ) : (
-                                                        <div className="text-center py-5">
-                                                            <div className="bg-light rounded-circle d-inline-flex align-items-center justify-content-center mb-3"
-                                                                 style={{width: '80px', height: '80px'}}>
-                                                                <Award className="text-muted" size={32} />
+                                                        ) : evaluation ? (
+                                                            /* No Eligible Scholarships State */
+                                                            <div className="text-center py-5">
+                                                                <div className="bg-warning bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-4" style={{width: '100px', height: '100px'}}>
+                                                                    <AlertCircle className="text-warning" size={40} />
+                                                                </div>
+                                                                <h5 className="text-warning fw-bold mb-3">No Eligible Scholarships Found</h5>
+                                                                <p className="text-muted mb-4 px-lg-5">
+                                                                    This applicant has been evaluated but doesn't meet the criteria for currently available scholarships.
+                                                                    Consider reviewing scholarship requirements or waiting for new opportunities.
+                                                                </p>
+                                                                <div className="d-flex gap-3 justify-content-center flex-wrap mb-3">
+                                                                    <div className="bg-info bg-opacity-10 rounded-pill px-4 py-3 d-flex align-items-center gap-2">
+                                                                        <i className="bi bi-graph-up text-info"></i>
+                                                                        <span className="fw-semibold text-info">
+                                                    Evaluation Score: {(evaluation.score * 100).toFixed(1)}%
+                                                </span>
+                                                                    </div>
+                                                                    <div className="d-flex align-items-center">
+                                                                        {getClassificationBadge(evaluation.classification)}
+                                                                    </div>
+                                                                </div>
+                                                                <div className="alert alert-info bg-info bg-opacity-5 border-0 d-inline-block">
+                                                                    <small className="text-info">
+                                                                        <i className="bi bi-info-circle me-1"></i>
+                                                                        Student may be eligible for future scholarship opportunities
+                                                                    </small>
+                                                                </div>
                                                             </div>
-                                                            <h6 className="text-muted mb-2">No recommendations generated yet</h6>
-                                                            <p className="text-muted small mb-3">Click "Evaluate & Recommend" in Phase 1 to generate recommendations</p>
-                                                            <button
-                                                                className="btn btn-outline-primary"
-                                                                onClick={() => setActiveTab('evaluate')}
-                                                            >
-                                                                Go to Evaluation
-                                                            </button>
-                                                        </div>
-                                                    )}
+                                                        ) : (
+                                                            /* No Evaluation State */
+                                                            <div className="text-center py-5">
+                                                                <div className="bg-light rounded-circle d-inline-flex align-items-center justify-content-center mb-4" style={{width: '100px', height: '100px'}}>
+                                                                    <Award className="text-muted" size={40} />
+                                                                </div>
+                                                                <h5 className="text-muted fw-bold mb-3">No Recommendations Available</h5>
+                                                                <p className="text-muted mb-4 px-lg-5">
+                                                                    Complete the evaluation process in Phase 1 to generate personalized scholarship recommendations for this applicant.
+                                                                </p>
+                                                                <button
+                                                                    className="btn btn-primary btn-lg px-4 py-3 d-inline-flex align-items-center gap-2"
+                                                                    onClick={() => setActiveTab('evaluate')}
+                                                                >
+                                                                    <i className="bi bi-arrow-left"></i>
+                                                                    Go to Evaluation Phase
+                                                                </button>
+                                                            </div>
+                                                        )}
+                                                    </div>
                                                 </div>
                                             </div>
-                                        </div>
-                                    );
-                                })}
+                                        );
+                                    })}
+                                </div>
                             </div>
                         )}
 
@@ -894,17 +1020,26 @@ const ScholarshipDashboard = () => {
                             <div className="row g-4">
                                 {filteredApplications.map((app) => {
                                     const appRecommendations = recommendations[app.id] || [];
-                                    const appSelection = selections[app.id]; // This is now a single object or null/undefined
+                                    const appSelection = selections[app.id];
 
                                     return (
                                         <div key={app.id} className="col-12">
-                                            <div className="card border-0 shadow-sm">
-                                                <div className="card-header bg-light border-0 py-3">
+                                            <div className="card border-0 shadow-lg hover-shadow">
+                                                <div className="card-header bg-gradient bg-primary bg-opacity-10 border-0 py-4">
                                                     <div className="row align-items-center">
                                                         <div className="col">
-                                                            <h6 className="fw-bold mb-1">{app.name}</h6>
-                                                            <div className="text-muted small">
-                                                                {getCourseInfo(app.course_id).name} • GWA: {calculateGWA(app.grades).toFixed(2)} • Income: ₱{parseFloat(app.family_income).toLocaleString()}
+                                                            <h6 className="fw-bold mb-2 text-dark">{app.name}</h6>
+                                                            <div className="d-flex flex-wrap gap-2 align-items-center">
+                                        <span className="badge bg-white text-info border border-info px-3 py-2 rounded-pill">
+                                            <i className="bi bi-mortarboard me-1"></i>
+                                            {getCourseInfo(app.course_id).name}
+                                        </span>
+                                                                <span className="badge bg-white text-success border border-success px-3 py-2 rounded-pill">
+                                            GWA: {calculateGWA(app.grades).toFixed(2)}
+                                        </span>
+                                                                <span className="badge bg-white text-warning border border-warning px-3 py-2 rounded-pill">
+                                            Income: ₱{parseFloat(app.family_income).toLocaleString()}
+                                        </span>
                                                             </div>
                                                         </div>
                                                         <div className="col-auto">
@@ -915,65 +1050,63 @@ const ScholarshipDashboard = () => {
 
                                                 <div className="card-body p-4">
                                                     {appSelection ? (
-                                                        // Selection has been made - show success state
-                                                        <div className="alert alert-success border-0 shadow-sm">
+                                                        /* Selection Complete */
+                                                        <div className="alert alert-success border-0 bg-success bg-opacity-10">
                                                             <div className="d-flex align-items-center gap-3 mb-3">
-                                                                <div className="bg-success bg-opacity-20 p-2 rounded-3">
+                                                                <div className="bg-success bg-opacity-20 p-3 rounded-3">
                                                                     <CheckCircle className="text-success" size={24} />
                                                                 </div>
                                                                 <div>
-                                                                    <h6 className="alert-heading mb-1 fw-bold">Scholarship Successfully Awarded!</h6>
-                                                                    <div className="text-muted small">Final selection completed</div>
+                                                                    <h6 className="fw-bold mb-1 text-success">Scholarship Successfully Awarded!</h6>
+                                                                    <div className="text-success opacity-75 small">Selection completed on {appSelection.selected_date ? new Date(appSelection.selected_date).toLocaleDateString() : 'N/A'}</div>
                                                                 </div>
                                                             </div>
 
-                                                            <div className="row g-3">
-                                                                <div className="col-md-3">
-                                                                    <div className="bg-white rounded-3 p-3 text-center">
+                                                            <div className="row g-3 mb-3">
+                                                                <div className="col-sm-6 col-lg-3">
+                                                                    <div className="bg-white rounded-3 p-3 text-center shadow-sm">
                                                                         <div className="fw-bold text-success mb-1">
                                                                             {appSelection.scholarship_name || 'Selected Scholarship'}
                                                                         </div>
-                                                                        <div className="small text-muted">Selected Scholarship</div>
+                                                                        <div className="small text-muted">Scholarship</div>
                                                                     </div>
                                                                 </div>
-                                                                <div className="col-md-3">
-                                                                    <div className="bg-white rounded-3 p-3 text-center">
+                                                                <div className="col-sm-6 col-lg-3">
+                                                                    <div className="bg-white rounded-3 p-3 text-center shadow-sm">
                                                                         <div className="fw-bold text-primary mb-1">
                                                                             ₱{appSelection.awarded_amount ? parseFloat(appSelection.awarded_amount as string).toLocaleString() : 'N/A'}
                                                                         </div>
-                                                                        <div className="small text-muted">Award Amount</div>
+                                                                        <div className="small text-muted">Amount</div>
                                                                     </div>
                                                                 </div>
-                                                                <div className="col-md-3">
-                                                                    <div className="bg-white rounded-3 p-3 text-center">
-                                                                        <div className="fw-bold text-info mb-1">
-                                                                            {appSelection.final_score ? parseFloat(String(appSelection.final_score * 100)).toFixed(3) : 'N/A'}
+                                                                <div className="col-sm-6 col-lg-3">
+                                                                    <div className="bg-white rounded-3 p-3 text-center shadow-sm">
+                                                                        <div className="fw-bold text-dark mb-1">
+                                                                            {appSelection.final_score ? (appSelection.final_score * 100).toFixed(1) + '%' : 'N/A'}
                                                                         </div>
                                                                         <div className="small text-muted">Final Score</div>
                                                                     </div>
                                                                 </div>
-                                                                <div className="col-md-3">
-                                                                    <div className="bg-white rounded-3 p-3 text-center">
-                                                                        <div className="fw-bold text-secondary mb-1">
-                                                                            {appSelection.selected_date ? new Date(appSelection.selected_date).toLocaleDateString() : 'N/A'}
-                                                                        </div>
-                                                                        <div className="small text-muted">Selection Date</div>
+                                                                <div className="col-sm-6 col-lg-3">
+                                                                    <div className="bg-white rounded-3 p-3 text-center shadow-sm">
+                                                                        <div className="fw-bold text-success mb-1">Awarded</div>
+                                                                        <div className="small text-muted">Status</div>
                                                                     </div>
                                                                 </div>
                                                             </div>
 
                                                             {appSelection.selection_reason && (
-                                                                <div className="mt-3">
-                                                                    <div className="small text-muted">
-                                                                        <strong>Selection Reason:</strong> {appSelection.selection_reason}
+                                                                <div className="mb-3">
+                                                                    <div className="small">
+                                                                        <strong>Reason:</strong> {appSelection.selection_reason}
                                                                     </div>
                                                                 </div>
                                                             )}
 
-                                                            <div className="mt-3 d-flex gap-2">
+                                                            <div className="d-flex gap-2 flex-wrap">
                                                                 <button className="btn btn-outline-success btn-sm d-flex align-items-center gap-2">
                                                                     <Download size={14} />
-                                                                    Download Award Letter
+                                                                    Award Letter
                                                                 </button>
                                                                 <button className="btn btn-outline-primary btn-sm d-flex align-items-center gap-2">
                                                                     <FileText size={14} />
@@ -982,27 +1115,29 @@ const ScholarshipDashboard = () => {
                                                             </div>
                                                         </div>
                                                     ) : appRecommendations.length > 0 ? (
-                                                        // Show recommendations for selection
+                                                        /* Show Recommendations for Selection */
                                                         <div>
-                                                            <div className="d-flex align-items-center justify-content-between mb-4">
-                                                                <div className="d-flex align-items-center gap-2">
-                                                                    <Award className="text-warning" size={20} />
-                                                                    <h6 className="text-warning mb-0 fw-bold">Select Final Scholarship Award</h6>
-                                                                </div>
-                                                                <div className="small text-muted">
-                                                                    {appRecommendations.length} recommendation{appRecommendations.length !== 1 ? 's' : ''} available
+                                                            <div className="alert alert-warning bg-warning bg-opacity-10 border-0 mb-4">
+                                                                <div className="d-flex align-items-center justify-content-between">
+                                                                    <div className="d-flex align-items-center gap-2">
+                                                                        <Award className="text-warning" size={20} />
+                                                                        <h6 className="text-warning mb-0 fw-bold">Select Final Scholarship Award</h6>
+                                                                    </div>
+                                                                    <div className="small text-dark">
+                                                                        {appRecommendations.length} option{appRecommendations.length !== 1 ? 's' : ''} available
+                                                                    </div>
                                                                 </div>
                                                             </div>
 
                                                             <div className="row g-3">
                                                                 {appRecommendations.map((rec, index) => (
                                                                     <div key={index} className="col-12">
-                                                                        <div className="card border hover-shadow h-100">
+                                                                        <div className="card border shadow-sm">
                                                                             <div className="card-body p-4">
                                                                                 <div className="row align-items-center">
                                                                                     <div className="col-lg-8">
                                                                                         <div className="d-flex align-items-start gap-3">
-                                                                                            <div className="bg-warning bg-opacity-10 p-2 rounded-3">
+                                                                                            <div className="bg-warning bg-opacity-15 p-2 rounded-3">
                                                                                                 <Star className="text-warning" size={20} />
                                                                                             </div>
                                                                                             <div className="flex-grow-1">
@@ -1011,7 +1146,7 @@ const ScholarshipDashboard = () => {
 
                                                                                                 <div className="row g-2 mb-3">
                                                                                                     <div className="col-auto">
-                                                                                <span className="badge bg-primary bg-opacity-10 text-primary px-3 py-2">
+                                                                                <span className="badge bg-white text-primary border border-primary px-3 py-2">
                                                                                     Score: {rec.score ? parseFloat(String(rec.score * 100)).toFixed(2) + '%' : 'N/A'}
                                                                                 </span>
                                                                                                     </div>
@@ -1019,7 +1154,7 @@ const ScholarshipDashboard = () => {
                                                                                                         {getClassificationBadge(rec.classification)}
                                                                                                     </div>
                                                                                                     <div className="col-auto">
-                                                                                <span className="badge bg-success bg-opacity-10 text-success px-3 py-2">
+                                                                                <span className="badge bg-white text-success border border-success px-3 py-2">
                                                                                     ₱{rec.amount ? parseFloat(String(rec.amount)).toLocaleString() : 'N/A'}
                                                                                 </span>
                                                                                                     </div>

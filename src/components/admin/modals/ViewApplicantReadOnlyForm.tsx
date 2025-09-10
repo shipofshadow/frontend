@@ -5,6 +5,7 @@ import FilePreview from "../FilePreview.tsx";
 import axios from "axios";
 import {API_BASE_URL} from "../../../config.ts";
 import {useAuth} from "../../../context/AuthContext.tsx";
+import ScholarshipSummary from "../ScholarshipSummary.tsx";
 interface Props {
     applicant: Applicant;
 }
@@ -710,17 +711,8 @@ const ViewApplicantReadOnlyForm: React.FC<Props> = ({ applicant }) => {
                             role="tabpanel"
                             aria-labelledby="tab-history"
                         >
-                            <div className="card border-0">
-                                <div className="card-header">
-                                    <h6 className="mb-0">
-                                        <i className="far fa-medal me-2"></i>
-                                        Scholarship History
-                                    </h6>
-                                </div>
-                                <div className="card-body">
+                            <ScholarshipSummary studentId={applicant.student_id}/>
 
-                                </div>
-                            </div>
                         </div>
                     </div>
                 </div>

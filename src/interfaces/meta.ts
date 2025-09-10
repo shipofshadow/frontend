@@ -10,8 +10,8 @@ export interface Department {
 }
 
 export interface Course {
-    id: string;
+    id: number;
     name: string;
     major?: string;
-    department_id: string;
+    department_id: number;
 }
