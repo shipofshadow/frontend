@@ -8,17 +8,22 @@ interface FormData {
     income: number;
     year_level: string;
     is_4ps_member: boolean;
-    is_indigenous: boolean;
+    ip_affiliation: boolean;
     is_pwd: false;
     siblings_in_college: number;
+    mother_occupation: string;
+    father_occupation: string;
+    total_units: number;
 }
 
 interface Scholarship {
+    scholarship_id: number;
     name: string;
     description: string;
-    grant_amount: number;
-    match_strength: 'High' | 'Medium' | 'Low';
-    confidence_score: number;
+    amount: number;
+    score: number;
+    classification: string;
+    reasons: []
 }
 
 interface EligibilityResult {
@@ -38,13 +43,16 @@ const Prequalify: React.FC = () => {
 
     // Initial form data
     const initialFormData: FormData = {
-        gwa: 0,
+        gwa: 0.0,
         income: 0,
         year_level: '',
         is_4ps_member: false,
-        is_indigenous: false,
+        ip_affiliation: false,
         is_pwd: false,
-        siblings_in_college: 0
+        siblings_in_college: 0,
+        father_occupation: '',
+        mother_occupation: '',
+        total_units: 0
     };
 
     const [formData, setFormData] = useState<FormData>(initialFormData);
@@ -120,13 +128,10 @@ const Prequalify: React.FC = () => {
         setError(null);
     };
 
-    const handleNumberInput = (value: string, field: 'gwa' | 'income' | 'siblings_in_college'): void => {
-        if (field === 'siblings_in_college') {
-            const numValue = parseInt(value) || 0;
-            handleInputChange(field, Math.max(0, Math.min(10, numValue)));
-        } else {
+    const handleNumberInput = (value: string, field: 'gwa' | 'income' | 'total_units'): void => {
+
             handleInputChange(field, value);
-        }
+
     };
 
     return (
@@ -251,8 +256,62 @@ const Prequalify: React.FC = () => {
                                                         <option value="2nd Year">2nd Year</option>
                                                         <option value="3rd Year">3rd Year</option>
                                                         <option value="4th Year">4th Year</option>
-                                                        <option value="5th Year">5th Year</option>
                                                     </select>
+                                                </div>
+
+                                                {/* Total Units Input */}
+                                                <div className="mb-3">
+                                                    <label className="form-label fw-medium d-flex align-items-center">
+                                                        Total Units Enrolled
+                                                        <span className="text-danger ms-1">*</span>
+                                                        <i
+                                                            className="fas fa-info-circle text-muted ms-2"
+                                                            data-bs-toggle="tooltip"
+                                                            title="Total number of units you are enrolled in this semester"
+                                                        ></i>
+                                                    </label>
+                                                    <div className="input-group">
+        <span className="input-group-text bg-primary text-white border-0">
+            <i className="fas fa-calculator"></i>
+        </span>
+                                                        <input
+                                                            type="number"
+                                                            min="1"
+                                                            max="30"
+                                                            className={`form-control border-0 shadow-sm ${
+                                                                formData.total_units ? 'is-valid' : ''
+                                                            }`}
+                                                            value={formData.total_units}
+                                                            onChange={(e) => handleNumberInput(e.target.value, 'total_units')}
+                                                            placeholder="Enter total units (e.g. 21)"
+                                                        />
+                                                        <span className="input-group-text bg-light">
+            <i className="fas fa-book me-1"></i>
+            units
+        </span>
+                                                    </div>
+                                                    {formData.total_units && (
+                                                        <div className="form-text">
+                                                            <div className="d-flex align-items-center mt-2">
+                                                            <span className={`badge me-2 ${
+                                                                formData.total_units >= 18 ? 'bg-success' :
+                                                                    formData.total_units >= 12 ? 'bg-warning' : 'bg-secondary'
+                                                            }`}>
+                                                                <i className={`fas ${
+                                                                    formData.total_units >= 18 ? 'fa-graduation-cap' :
+                                                                        formData.total_units >= 12 ? 'fa-book-open' : 'fa-book'
+                                                                } me-1`}></i>
+                                                                {formData.total_units >= 18 ? 'Full Load' :
+                                                                    formData.total_units >= 12 ? 'Regular Load' : 'Light Load'}
+                                                            </span>
+                                                                <small className="text-muted">
+                                                                    {formData.total_units >= 18 ? 'Full-time student status' :
+                                                                        formData.total_units >= 12 ? 'Regular enrollment load' :
+                                                                            'Part-time student status'}
+                                                                </small>
+                                                            </div>
+                                                        </div>
+                                                    )}
                                                 </div>
                                             </div>
                                         </div>
@@ -278,9 +337,9 @@ const Prequalify: React.FC = () => {
                                                         ></i>
                                                     </label>
                                                     <div className="input-group input-group-lg">
-                                                <span className="input-group-text bg-success text-white border-0">
-                                                    <i className="fas fa-peso-sign"></i>
-                                                </span>
+                <span className="input-group-text bg-success text-white border-0">
+                    <i className="fas fa-peso-sign"></i>
+                </span>
                                                         <input
                                                             type="number"
                                                             min="0"
@@ -292,25 +351,25 @@ const Prequalify: React.FC = () => {
                                                             placeholder="Enter monthly income (e.g. 25000)"
                                                         />
                                                         <span className="input-group-text bg-light">
-                                                    <i className="fas fa-calendar-alt me-1"></i>
-                                                    /month
-                                                </span>
+                    <i className="fas fa-calendar-alt me-1"></i>
+                    /month
+                </span>
                                                     </div>
                                                     {formData.income && (
                                                         <div className="form-text">
                                                             <div className="d-flex align-items-center mt-2">
-                                                        <span className={`badge me-2 ${
-                                                            formData.income < 20000 ? 'bg-success' :
-                                                                formData.income < 50000 ? 'bg-warning' : 'bg-secondary'
-                                                        }`}>
-                                                            <i className={`fas ${
-                                                                formData.income < 20000 ? 'fa-heart' :
-                                                                    formData.income < 50000 ? 'fa-balance-scale' : 'fa-dollar-sign'
-                                                            } me-1`}></i>
-                                                            {formData.income < 20000 ? 'High Priority' :
-                                                                formData.income < 50000 ? 'Moderate Priority' :
-                                                                    'Standard Priority'}
-                                                        </span>
+                        <span className={`badge me-2 ${
+                            formData.income < 20000 ? 'bg-success' :
+                                formData.income < 50000 ? 'bg-warning' : 'bg-secondary'
+                        }`}>
+                            <i className={`fas ${
+                                formData.income < 20000 ? 'fa-heart' :
+                                    formData.income < 50000 ? 'fa-balance-scale' : 'fa-dollar-sign'
+                            } me-1`}></i>
+                            {formData.income < 20000 ? 'High Priority' :
+                                formData.income < 50000 ? 'Moderate Priority' :
+                                    'Standard Priority'}
+                        </span>
                                                                 <small className="text-muted">
                                                                     {formData.income < 20000 ? 'Low income bracket - excellent scholarship prospects' :
                                                                         formData.income < 50000 ? 'Middle income bracket - good scholarship opportunities' :
@@ -321,39 +380,114 @@ const Prequalify: React.FC = () => {
                                                     )}
                                                 </div>
 
-                                                {/* Siblings Input */}
-                                                <div className="mb-3">
-                                                    <label className="form-label fw-medium d-flex align-items-center">
-                                                        Siblings Currently in College
-                                                        <i
-                                                            className="fas fa-info-circle text-muted ms-2"
-                                                            data-bs-toggle="tooltip"
-                                                            title="More siblings in college can increase your scholarship eligibility"
-                                                        ></i>
-                                                    </label>
-                                                    <div className="input-group">
-                                                <span className="input-group-text bg-info text-white border-0">
-                                                    <i className="fas fa-users"></i>
-                                                </span>
-                                                        <input
-                                                            type="number"
-                                                            min="0"
-                                                            max="10"
-                                                            className="form-control border-0 shadow-sm"
-                                                            value={formData.siblings_in_college}
-                                                            onChange={(e) => handleNumberInput(e.target.value, 'siblings_in_college')}
-                                                            placeholder="Number of siblings (0 if none)"
-                                                        />
-                                                    </div>
-                                                    {formData.siblings_in_college > 0 && (
-                                                        <div className="form-text">
-                                                            <small className="text-success">
-                                                                <i className="fas fa-plus-circle me-1"></i>
-                                                                {formData.siblings_in_college} {formData.siblings_in_college === 1 ? 'sibling' : 'siblings'} may boost your eligibility!
-                                                            </small>
+                                                {/* Parent Occupations Row */}
+                                                <div className="row mb-4">
+                                                    {/* Father's Occupation */}
+                                                    <div className="col-md-6">
+                                                        <label className="form-label fw-medium d-flex align-items-center">
+                                                            Father's Occupation
+                                                            <i
+                                                                className="fas fa-info-circle text-muted ms-2"
+                                                                data-bs-toggle="tooltip"
+                                                                title="Father's current job or profession"
+                                                            ></i>
+                                                        </label>
+                                                        <div className="input-group">
+                    <span className="input-group-text bg-primary text-white border-0">
+                        <i className="fas fa-male"></i>
+                    </span>
+                                                            <input
+                                                                type="text"
+                                                                className="form-control border-0 shadow-sm"
+                                                                value={formData.father_occupation || ''}
+                                                                onChange={(e) => setFormData(prev => ({
+                                                                    ...prev,
+                                                                    father_occupation: e.target.value
+                                                                }))}
+                                                                placeholder="e.g. Farmer, Teacher, Driver"
+                                                            />
                                                         </div>
-                                                    )}
+                                                        {/* Special occupation indicators */}
+                                                        {formData.father_occupation && (
+                                                            <div className="form-text">
+                                                                {['farmer', 'fisherfolk', 'fisherman'].some(job =>
+                                                                    formData.father_occupation.toLowerCase().includes(job)
+                                                                ) && (
+                                                                    <small className="text-success">
+                                                                        <i className="fas fa-seedling me-1"></i>
+                                                                        Agricultural/Fishery background may qualify for special scholarships
+                                                                    </small>
+                                                                )}
+                                                                {['ofw', 'overseas', 'abroad'].some(job =>
+                                                                    formData.father_occupation.toLowerCase().includes(job)
+                                                                ) && (
+                                                                    <small className="text-info">
+                                                                        <i className="fas fa-plane me-1"></i>
+                                                                        OFW dependent may qualify for special programs
+                                                                    </small>
+                                                                )}
+                                                            </div>
+                                                        )}
+                                                    </div>
+
+                                                    {/* Mother's Occupation */}
+                                                    <div className="col-md-6">
+                                                        <label className="form-label fw-medium d-flex align-items-center">
+                                                            Mother's Occupation
+                                                            <i
+                                                                className="fas fa-info-circle text-muted ms-2"
+                                                                data-bs-toggle="tooltip"
+                                                                title="Mother's current job or profession"
+                                                            ></i>
+                                                        </label>
+                                                        <div className="input-group">
+                    <span className="input-group-text bg-danger text-white border-0">
+                        <i className="fas fa-female"></i>
+                    </span>
+                                                            <input
+                                                                type="text"
+                                                                className="form-control border-0 shadow-sm"
+                                                                value={formData.mother_occupation || ''}
+                                                                onChange={(e) => setFormData(prev => ({
+                                                                    ...prev,
+                                                                    mother_occupation: e.target.value
+                                                                }))}
+                                                                placeholder="e.g. Housewife, Vendor, Nurse"
+                                                            />
+                                                        </div>
+                                                        {/* Special occupation indicators */}
+                                                        {formData.mother_occupation && (
+                                                            <div className="form-text">
+                                                                {['farmer', 'fisherfolk', 'fisherman'].some(job =>
+                                                                    formData.mother_occupation.toLowerCase().includes(job)
+                                                                ) && (
+                                                                    <small className="text-success">
+                                                                        <i className="fas fa-seedling me-1"></i>
+                                                                        Agricultural/Fishery background may qualify for special scholarships
+                                                                    </small>
+                                                                )}
+                                                                {['ofw', 'overseas', 'abroad'].some(job =>
+                                                                    formData.mother_occupation.toLowerCase().includes(job)
+                                                                ) && (
+                                                                    <small className="text-info">
+                                                                        <i className="fas fa-plane me-1"></i>
+                                                                        OFW dependent may qualify for special programs
+                                                                    </small>
+                                                                )}
+                                                                {['housewife', 'homemaker', 'unemployed'].some(job =>
+                                                                    formData.mother_occupation.toLowerCase().includes(job)
+                                                                ) && (
+                                                                    <small className="text-warning">
+                                                                        <i className="fas fa-home me-1"></i>
+                                                                        Single income household noted
+                                                                    </small>
+                                                                )}
+                                                            </div>
+                                                        )}
+                                                    </div>
                                                 </div>
+
+                                  
                                             </div>
                                         </div>
 
@@ -397,21 +531,21 @@ const Prequalify: React.FC = () => {
                                                     </div>
                                                     <div className="col-md-4">
                                                         <div className={`form-check form-check-lg p-3 rounded text-center h-100 transition-all ${
-                                                            formData.is_indigenous ? 'bg-success bg-opacity-10 border border-success' : 'bg-light'
+                                                            formData.ip_affiliation ? 'bg-success bg-opacity-10 border border-success' : 'bg-light'
                                                         }`}>
                                                             <input
                                                                 className="form-check-input mb-2"
                                                                 type="checkbox"
                                                                 id="indigenous-check"
-                                                                checked={formData.is_indigenous}
-                                                                onChange={(e) => handleInputChange('is_indigenous', e.target.checked)}
+                                                                checked={formData.ip_affiliation}
+                                                                onChange={(e) => handleInputChange('ip_affiliation', e.target.checked)}
                                                             />
                                                             <label className="form-check-label d-block cursor-pointer" htmlFor="indigenous-check">
                                                                 <i className="fas fa-globe-asia text-success d-block mb-2 fs-4"></i>
                                                                 <strong>Indigenous People</strong>
                                                                 <br />
                                                                 <small className="text-muted">Cultural community member</small>
-                                                                {formData.is_indigenous && (
+                                                                {formData.ip_affiliation && (
                                                                     <div className="mt-2">
                                                                 <span className="badge bg-success">
                                                                     <i className="fas fa-check me-1"></i>
@@ -646,18 +780,9 @@ const Prequalify: React.FC = () => {
                                                                                             <div className="d-flex flex-wrap gap-2">
                                                                                         <span className="badge bg-success shadow-sm">
                                                                                             <i className="fas fa-peso-sign me-1"></i>
-                                                                                            {scholarship.grant_amount.toLocaleString()}
+                                                                                            {scholarship.amount.toLocaleString()}
                                                                                         </span>
-                                                                                                <span className={`badge shadow-sm ${
-                                                                                                    scholarship.match_strength === 'High' ? 'bg-success' :
-                                                                                                        scholarship.match_strength === 'Medium' ? 'bg-warning' : 'bg-secondary'
-                                                                                                }`}>
-                                                                                            <i className={`fas ${
-                                                                                                scholarship.match_strength === 'High' ? 'fa-star' :
-                                                                                                    scholarship.match_strength === 'Medium' ? 'fa-star-half-alt' : 'fa-circle'
-                                                                                            } me-1`}></i>
-                                                                                                    {scholarship.match_strength} Match
-                                                                                        </span>
+
                                                                                             </div>
                                                                                         </div>
                                                                                         <div className="text-center ms-3">
@@ -665,7 +790,7 @@ const Prequalify: React.FC = () => {
                                                                                                 <div className="d-flex align-items-center justify-content-center h-100">
                                                                                                     <div className="text-center">
                                                                                                         <div className="fw-bold text-primary small">
-                                                                                                            {scholarship.confidence_score}%
+                                                                                                            {scholarship.score}%
                                                                                                         </div>
                                                                                                         <small className="text-muted" style={{fontSize: '0.7rem'}}>Match</small>
                                                                                                     </div>
