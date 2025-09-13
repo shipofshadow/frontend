@@ -3,7 +3,6 @@ import { useAuth } from '../../context/AuthContext';
 import { Link } from 'react-router-dom';
 import { API_BASE_URL } from "../../config";
 
-// Types
 interface FormData {
     gwa: number;
     income: number;
@@ -39,8 +38,8 @@ const Prequalify: React.FC = () => {
 
     // Initial form data
     const initialFormData: FormData = {
-        gwa: '',
-        income: '',
+        gwa: 0,
+        income: 0,
         year_level: '',
         is_4ps_member: false,
         is_indigenous: false,
@@ -52,7 +51,6 @@ const Prequalify: React.FC = () => {
     const [eligibilityResult, setEligibilityResult] = useState<EligibilityResult | null>(null);
     const [isCalculating, setIsCalculating] = useState<boolean>(false);
     const [error, setError] = useState<string | null>(null);
-    const [showTips, setShowTips] = useState<boolean>(false);
 
     const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -116,39 +114,10 @@ const Prequalify: React.FC = () => {
             [field]: value
         }));
     };
-
-    const getScoreColor = (score: number): string => {
-        if (score >= 80) return 'success';
-        if (score >= 65) return 'info';
-        if (score >= 45) return 'warning';
-        return 'danger';
-    };
-
-    const getClassificationBadge = (classification: string): string => {
-        switch (classification) {
-            case 'Highly Eligible': return 'bg-success';
-            case 'Eligible': return 'bg-primary';
-            case 'Somewhat Eligible': return 'bg-warning';
-            case 'Barely Eligible': return 'bg-info';
-            default: return 'bg-danger';
-        }
-    };
-
-    const getClassificationIcon = (classification: string): string => {
-        switch (classification) {
-            case 'Highly Eligible': return '🎉';
-            case 'Eligible': return '✅';
-            case 'Somewhat Eligible': return '⚠️';
-            case 'Barely Eligible': return '📋';
-            default: return '❌';
-        }
-    };
-
     const handleReset = (): void => {
         setFormData(initialFormData);
         setEligibilityResult(null);
         setError(null);
-        setShowTips(false);
     };
 
     const handleNumberInput = (value: string, field: 'gwa' | 'income' | 'siblings_in_college'): void => {
@@ -262,7 +231,7 @@ const Prequalify: React.FC = () => {
                                                                             formData.gwa <= 2.5 ? 'bg-warning' :
                                                                                 formData.gwa <= 3.0 ? 'bg-info' : 'bg-danger'
                                                                     }`}
-                                                                    style={{ width: `${Math.max(20, (5 - parseFloat(formData.gwa)) / 4 * 100)}%` }}
+                                                                    style={{ width: `${Math.max(20, (5 - parseFloat(String(formData.gwa))) / 4 * 100)}%` }}
                                                                 />
                                                             </div>
                                                         </div>

@@ -1,9 +1,9 @@
-// layouts/AdminLayout.tsx
+// layouts/ApplicantLayout.tsx
 import React from 'react';
 import { Outlet } from 'react-router-dom';
 import Navbar from '../components/common/applicant/Navbar';
 
-const AdminLayout: React.FC = () => {
+const ApplicantLayout: React.FC = () => {
   return (
     <>
       <Navbar />
@@ -12,4 +12,4 @@ const AdminLayout: React.FC = () => {
   );
 };
 
-export default AdminLayout;
+export default ApplicantLayout;

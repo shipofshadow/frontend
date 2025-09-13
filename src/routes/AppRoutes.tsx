@@ -12,7 +12,7 @@ import NotFound from '../pages/errors/NotFound';
 import Apply from '../pages/applicant/Apply.tsx';
 import ProtectedRoute from './ProtectedRoute';
 import Profile from '../pages/applicant/Profile';
-import Home from '../pages/applicant/Home';
+import Home from '../pages/applicant/Home.tsx';
 import Register from '../pages/Register';
 import ForgotPassword from '../pages/ForgotPassword.tsx';
 import Settings from '../pages/applicant/Settings';

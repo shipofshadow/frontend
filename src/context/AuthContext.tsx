@@ -10,7 +10,6 @@ interface User {
     username: string;
     profile?: Profile;
     email: string;
-
 }
 
 interface AuthData {

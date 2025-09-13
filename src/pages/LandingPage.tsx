@@ -32,7 +32,7 @@ interface Scholarship {
 interface EligibilityResult {
   score: number;
   classification: string;
-  message: string;
+  message: string;  
 }
 
 interface FAQ {

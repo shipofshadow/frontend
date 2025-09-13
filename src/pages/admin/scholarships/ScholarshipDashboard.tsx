@@ -1,5 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { Users, Clock, CheckCircle, Award, Star, Search, Download, AlertCircle, Eye, FileText } from "lucide-react";
+import {
+    Users,
+    Clock,
+    CheckCircle,
+    Award,
+    Star,
+    Search,
+    Download,
+    AlertCircle,
+    Eye,
+    FileText,
+    XCircle
+} from "lucide-react";
 import {API_BASE_URL} from "../../../config.ts";
 import axios from "axios";
 import {useAuth} from "../../../context/AuthContext.tsx";
@@ -476,6 +488,13 @@ const ScholarshipDashboard = () => {
         scholarships: scholarships.length
     };
 
+    function handleDeny(applicationId: number) {
+        if(!applicationId){
+            return;
+        }
+        alert(applicationId);
+    }
+
     return (
         <>
             <div className="min-vh-100 bg-light">
@@ -509,11 +528,11 @@ const ScholarshipDashboard = () => {
                                             <div className="text-muted small fw-medium mb-1">Total Applications</div>
                                             <div className="h4 fw-bold text-primary mb-0">{stats.total}</div>
                                             <div className="small text-success mt-1">
-                                                <i className="bi bi-arrow-up me-1"></i>Active
+                                                <i className="far fa-arrow-up"></i>Active
                                             </div>
                                         </div>
                                         <div className="bg-primary bg-opacity-15 p-2 rounded-3">
-                                            <Users className="text-primary" size={20} />
+                                            <Users className="text-white" size={20} />
                                         </div>
                                     </div>
                                 </div>
@@ -530,7 +549,7 @@ const ScholarshipDashboard = () => {
                                             <div className="small text-muted mt-1">Awaiting evaluation</div>
                                         </div>
                                         <div className="bg-warning bg-opacity-15 p-2 rounded-3">
-                                            <Clock className="text-warning" size={20} />
+                                            <Clock className="text-white" size={20} />
                                         </div>
                                     </div>
                                 </div>
@@ -547,7 +566,7 @@ const ScholarshipDashboard = () => {
                                             <div className="small text-success mt-1">Successfully awarded</div>
                                         </div>
                                         <div className="bg-success bg-opacity-15 p-2 rounded-3">
-                                            <CheckCircle className="text-success" size={20} />
+                                            <CheckCircle className="text-white" size={20} />
                                         </div>
                                     </div>
                                 </div>
@@ -564,7 +583,7 @@ const ScholarshipDashboard = () => {
                                             <div className="small text-muted mt-1">Available programs</div>
                                         </div>
                                         <div className="bg-info bg-opacity-15 p-2 rounded-3">
-                                            <Award className="text-info" size={20} />
+                                            <Award className="text-white" size={20} />
                                         </div>
                                     </div>
                                 </div>
@@ -612,7 +631,7 @@ const ScholarshipDashboard = () => {
                                     role="tab"
                                 >
                                     <div className="d-flex align-items-center justify-content-center gap-2 flex-wrap">
-                                        <span className="badge bg-primary bg-opacity-25 text-primary rounded-pill px-2 py-1 small">1</span>
+                                        <span className="badge bg-secondary  text-white rounded-pill px-2 py-1 small">1</span>
                                         <span className="d-none d-sm-inline">Evaluate Applications</span>
                                         <span className="d-sm-none">Evaluate</span>
                                     </div>
@@ -626,7 +645,7 @@ const ScholarshipDashboard = () => {
                                     role="tab"
                                 >
                                     <div className="d-flex align-items-center justify-content-center gap-2 flex-wrap">
-                                        <span className="badge bg-success bg-opacity-25 text-success rounded-pill px-2 py-1 small">2</span>
+                                        <span className="badge bg-success  rounded-pill px-2 py-1 small">2</span>
                                         <span className="d-none d-sm-inline">Review Recommendations</span>
                                         <span className="d-sm-none">Recommend</span>
                                     </div>
@@ -640,7 +659,7 @@ const ScholarshipDashboard = () => {
                                     role="tab"
                                 >
                                     <div className="d-flex align-items-center justify-content-center gap-2 flex-wrap">
-                                        <span className="badge bg-warning bg-opacity-25 text-warning rounded-pill px-2 py-1 small">3</span>
+                                        <span className="badge bg-warning  rounded-pill px-2 py-1 small">3</span>
                                         <span className="d-none d-sm-inline">Final Selection</span>
                                         <span className="d-sm-none">Select</span>
                                     </div>
@@ -745,48 +764,86 @@ const ScholarshipDashboard = () => {
                                                         </div>
 
                                                         <div className="col-lg-4">
-                                                            <div className="d-flex flex-column gap-2 h-100 justify-content-between">
-                                                                <div className="d-none d-lg-block">
-                                                                    {getStatusBadge(app.status)}
+                                                            <div className="d-flex flex-column gap-3 h-100 justify-content-between p-3 bg-light rounded-3 border">
+                                                                {/* Status Section */}
+                                                                <div className="d-flex flex-column gap-2">
+                                                                    <div className="d-none d-lg-block">
+                                                                        {getStatusBadge(app.status)}
+                                                                    </div>
+
+                                                                    {hasBeenEvaluated && (
+                                                                        <div className="text-center p-2 bg-white rounded-2 border border-primary border-opacity-25">
+                                                                            {getClassificationBadge(evaluation.classification)}
+
+                                                                        </div>
+                                                                    )}
                                                                 </div>
 
-                                                                {hasBeenEvaluated && (
-                                                                    <div className="text-center">
-                                                                        {getClassificationBadge(evaluation.classification)}
-                                                                    </div>
-                                                                )}
-
+                                                                {/* Action Buttons */}
                                                                 <div className="d-flex flex-column gap-2">
+                                                                    {/* View Details Button */}
                                                                     <button
-                                                                        className="btn btn-outline-primary btn-sm"
+                                                                        className="btn btn-outline-primary btn-sm d-flex align-items-center justify-content-center gap-2 py-2"
                                                                         onClick={() => viewApplicant(app.id)}
                                                                         data-bs-toggle="modal"
                                                                         data-bs-target="#viewModal"
                                                                     >
-                                                                        <Eye size={14} className="me-2" />
-                                                                        View Details
+                                                                        <Eye size={16} />
+                                                                        <span>View Details</span>
                                                                     </button>
 
+                                                                    {/* Evaluate Button */}
                                                                     <button
-                                                                        className={`btn d-flex align-items-center justify-content-center gap-2 ${
-                                                                            hasBeenEvaluated ? 'btn-outline-primary' : 'btn-primary'
+                                                                        className={`btn d-flex align-items-center justify-content-center gap-2 py-2 fw-medium ${
+                                                                            hasBeenEvaluated
+                                                                                ? 'btn-outline-warning border-2'
+                                                                                : 'btn-primary shadow-sm'
                                                                         }`}
                                                                         onClick={() => handleEvaluate(app.id)}
                                                                         disabled={loadingId === app.id}
                                                                     >
                                                                         {loadingId === app.id ? (
                                                                             <>
-                                                                                <div className="spinner-border spinner-border-sm" role="status"></div>
+                                                                                <div className="spinner-border spinner-border-sm" role="status">
+                                                                                    <span className="visually-hidden">Loading...</span>
+                                                                                </div>
                                                                                 <span>Evaluating...</span>
                                                                             </>
                                                                         ) : (
                                                                             <>
-                                                                                <Star size={16} />
-                                                                                <span>{hasBeenEvaluated ? 'Re-evaluate' : 'Evaluate'}</span>
+                                                                                <Star size={16} fill={hasBeenEvaluated ? "currentColor" : "none"} />
+                                                                                <span>{hasBeenEvaluated ? 'Re-evaluate' : 'Evaluate Application'}</span>
                                                                             </>
                                                                         )}
                                                                     </button>
+
+                                                                    {/* Action Buttons for Evaluated Applications */}
+                                                                    {hasBeenEvaluated && (
+                                                                        <div className="d-flex flex-column gap-2 pt-2 border-top border-opacity-25">
+
+                                                                            <button
+                                                                                className="btn btn-outline-danger btn-sm d-flex align-items-center justify-content-center gap-2 py-2"
+                                                                                onClick={() => handleDeny(app.id)}
+                                                                                disabled={app.status === 'denied'}
+                                                                            >
+                                                                                <XCircle size={14} />
+                                                                                <span>{app.status === 'denied' ? 'Denied' : 'Deny Application'}</span>
+                                                                            </button>
+                                                                        </div>
+                                                                    )}
+
+                                                                    {/* Additional Quick Actions */}
+                                                                    {hasBeenEvaluated && evaluation.classification === 'Eligible' && (
+                                                                        <div className="mt-2 p-2 bg-success bg-opacity-10 rounded-2 border border-success border-opacity-25">
+                                                                            <small className="text-success fw-medium d-flex align-items-center gap-1">
+                                                                                <CheckCircle size={12} />
+                                                                                Recommended for Scholarship
+                                                                            </small>
+                                                                        </div>
+                                                                    )}
                                                                 </div>
+
+
                                                             </div>
                                                         </div>
                                                     </div>
@@ -1138,7 +1195,7 @@ const ScholarshipDashboard = () => {
                                                                                     <div className="col-lg-8">
                                                                                         <div className="d-flex align-items-start gap-3">
                                                                                             <div className="bg-warning bg-opacity-15 p-2 rounded-3">
-                                                                                                <Star className="text-warning" size={20} />
+                                                                                                <Star className="text-white" size={20} />
                                                                                             </div>
                                                                                             <div className="flex-grow-1">
                                                                                                 <h6 className="fw-bold mb-2">{rec.name}</h6>
