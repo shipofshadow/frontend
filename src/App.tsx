@@ -5,13 +5,16 @@ import AppRoutes from './routes/AppRoutes';
 import ApiStatusGuard from "./components/ApiStatusGuard.tsx";
 import {store} from "./store/slices";
 import {Provider} from "react-redux";
+import {NotificationProvider} from "./context/NotificationContext.tsx";
 
 const App: React.FC = () => {
     return (
         <Router>
             <ApiStatusGuard>
                 <Provider store={store}>
-                    <AppRoutes />
+                    <NotificationProvider>
+                        <AppRoutes />
+                    </NotificationProvider>
                 </Provider>
             </ApiStatusGuard>
         </Router>

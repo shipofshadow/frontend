@@ -23,8 +23,6 @@ import {hasApplied} from "../../services/applicationService.tsx";
 import { useDispatch, useSelector } from 'react-redux';
 import {fetchSemester} from "../../store/slices/semesterSlice.ts";
 import type {AppDispatch, RootState} from "../../store/slices";
-import Notifications from "./Notifications.tsx";
-import Notif from "../../components/Notif.tsx";
 
 const Home = () => {
     const { user, token } = useAuth();
@@ -49,8 +47,6 @@ const Home = () => {
 
             <div className="container py-4">
                 <div className="row g-4">
-                    <Notif />
-
                     {/* Welcome Section */}
                     <div className="col-12">
                         <div className="card border-0 shadow-sm overflow-hidden">

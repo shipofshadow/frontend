@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../context/AuthContext';
+import {NotificationBell} from "../../NotificationBell.tsx";
 
 const Navbar: React.FC = () => {
   const navigate = useNavigate();
@@ -10,11 +11,6 @@ const Navbar: React.FC = () => {
     logout();
     navigate('/login');
   };
-
-  const notifications = [
-    { id: 1, text: 'Application received' },
-    { id: 2, text: 'Upload your ITR' },
-  ];
 
   return (
       <nav className="navbar navbar-expand-lg navbar-light bg-white shadow-sm sticky-top">
@@ -75,41 +71,8 @@ const Navbar: React.FC = () => {
                     </li>
 
                     {/* 🖥 Desktop: dropdown notifs */}
-                    <li className="nav-item dropdown d-none d-lg-block">
-                      <a
-                          className="nav-link dropdown-toggle position-relative"
-                          href="#"
-                          id="notifDropdown"
-                          role="button"
-                          data-bs-toggle="dropdown"
-                          aria-expanded="false"
-                      >
-                        <i className="far fa-bell"></i>
-                        {notifications.length > 0 && (
-                            <span className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-                        {notifications.length}
-                      </span>
-                        )}
-                      </a>
-                      <ul className="dropdown-menu dropdown-menu-end" aria-labelledby="notifDropdown">
-                        {notifications.map((notif) => (
-                            <li key={notif.id} className="dropdown-item small text-wrap">
-                              {notif.text}
-                            </li>
-                        ))}
-                        {notifications.length === 0 && (
-                            <li className="dropdown-item text-muted small">No new notifications</li>
-                        )}
-                        <li><hr className="dropdown-divider" /></li>
-                        <li>
-                          <Link to="/applicant/notifications" className="dropdown-item text-center">
-                            View all
-                          </Link>
-                        </li>
-                      </ul>
-                    </li>
-
-                    {/* Profile Dropdown */}
+                      <NotificationBell/>
+                      {/* Profile Dropdown */}
                     <li className="nav-item dropdown">
                       <a
                           className="nav-link dropdown-toggle"
