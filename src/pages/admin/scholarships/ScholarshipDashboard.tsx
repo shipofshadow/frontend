@@ -947,7 +947,7 @@ const ScholarshipDashboard = () => {
                                                                                         </div>
                                                                                         <div className="text-end">
                                                                     <span className="badge bg-success text-dark px-3 py-2 rounded-pill fs-6">
-                                                                        <i className="bi bi-currency-dollar me-1"></i>
+                                                                        <i className="fal fa-dollar me-1"></i>
                                                                         {rec.amount.toLocaleString()}
                                                                     </span>
                                                                                         </div>
@@ -956,10 +956,7 @@ const ScholarshipDashboard = () => {
                                                                                     {/* Description */}
                                                                                     <p className="text-muted mb-3 lh-base">{rec.description}</p>
 
-                                                                                    {/* Classification Badge */}
-                                                                                    <div className="mb-4">
-                                                                                        {getClassificationBadge(rec.classification)}
-                                                                                    </div>
+
 
                                                                                     {/* Eligibility Details Accordion */}
                                                                                     <div className="accordion accordion-flush" id={`accordion-${app.id}-${index}`}>
@@ -987,20 +984,10 @@ const ScholarshipDashboard = () => {
                                                                                                         <ul className="list-unstyled mb-0">
                                                                                                             {rec.reasons.map((reason, idx) => (
                                                                                                                 <li key={idx} className="mb-2 d-flex align-items-start gap-3">
-                                                                                                                    <div className="flex-shrink-0 mt-1">
-                                                                                                                        {reason.startsWith('✓') ? (
-                                                                                                                            <div className="bg-success bg-opacity-15 rounded-circle d-flex align-items-center justify-content-center" style={{width: '24px', height: '24px'}}>
-                                                                                                                                <i className="bi bi-check-circle-fill text-success"></i>
-                                                                                                                            </div>
-                                                                                                                        ) : (
-                                                                                                                            <div className="bg-danger bg-opacity-15 rounded-circle d-flex align-items-center justify-content-center" style={{width: '24px', height: '24px'}}>
-                                                                                                                                <i className="bi bi-x-circle-fill text-danger"></i>
-                                                                                                                            </div>
-                                                                                                                        )}
+                                                                                                                    <div className="bg-success bg-opacity-15 rounded-circle d-flex align-items-center justify-content-center" style={{width: '24px', height: '24px'}}>
+                                                                                                                        <i className="fal fa-check text-white"></i>
                                                                                                                     </div>
-                                                                                                                    <span className={`lh-base ${reason.startsWith('✓') ? 'text-success' : 'text-danger'}`}>
-                                                                                                {reason.substring(2)}
-                                                                                            </span>
+                                                                                                                    <span className="lh-base fs-sm text-success">{reason}</span>
                                                                                                                 </li>
                                                                                                             ))}
                                                                                                         </ul>
@@ -1030,7 +1017,7 @@ const ScholarshipDashboard = () => {
                                                                     <div className="bg-info bg-opacity-10 rounded-pill px-4 py-3 d-flex align-items-center gap-2">
                                                                         <i className="bi bi-graph-up text-info"></i>
                                                                         <span className="fw-semibold text-info">
-                                                    Evaluation Score: {(evaluation.score * 100).toFixed(1)}%
+                                                    Evaluation Score: {(evaluation.score * 100).toFixed(12)}%
                                                 </span>
                                                                     </div>
                                                                     <div className="d-flex align-items-center">
@@ -1078,29 +1065,52 @@ const ScholarshipDashboard = () => {
                                 {filteredApplications.map((app) => {
                                     const appRecommendations = recommendations[app.id] || [];
                                     const appSelection = selections[app.id];
+                                    const courseInfo = getCourseInfo(app.course_id);
+                                    const gwa = calculateGWA(app.grades);
+                                    const income = parseFloat(app.family_income);
+                                    const evaluation = evaluationResults[app.id];
+
 
                                     return (
                                         <div key={app.id} className="col-12">
                                             <div className="card border-0 shadow-lg hover-shadow">
-                                                <div className="card-header bg-gradient bg-primary bg-opacity-10 border-0 py-4">
-                                                    <div className="row align-items-center">
-                                                        <div className="col">
-                                                            <h6 className="fw-bold mb-2 text-dark">{app.name}</h6>
-                                                            <div className="d-flex flex-wrap gap-2 align-items-center">
-                                        <span className="badge bg-white text-info border border-info px-3 py-2 rounded-pill">
-                                            <i className="bi bi-mortarboard me-1"></i>
-                                            {getCourseInfo(app.course_id).name}
-                                        </span>
-                                                                <span className="badge bg-white text-success border border-success px-3 py-2 rounded-pill">
-                                            GWA: {calculateGWA(app.grades).toFixed(2)}
-                                        </span>
-                                                                <span className="badge bg-white text-warning border border-warning px-3 py-2 rounded-pill">
-                                            Income: ₱{parseFloat(app.family_income).toLocaleString()}
-                                        </span>
+                                                <div className="card-header bg-gradient bg-primary bg-opacity-20 border-0 py-4">
+                                                    <div className="row align-items-center g-3">
+                                                        <div className="col-12 col-lg-8">
+                                                            <div className="d-flex align-items-center gap-3">
+                                                                <div className="bg-primary bg-opacity-16 rounded-circle d-flex align-items-center justify-content-center" style={{width: '50px', height: '50px'}}>
+                                                                    <i className="far fa-user fs-4 text-white"></i>
+                                                                </div>
+                                                                <div>
+                                                                    <h5 className="fw-bold text-white mb-1">{app.name}</h5>
+                                                                    <div className="d-flex flex-wrap gap-3 align-items-center">
+                                                    <span className="badge bg-info bg-opacity-15 text-dark px-3 py-2 rounded-pill">
+                                                        <i className="far fa-mortar-board"></i>
+                                                        {courseInfo.name}
+                                                    </span>
+                                                                        <span className="badge bg-success bg-opacity-15 text-dark px-3 py-2 rounded-pill">
+                                                        <i className="far fa-up-to-line me-1"></i>
+                                                        GWA: {gwa.toFixed(2)}
+                                                    </span>
+                                                                        <span className="badge bg-warning bg-opacity-15 text-dark px-3 py-2 rounded-pill">
+                                                        <i className="far fa-dollar-sign me-1"></i>
+                                                        ₱{income}
+                                                    </span>
+
+                                                                            <span className="badge bg-secondary bg-opacity-15 text-white px-3 py-2 rounded-pill">
+                                                            <i className="far fa-star-circle me-1"></i>
+                                                                                {(evaluation.score * 100).toFixed(1)}%
+                                                        </span>
+                                                                    </div>
+                                                                </div>
                                                             </div>
                                                         </div>
-                                                        <div className="col-auto">
-                                                            {getStatusBadge(app.status)}
+                                                        <div className="col-12 col-lg-4 text-lg-end">
+                                                            <div className="d-flex flex-wrap gap-2 justify-content-lg-end text-dark">
+
+                                                                {getStatusBadge(app.status)}
+                                                                { getClassificationBadge(evaluation.classification)}
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -1204,12 +1214,10 @@ const ScholarshipDashboard = () => {
                                                                                                 <div className="row g-2 mb-3">
                                                                                                     <div className="col-auto">
                                                                                 <span className="badge bg-white text-primary border border-primary px-3 py-2">
-                                                                                    Score: {rec.score ? parseFloat(String(rec.score * 100)).toFixed(2) + '%' : 'N/A'}
+                                                                                     {rec.score ? parseFloat(String(rec.score)).toFixed(2) + '%' : 'N/A'}
                                                                                 </span>
                                                                                                     </div>
-                                                                                                    <div className="col-auto">
-                                                                                                        {getClassificationBadge(rec.classification)}
-                                                                                                    </div>
+
                                                                                                     <div className="col-auto">
                                                                                 <span className="badge bg-white text-success border border-success px-3 py-2">
                                                                                     ₱{rec.amount ? parseFloat(String(rec.amount)).toLocaleString() : 'N/A'}

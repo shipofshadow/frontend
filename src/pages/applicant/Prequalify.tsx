@@ -711,40 +711,7 @@ const Prequalify: React.FC = () => {
                                                             )}
                                                         </div>
 
-                                                        {/* Enhanced Score Breakdown */}
-                                                        {eligibilityResult.original_score !== eligibilityResult.score && (
-                                                            <div className="card bg-light border-0 mb-4 shadow-sm">
-                                                                <div className="card-body">
-                                                                    <h6 className="card-title mb-3">
-                                                                        <i className="fas fa-calculator me-2"></i>
-                                                                        Score Breakdown
-                                                                    </h6>
-                                                                    <div className="row g-3">
-                                                                        <div className="col-4">
-                                                                            <div className="bg-white rounded p-3 shadow-sm text-center">
-                                                                                <i className="fas fa-chart-bar text-primary mb-2"></i>
-                                                                                <div className="fw-bold text-primary fs-5">{eligibilityResult.original_score}%</div>
-                                                                                <small className="text-muted">Base Score</small>
-                                                                            </div>
-                                                                        </div>
-                                                                        <div className="col-4">
-                                                                            <div className="bg-white rounded p-3 shadow-sm text-center">
-                                                                                <i className="fas fa-plus-circle text-success mb-2"></i>
-                                                                                <div className="fw-bold text-success fs-5">+{eligibilityResult.bonus_points}%</div>
-                                                                                <small className="text-muted">Bonus Points</small>
-                                                                            </div>
-                                                                        </div>
-                                                                        <div className="col-4">
-                                                                            <div className="bg-white rounded p-3 shadow-sm text-center">
-                                                                                <i className="fas fa-trophy text-warning mb-2"></i>
-                                                                                <div className="fw-bold text-primary fs-5">{eligibilityResult.score}%</div>
-                                                                                <small className="text-muted">Final Score</small>
-                                                                            </div>
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        )}
+
 
                                                         {/* Enhanced Scholarship Recommendations */}
                                                         {eligibilityResult.recommended_scholarships && eligibilityResult.recommended_scholarships.length > 0 && (
@@ -806,43 +773,7 @@ const Prequalify: React.FC = () => {
                                                             </div>
                                                         )}
 
-                                                        {/* Enhanced Improvement Tips */}
-                                                        {eligibilityResult.tips && eligibilityResult.tips.length > 0 && (
-                                                            <div className="mb-4">
-                                                                <div className="accordion accordion-flush" id="tipsAccordion">
-                                                                    <div className="accordion-item border-0 shadow-sm rounded">
-                                                                        <h6 className="accordion-header">
-                                                                            <button
-                                                                                className="accordion-button collapsed bg-light rounded fw-medium"
-                                                                                type="button"
-                                                                                data-bs-toggle="collapse"
-                                                                                data-bs-target="#tipsCollapse"
-                                                                            >
-                                                                                <i className="fas fa-lightbulb me-2 text-warning"></i>
-                                                                                <strong>Tips to Improve Your Score</strong>
-                                                                                <span className="badge bg-info ms-2">{eligibilityResult.tips.length}</span>
-                                                                            </button>
-                                                                        </h6>
-                                                                        <div
-                                                                            id="tipsCollapse"
-                                                                            className="accordion-collapse collapse"
-                                                                            data-bs-parent="#tipsAccordion"
-                                                                        >
-                                                                            <div className="accordion-body">
-                                                                                {eligibilityResult.tips.map((tip: string, index: number) => (
-                                                                                    <div key={index} className="d-flex mb-3 p-2 bg-light rounded">
-                                                                                        <div className="bg-success rounded-circle p-1 me-3 mt-1" style={{width: '20px', height: '20px'}}>
-                                                                                            <i className="fas fa-check text-white" style={{fontSize: '0.7rem'}}></i>
-                                                                                        </div>
-                                                                                        <small className="flex-grow-1">{tip}</small>
-                                                                                    </div>
-                                                                                ))}
-                                                                            </div>
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        )}
+
 
                                                         {/* Enhanced Action Buttons */}
                                                         <div className="d-grid gap-3">
