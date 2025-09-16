@@ -39,7 +39,7 @@ interface EligibilityResult {
 }
 
 const Prequalify: React.FC = () => {
-    const { user, token } = useAuth();
+    const { token } = useAuth();
 
     // Initial form data
     const initialFormData: FormData = {
@@ -135,494 +135,294 @@ const Prequalify: React.FC = () => {
     };
 
     return (
-        <div className="container-fluid py-4">
-            <div className="row">
-                <div className="col-12">
-                    <div className="card shadow-lg border-0 rounded-3">
-                        {/* Header */}
-                        <div className="card-header bg-gradient-primary text-white border-0 rounded-top-3">
-                            <div className="d-flex justify-content-between align-items-center py-2">
-                                <div>
-                                    <h4 className="mb-1 fw-bold">
-                                        <i className="fas fa-graduation-cap me-2"></i>
-                                        iScholar Prequalification
-                                    </h4>
-                                    <p className="mb-0 opacity-90">Discover your scholarship eligibility in real-time</p>
-                                </div>
-                                <div className="d-flex align-items-center">
-                                    <div className="badge bg-white text-primary px-3 py-2 rounded-pill">
-                                        <i className="fas fa-user-circle me-1"></i>
-                                        {user?.username}
+        <>
+            <div className="container-fluid py-4">
+                <div className="row">
+                    <div className="col-12">
+                        <div className="card border-0 shadow-sm rounded-3">
+                            {/* Header */}
+                            <div className="card-header border-0 rounded-top-3" style={{ background: 'linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%)' }}>
+                                <div className="d-flex justify-content-between align-items-center py-2">
+                                    <div>
+                                        <h4 className="mb-1 fw-bold text-white d-flex align-items-center">
+                                            <i className="fas fa-graduation-cap me-2"></i>
+                                            iScholar Prequalification
+                                        </h4>
+                                        <p className="mb-0 text-white-50">Discover scholarship eligibility in real time</p>
                                     </div>
                                 </div>
                             </div>
-                        </div>
 
-                        <div className="card-body p-4">
-                            <div className="row g-4">
-                                {/* Left Column: Enhanced Form Section */}
-                                <div className="col-lg-6">
-                                    <div className="h-100">
-                                        <h5 className="mb-4 text-primary fw-semibold">
-                                            <i className="fas fa-clipboard-list me-2"></i>
-                                            Your Information
-                                        </h5>
+                            <div className="card-body p-4">
+                                <div className="row g-4">
+                                    {/* Left Column: Form */}
+                                    <div className="col-lg-6">
+                                        <div className="h-100">
+                                            <h5 className="mb-4 text-primary fw-semibold d-flex align-items-center">
+                                                <i className="fas fa-clipboard-list me-2"></i>
+                                                Your Information
+                                            </h5>
 
-                                        {/* Academic Information Card */}
-                                        <div className="card mb-4 border-0 shadow-sm">
-                                            <div className="card-header bg-light border-0">
-                                                <h6 className="mb-0 text-success fw-semibold">
-                                                    <i className="fas fa-book-open me-2"></i>
-                                                    Academic Details
-                                                </h6>
+                                            {/* Academic */}
+                                            <div className="card mb-4 border-0 shadow-sm">
+                                                <div className="card-header bg-light border-0">
+                                                    <h6 className="mb-0 text-success fw-semibold d-flex align-items-center">
+                                                        <i className="fas fa-book-open me-2"></i>
+                                                        Academic Details
+                                                    </h6>
+                                                </div>
+                                                <div className="card-body">
+                                                    {/* GWA */}
+                                                    <div className="mb-4">
+                                                        <label className="form-label fw-medium d-flex align-items-center">
+                                                            General Weighted Average (GWA)
+                                                            <span className="text-danger ms-1">*</span>
+                                                            <i
+                                                                className="fas fa-info-circle text-muted ms-2"
+                                                                data-bs-toggle="tooltip"
+                                                                title="Your current academic average (1.00 = highest, 5.00 = lowest)"
+                                                            ></i>
+                                                        </label>
+                                                        <div className="input-group input-group-lg">
+                            <span className="input-group-text bg-primary text-white border-0">
+                              <i className="fas fa-award"></i>
+                            </span>
+                                                            <input
+                                                                type="number"
+                                                                step="0.01"
+                                                                min="1.00"
+                                                                max="5.00"
+                                                                className={`form-control border-0 shadow-sm`}
+                                                                value={formData.gwa}
+                                                                onChange={(e) => handleNumberInput(e.target.value, 'gwa')}
+                                                                placeholder="Enter GWA (e.g. 1.75)"
+                                                                aria-describedby="gwaHelp"
+                                                            />
+                                                        </div>
+                                                        <div id="gwaHelp" className="form-text">
+                                                            Scale: 1.00 (Excellent) to 5.00 (Failed)
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Year level */}
+                                                    <div className="mb-3">
+                                                        <label className="form-label fw-medium">Current Year Level</label>
+                                                        <select
+                                                            className="form-select form-select-lg border-0 shadow-sm"
+                                                            value={formData.year_level}
+                                                            onChange={(e) => handleInputChange('year_level', e.target.value)}
+                                                        >
+                                                            <option value="">Select your year level</option>
+                                                            <option value="1st Year">1st Year</option>
+                                                            <option value="2nd Year">2nd Year</option>
+                                                            <option value="3rd Year">3rd Year</option>
+                                                            <option value="4th Year">4th Year</option>
+                                                        </select>
+                                                    </div>
+
+                                                    {/* Units */}
+                                                    <div className="mb-3">
+                                                        <label className="form-label fw-medium d-flex align-items-center">
+                                                            Total Units Enrolled
+                                                            <span className="text-danger ms-1">*</span>
+                                                            <i
+                                                                className="fas fa-info-circle text-muted ms-2"
+                                                                data-bs-toggle="tooltip"
+                                                                title="Total number of units you are enrolled in this semester"
+                                                            ></i>
+                                                        </label>
+                                                        <div className="input-group">
+                            <span className="input-group-text bg-primary text-white border-0">
+                              <i className="fas fa-calculator"></i>
+                            </span>
+                                                            <input
+                                                                type="number"
+                                                                min="1"
+                                                                max="30"
+                                                                className="form-control border-0 shadow-sm"
+                                                                value={formData.total_units}
+                                                                onChange={(e) => handleNumberInput(e.target.value, 'total_units')}
+                                                                placeholder="Enter total units (e.g. 21)"
+                                                                aria-describedby="unitsHelp"
+                                                            />
+                                                            <span className="input-group-text bg-light">
+                              <i className="fas fa-book me-1"></i>
+                              units
+                            </span>
+                                                        </div>
+                                                        <div id="unitsHelp" className="form-text">
+                                                            Typical full load is 18 units or more
+                                                        </div>
+                                                    </div>
+                                                </div>
                                             </div>
-                                            <div className="card-body">
-                                                {/* GWA Input with Enhanced Validation */}
-                                                <div className="mb-4">
-                                                    <label className="form-label fw-medium d-flex align-items-center">
-                                                        General Weighted Average (GWA)
-                                                        <span className="text-danger ms-1">*</span>
-                                                        <i
-                                                            className="fas fa-info-circle text-muted ms-2"
-                                                            data-bs-toggle="tooltip"
-                                                            title="Your current academic average (1.00 = highest, 5.00 = lowest)"
-                                                        ></i>
-                                                    </label>
-                                                    <div className="input-group input-group-lg">
-                                                <span className="input-group-text bg-primary text-white border-0">
-                                                    <i className="fas fa-award"></i>
-                                                </span>
-                                                        <input
-                                                            type="number"
-                                                            step="0.01"
-                                                            min="1.00"
-                                                            max="5.00"
-                                                            className={`form-control border-0 shadow-sm ${
-                                                                formData.gwa ?
-                                                                    (formData.gwa <= 3.0 ? 'is-valid' : 'is-warning') :
-                                                                    ''
-                                                            }`}
-                                                            value={formData.gwa}
-                                                            onChange={(e) => handleNumberInput(e.target.value, 'gwa')}
-                                                            placeholder="Enter your GWA (e.g. 1.75)"
-                                                        />
+
+                                            {/* Financial */}
+                                            <div className="card mb-4 border-0 shadow-sm">
+                                                <div className="card-header bg-light border-0">
+                                                    <h6 className="mb-0 text-warning fw-semibold d-flex align-items-center">
+                                                        <i className="fas fa-coins me-2"></i>
+                                                        Financial Information
+                                                    </h6>
+                                                </div>
+                                                <div className="card-body">
+                                                    {/* Income */}
+                                                    <div className="mb-4">
+                                                        <label className="form-label fw-medium d-flex align-items-center">
+                                                            Monthly Family Income
+                                                            <span className="text-danger ms-1">*</span>
+                                                            <i
+                                                                className="fas fa-info-circle text-muted ms-2"
+                                                                data-bs-toggle="tooltip"
+                                                                title="Total combined monthly income of all family members"
+                                                            ></i>
+                                                        </label>
+                                                        <div className="input-group input-group-lg">
+                            <span className="input-group-text bg-success text-white border-0">
+                              <i className="fas fa-peso-sign"></i>
+                            </span>
+                                                            <input
+                                                                type="number"
+                                                                min="0"
+                                                                className="form-control border-0 shadow-sm"
+                                                                value={formData.income}
+                                                                onChange={(e) => handleNumberInput(e.target.value, 'income')}
+                                                                placeholder="Enter monthly income (e.g. 25000)"
+                                                                aria-describedby="incomeHelp"
+                                                            />
+                                                            <span className="input-group-text bg-light">
+                              <i className="fas fa-calendar-alt me-1"></i>
+                              /month
+                            </span>
+                                                        </div>
+                                                        <div id="incomeHelp" className="form-text">
+                                                            Provide a rough estimate if unsure
+                                                        </div>
                                                     </div>
-                                                    <div className="form-text d-flex justify-content-between align-items-center">
-                                                        <span>Scale: 1.00 (Excellent) to 5.00 (Failed)</span>
-                                                        {formData.gwa && (
-                                                            <span className={`badge ${
-                                                                formData.gwa <= 1.5 ? 'bg-success' :
-                                                                    formData.gwa <= 2.5 ? 'bg-warning' :
-                                                                        formData.gwa <= 3.0 ? 'bg-info' : 'bg-danger'
-                                                            }`}>
-                                                        <i className={`fas ${
-                                                            formData.gwa <= 1.5 ? 'fa-star' :
-                                                                formData.gwa <= 2.5 ? 'fa-thumbs-up' :
-                                                                    formData.gwa <= 3.0 ? 'fa-check' : 'fa-exclamation-triangle'
-                                                        } me-1`}></i>
-                                                                {formData.gwa <= 1.5 ? 'Excellent' :
-                                                                    formData.gwa <= 2.5 ? 'Good' :
-                                                                        formData.gwa <= 3.0 ? 'Fair' : 'Needs Improvement'}
-                                                    </span>
-                                                        )}
-                                                    </div>
-                                                    {/* GWA Progress Bar */}
-                                                    {formData.gwa && (
-                                                        <div className="mt-2">
-                                                            <div className="progress" style={{ height: '6px' }}>
-                                                                <div
-                                                                    className={`progress-bar ${
-                                                                        formData.gwa <= 1.5 ? 'bg-success' :
-                                                                            formData.gwa <= 2.5 ? 'bg-warning' :
-                                                                                formData.gwa <= 3.0 ? 'bg-info' : 'bg-danger'
-                                                                    }`}
-                                                                    style={{ width: `${Math.max(20, (5 - parseFloat(String(formData.gwa))) / 4 * 100)}%` }}
+
+                                                    {/* Parents’ occupations */}
+                                                    <div className="row g-3">
+                                                        <div className="col-md-6">
+                                                            <label className="form-label fw-medium d-flex align-items-center">
+                                                                Father's Occupation
+                                                                <i className="fas fa-info-circle text-muted ms-2" data-bs-toggle="tooltip" title="Father's current job or profession"></i>
+                                                            </label>
+                                                            <div className="input-group">
+                              <span className="input-group-text bg-primary text-white border-0">
+                                <i className="fas fa-person"></i>
+                              </span>
+                                                                <input
+                                                                    type="text"
+                                                                    className="form-control border-0 shadow-sm"
+                                                                    value={formData.father_occupation || ''}
+                                                                    onChange={(e) => setFormData(prev => ({ ...prev, father_occupation: e.target.value }))}
+                                                                    placeholder="e.g. Farmer, Teacher, Driver"
                                                                 />
                                                             </div>
                                                         </div>
-                                                    )}
-                                                </div>
-
-                                                {/* Year Level */}
-                                                <div className="mb-3">
-                                                    <label className="form-label fw-medium">Current Year Level</label>
-                                                    <select
-                                                        className="form-select form-select-lg border-0 shadow-sm"
-                                                        value={formData.year_level}
-                                                        onChange={(e) => handleInputChange('year_level', e.target.value)}
-                                                    >
-                                                        <option value="">Select your year level</option>
-                                                        <option value="1st Year">1st Year</option>
-                                                        <option value="2nd Year">2nd Year</option>
-                                                        <option value="3rd Year">3rd Year</option>
-                                                        <option value="4th Year">4th Year</option>
-                                                    </select>
-                                                </div>
-
-                                                {/* Total Units Input */}
-                                                <div className="mb-3">
-                                                    <label className="form-label fw-medium d-flex align-items-center">
-                                                        Total Units Enrolled
-                                                        <span className="text-danger ms-1">*</span>
-                                                        <i
-                                                            className="fas fa-info-circle text-muted ms-2"
-                                                            data-bs-toggle="tooltip"
-                                                            title="Total number of units you are enrolled in this semester"
-                                                        ></i>
-                                                    </label>
-                                                    <div className="input-group">
-        <span className="input-group-text bg-primary text-white border-0">
-            <i className="fas fa-calculator"></i>
-        </span>
-                                                        <input
-                                                            type="number"
-                                                            min="1"
-                                                            max="30"
-                                                            className={`form-control border-0 shadow-sm ${
-                                                                formData.total_units ? 'is-valid' : ''
-                                                            }`}
-                                                            value={formData.total_units}
-                                                            onChange={(e) => handleNumberInput(e.target.value, 'total_units')}
-                                                            placeholder="Enter total units (e.g. 21)"
-                                                        />
-                                                        <span className="input-group-text bg-light">
-            <i className="fas fa-book me-1"></i>
-            units
-        </span>
-                                                    </div>
-                                                    {formData.total_units && (
-                                                        <div className="form-text">
-                                                            <div className="d-flex align-items-center mt-2">
-                                                            <span className={`badge me-2 ${
-                                                                formData.total_units >= 18 ? 'bg-success' :
-                                                                    formData.total_units >= 12 ? 'bg-warning' : 'bg-secondary'
-                                                            }`}>
-                                                                <i className={`fas ${
-                                                                    formData.total_units >= 18 ? 'fa-graduation-cap' :
-                                                                        formData.total_units >= 12 ? 'fa-book-open' : 'fa-book'
-                                                                } me-1`}></i>
-                                                                {formData.total_units >= 18 ? 'Full Load' :
-                                                                    formData.total_units >= 12 ? 'Regular Load' : 'Light Load'}
-                                                            </span>
-                                                                <small className="text-muted">
-                                                                    {formData.total_units >= 18 ? 'Full-time student status' :
-                                                                        formData.total_units >= 12 ? 'Regular enrollment load' :
-                                                                            'Part-time student status'}
-                                                                </small>
-                                                            </div>
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        {/* Financial Information Card */}
-                                        <div className="card mb-4 border-0 shadow-sm">
-                                            <div className="card-header bg-light border-0">
-                                                <h6 className="mb-0 text-warning fw-semibold">
-                                                    <i className="fas fa-coins me-2"></i>
-                                                    Financial Information
-                                                </h6>
-                                            </div>
-                                            <div className="card-body">
-                                                {/* Income Input */}
-                                                <div className="mb-4">
-                                                    <label className="form-label fw-medium d-flex align-items-center">
-                                                        Monthly Family Income
-                                                        <span className="text-danger ms-1">*</span>
-                                                        <i
-                                                            className="fas fa-info-circle text-muted ms-2"
-                                                            data-bs-toggle="tooltip"
-                                                            title="Total combined monthly income of all family members"
-                                                        ></i>
-                                                    </label>
-                                                    <div className="input-group input-group-lg">
-                <span className="input-group-text bg-success text-white border-0">
-                    <i className="fas fa-peso-sign"></i>
-                </span>
-                                                        <input
-                                                            type="number"
-                                                            min="0"
-                                                            className={`form-control border-0 shadow-sm ${
-                                                                formData.income ? 'is-valid' : ''
-                                                            }`}
-                                                            value={formData.income}
-                                                            onChange={(e) => handleNumberInput(e.target.value, 'income')}
-                                                            placeholder="Enter monthly income (e.g. 25000)"
-                                                        />
-                                                        <span className="input-group-text bg-light">
-                    <i className="fas fa-calendar-alt me-1"></i>
-                    /month
-                </span>
-                                                    </div>
-                                                    {formData.income && (
-                                                        <div className="form-text">
-                                                            <div className="d-flex align-items-center mt-2">
-                        <span className={`badge me-2 ${
-                            formData.income < 20000 ? 'bg-success' :
-                                formData.income < 50000 ? 'bg-warning' : 'bg-secondary'
-                        }`}>
-                            <i className={`fas ${
-                                formData.income < 20000 ? 'fa-heart' :
-                                    formData.income < 50000 ? 'fa-balance-scale' : 'fa-dollar-sign'
-                            } me-1`}></i>
-                            {formData.income < 20000 ? 'High Priority' :
-                                formData.income < 50000 ? 'Moderate Priority' :
-                                    'Standard Priority'}
-                        </span>
-                                                                <small className="text-muted">
-                                                                    {formData.income < 20000 ? 'Low income bracket - excellent scholarship prospects' :
-                                                                        formData.income < 50000 ? 'Middle income bracket - good scholarship opportunities' :
-                                                                            'Higher income bracket - merit-based scholarships available'}
-                                                                </small>
-                                                            </div>
-                                                        </div>
-                                                    )}
-                                                </div>
-
-                                                {/* Parent Occupations Row */}
-                                                <div className="row mb-4">
-                                                    {/* Father's Occupation */}
-                                                    <div className="col-md-6">
-                                                        <label className="form-label fw-medium d-flex align-items-center">
-                                                            Father's Occupation
-                                                            <i
-                                                                className="fas fa-info-circle text-muted ms-2"
-                                                                data-bs-toggle="tooltip"
-                                                                title="Father's current job or profession"
-                                                            ></i>
-                                                        </label>
-                                                        <div className="input-group">
-                    <span className="input-group-text bg-primary text-white border-0">
-                        <i className="fas fa-male"></i>
-                    </span>
-                                                            <input
-                                                                type="text"
-                                                                className="form-control border-0 shadow-sm"
-                                                                value={formData.father_occupation || ''}
-                                                                onChange={(e) => setFormData(prev => ({
-                                                                    ...prev,
-                                                                    father_occupation: e.target.value
-                                                                }))}
-                                                                placeholder="e.g. Farmer, Teacher, Driver"
-                                                            />
-                                                        </div>
-                                                        {/* Special occupation indicators */}
-                                                        {formData.father_occupation && (
-                                                            <div className="form-text">
-                                                                {['farmer', 'fisherfolk', 'fisherman'].some(job =>
-                                                                    formData.father_occupation.toLowerCase().includes(job)
-                                                                ) && (
-                                                                    <small className="text-success">
-                                                                        <i className="fas fa-seedling me-1"></i>
-                                                                        Agricultural/Fishery background may qualify for special scholarships
-                                                                    </small>
-                                                                )}
-                                                                {['ofw', 'overseas', 'abroad'].some(job =>
-                                                                    formData.father_occupation.toLowerCase().includes(job)
-                                                                ) && (
-                                                                    <small className="text-info">
-                                                                        <i className="fas fa-plane me-1"></i>
-                                                                        OFW dependent may qualify for special programs
-                                                                    </small>
-                                                                )}
-                                                            </div>
-                                                        )}
-                                                    </div>
-
-                                                    {/* Mother's Occupation */}
-                                                    <div className="col-md-6">
-                                                        <label className="form-label fw-medium d-flex align-items-center">
-                                                            Mother's Occupation
-                                                            <i
-                                                                className="fas fa-info-circle text-muted ms-2"
-                                                                data-bs-toggle="tooltip"
-                                                                title="Mother's current job or profession"
-                                                            ></i>
-                                                        </label>
-                                                        <div className="input-group">
-                    <span className="input-group-text bg-danger text-white border-0">
-                        <i className="fas fa-female"></i>
-                    </span>
-                                                            <input
-                                                                type="text"
-                                                                className="form-control border-0 shadow-sm"
-                                                                value={formData.mother_occupation || ''}
-                                                                onChange={(e) => setFormData(prev => ({
-                                                                    ...prev,
-                                                                    mother_occupation: e.target.value
-                                                                }))}
-                                                                placeholder="e.g. Housewife, Vendor, Nurse"
-                                                            />
-                                                        </div>
-                                                        {/* Special occupation indicators */}
-                                                        {formData.mother_occupation && (
-                                                            <div className="form-text">
-                                                                {['farmer', 'fisherfolk', 'fisherman'].some(job =>
-                                                                    formData.mother_occupation.toLowerCase().includes(job)
-                                                                ) && (
-                                                                    <small className="text-success">
-                                                                        <i className="fas fa-seedling me-1"></i>
-                                                                        Agricultural/Fishery background may qualify for special scholarships
-                                                                    </small>
-                                                                )}
-                                                                {['ofw', 'overseas', 'abroad'].some(job =>
-                                                                    formData.mother_occupation.toLowerCase().includes(job)
-                                                                ) && (
-                                                                    <small className="text-info">
-                                                                        <i className="fas fa-plane me-1"></i>
-                                                                        OFW dependent may qualify for special programs
-                                                                    </small>
-                                                                )}
-                                                                {['housewife', 'homemaker', 'unemployed'].some(job =>
-                                                                    formData.mother_occupation.toLowerCase().includes(job)
-                                                                ) && (
-                                                                    <small className="text-warning">
-                                                                        <i className="fas fa-home me-1"></i>
-                                                                        Single income household noted
-                                                                    </small>
-                                                                )}
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                </div>
-
-                                  
-                                            </div>
-                                        </div>
-
-                                        {/* Special Circumstances Card */}
-                                        <div className="card border-0 shadow-sm">
-                                            <div className="card-header bg-light border-0">
-                                                <h6 className="mb-0 text-info fw-semibold">
-                                                    <i className="fas fa-star me-2"></i>
-                                                    Special Circumstances
-                                                    <small className="text-muted ms-2">(Optional - may boost eligibility)</small>
-                                                </h6>
-                                            </div>
-                                            <div className="card-body">
-                                                <div className="row g-3">
-                                                    <div className="col-md-4">
-                                                        <div className={`form-check form-check-lg p-3 rounded text-center h-100 transition-all ${
-                                                            formData.is_4ps_member ? 'bg-primary bg-opacity-10 border border-primary' : 'bg-light'
-                                                        }`}>
-                                                            <input
-                                                                className="form-check-input mb-2"
-                                                                type="checkbox"
-                                                                id="4ps-check"
-                                                                checked={formData.is_4ps_member}
-                                                                onChange={(e) => handleInputChange('is_4ps_member', e.target.checked)}
-                                                            />
-                                                            <label className="form-check-label d-block cursor-pointer" htmlFor="4ps-check">
-                                                                <i className="fas fa-home text-primary d-block mb-2 fs-4"></i>
-                                                                <strong>4Ps Beneficiary</strong>
-                                                                <br />
-                                                                <small className="text-muted">Pantawid Pamilyang Pilipino Program</small>
-                                                                {formData.is_4ps_member && (
-                                                                    <div className="mt-2">
-                                                                <span className="badge bg-success">
-                                                                    <i className="fas fa-check me-1"></i>
-                                                                    +10% Bonus
-                                                                </span>
-                                                                    </div>
-                                                                )}
+                                                        <div className="col-md-6">
+                                                            <label className="form-label fw-medium d-flex align-items-center">
+                                                                Mother's Occupation
+                                                                <i className="fas fa-info-circle text-muted ms-2" data-bs-toggle="tooltip" title="Mother's current job or profession"></i>
                                                             </label>
-                                                        </div>
-                                                    </div>
-                                                    <div className="col-md-4">
-                                                        <div className={`form-check form-check-lg p-3 rounded text-center h-100 transition-all ${
-                                                            formData.ip_affiliation ? 'bg-success bg-opacity-10 border border-success' : 'bg-light'
-                                                        }`}>
-                                                            <input
-                                                                className="form-check-input mb-2"
-                                                                type="checkbox"
-                                                                id="indigenous-check"
-                                                                checked={formData.ip_affiliation}
-                                                                onChange={(e) => handleInputChange('ip_affiliation', e.target.checked)}
-                                                            />
-                                                            <label className="form-check-label d-block cursor-pointer" htmlFor="indigenous-check">
-                                                                <i className="fas fa-globe-asia text-success d-block mb-2 fs-4"></i>
-                                                                <strong>Indigenous People</strong>
-                                                                <br />
-                                                                <small className="text-muted">Cultural community member</small>
-                                                                {formData.ip_affiliation && (
-                                                                    <div className="mt-2">
-                                                                <span className="badge bg-success">
-                                                                    <i className="fas fa-check me-1"></i>
-                                                                    +15% Bonus
-                                                                </span>
-                                                                    </div>
-                                                                )}
-                                                            </label>
-                                                        </div>
-                                                    </div>
-                                                    <div className="col-md-4">
-                                                        <div className={`form-check form-check-lg p-3 rounded text-center h-100 transition-all ${
-                                                            formData.is_pwd ? 'bg-warning bg-opacity-10 border border-warning' : 'bg-light'
-                                                        }`}>
-                                                            <input
-                                                                className="form-check-input mb-2"
-                                                                type="checkbox"
-                                                                id="pwd-check"
-                                                                checked={formData.is_pwd}
-                                                                onChange={(e) => handleInputChange('is_pwd', e.target.checked)}
-                                                            />
-                                                            <label className="form-check-label d-block cursor-pointer" htmlFor="pwd-check">
-                                                                <i className="fas fa-wheelchair text-warning d-block mb-2 fs-4"></i>
-                                                                <strong>Person with Disability</strong>
-                                                                <br />
-                                                                <small className="text-muted">Certified PWD with valid ID</small>
-                                                                {formData.is_pwd && (
-                                                                    <div className="mt-2">
-                                                                <span className="badge bg-success">
-                                                                    <i className="fas fa-check me-1"></i>
-                                                                    +20% Bonus
-                                                                </span>
-                                                                    </div>
-                                                                )}
-                                                            </label>
+                                                            <div className="input-group">
+                              <span className="input-group-text bg-danger text-white border-0">
+                                <i className="fas fa-person-dress"></i>
+                              </span>
+                                                                <input
+                                                                    type="text"
+                                                                    className="form-control border-0 shadow-sm"
+                                                                    value={formData.mother_occupation || ''}
+                                                                    onChange={(e) => setFormData(prev => ({ ...prev, mother_occupation: e.target.value }))}
+                                                                    placeholder="e.g. Housewife, Vendor, Nurse"
+                                                                />
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 </div>
                                             </div>
-                                        </div>
 
-                                        {/* Enhanced Quick Start Guide */}
-                                        <div className="alert alert-primary border-0 mt-4 shadow-sm" role="alert">
-                                            <div className="d-flex">
-                                                <i className="fas fa-lightbulb me-3 mt-1 fs-5"></i>
-                                                <div>
-                                                    <h6 className="alert-heading mb-2">
-                                                        <i className="fas fa-rocket me-1"></i>
-                                                        Quick Start Guide
+                                            {/* Special circumstances */}
+                                            <div className="card border-0 shadow-sm">
+                                                <div className="card-header bg-light border-0">
+                                                    <h6 className="mb-0 text-info fw-semibold d-flex align-items-center">
+                                                        <i className="fas fa-star me-2"></i>
+                                                        Special Circumstances
+                                                        <small className="text-muted ms-2">(Optional)</small>
                                                     </h6>
-                                                    <p className="mb-2">
-                                                        <strong>Step 1:</strong> Enter your GWA and family income for instant results<br/>
-                                                        <strong>Step 2:</strong> Add optional details to unlock more opportunities<br/>
-                                                        <strong>Step 3:</strong> Review your matches and apply directly
-                                                    </p>
-                                                    <small className="text-muted">
-                                                        <i className="fas fa-shield-alt me-1"></i>
-                                                        Your information is secure and used only for eligibility assessment
-                                                    </small>
+                                                </div>
+                                                <div className="card-body">
+                                                    <div className="row g-3">
+                                                        <div className="col-md-4">
+                                                            <div className="p-3 rounded text-center bg-light">
+                                                                <input
+                                                                    className="form-check-input mb-2"
+                                                                    type="checkbox"
+                                                                    id="fourps"
+                                                                    checked={formData.is_4ps_member}
+                                                                    onChange={(e) => handleInputChange('is_4ps_member', e.target.checked)}
+                                                                />
+                                                                <label className="form-check-label d-block" htmlFor="fourps">
+                                                                    <i className="fas fa-home text-primary d-block mb-2 fs-4"></i>
+                                                                    <strong>4Ps Beneficiary</strong>
+                                                                    <br />
+                                                                    <small className="text-muted">Pantawid Pamilyang Pilipino Program</small>
+                                                                </label>
+                                                            </div>
+                                                        </div>
+                                                        <div className="col-md-4">
+                                                            <div className="p-3 rounded text-center bg-light">
+                                                                <input
+                                                                    className="form-check-input mb-2"
+                                                                    type="checkbox"
+                                                                    id="ip"
+                                                                    checked={formData.ip_affiliation}
+                                                                    onChange={(e) => handleInputChange('ip_affiliation', e.target.checked)}
+                                                                />
+                                                                <label className="form-check-label d-block" htmlFor="ip">
+                                                                    <i className="fas fa-globe-asia text-success d-block mb-2 fs-4"></i>
+                                                                    <strong>Indigenous People</strong>
+                                                                    <br />
+                                                                    <small className="text-muted">Cultural community member</small>
+                                                                </label>
+                                                            </div>
+                                                        </div>
+                                                        <div className="col-md-4">
+                                                            <div className="p-3 rounded text-center bg-light">
+                                                                <input
+                                                                    className="form-check-input mb-2"
+                                                                    type="checkbox"
+                                                                    id="pwd"
+                                                                    checked={formData.is_pwd}
+                                                                    onChange={(e) => handleInputChange('is_pwd', e.target.checked)}
+                                                                />
+                                                                <label className="form-check-label d-block" htmlFor="pwd">
+                                                                    <i className="fas fa-wheelchair text-warning d-block mb-2 fs-4"></i>
+                                                                    <strong>Person with Disability</strong>
+                                                                    <br />
+                                                                    <small className="text-muted">Certified PWD with valid ID</small>
+                                                                </label>
+                                                            </div>
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             </div>
+
+
                                         </div>
                                     </div>
-                                </div>
 
-                                {/* Right Column: Enhanced Results Section */}
-                                <div className="col-lg-6">
-                                    <div className="sticky-top" style={{ top: '20px' }}>
-                                        <div className="card border-0 shadow-lg h-100">
-                                            <div className="card-header bg-gradient-success text-white border-0">
+                                    {/* Right Column: Results */}
+                                    <div className="col-lg-6">
+                                        <div className="card border-0 shadow-sm h-100">
+                                            <div className="card-header border-0" style={{ background: 'linear-gradient(135deg, #198754 0%, #146c43 100%)' }}>
                                                 <div className="d-flex justify-content-between align-items-center">
-                                                    <h5 className="mb-0 fw-bold">
+                                                    <h5 className="mb-0 fw-bold text-white d-flex align-items-center">
                                                         <i className="fas fa-chart-line me-2"></i>
                                                         Live Eligibility Assessment
                                                     </h5>
                                                     {isCalculating && (
-                                                        <div className="d-flex align-items-center">
+                                                        <div className="d-flex align-items-center text-white-75">
                                                             <div className="spinner-grow spinner-grow-sm me-2" role="status">
                                                                 <span className="visually-hidden">Calculating...</span>
                                                             </div>
@@ -639,42 +439,42 @@ const Prequalify: React.FC = () => {
                                                             <i className="fas fa-exclamation-triangle me-2 fs-4"></i>
                                                             <div>
                                                                 <strong>Assessment Error:</strong> {error}
-                                                                <br/>
-                                                                <small>Please check your inputs and try again.</small>
+                                                                <br />
+                                                                <small>Please check inputs and try again.</small>
                                                             </div>
                                                         </div>
                                                     </div>
                                                 ) : eligibilityResult ? (
                                                     <>
-                                                        {/* Enhanced Circular Progress Meter */}
+                                                        {/* Circular meter simplified (no pulsing/extra indicators) */}
                                                         <div className="text-center mb-4">
                                                             <div className="position-relative d-inline-block">
                                                                 <div
-                                                                    className="circular-progress mx-auto mb-3"
+                                                                    className="mx-auto mb-3"
                                                                     style={{
                                                                         width: '160px',
                                                                         height: '160px',
-                                                                        background: `conic-gradient(
-                                                                    ${eligibilityResult.score >= 80 ? '#28a745' :
-                                                                            eligibilityResult.score >= 60 ? '#ffc107' :
-                                                                                eligibilityResult.score >= 40 ? '#fd7e14' : '#dc3545'
-                                                                        } ${eligibilityResult.score * 3.6}deg, 
-                                                                    #e9ecef 0deg
-                                                                )`,
+                                                                        background: `conic-gradient(${
+                                                                            eligibilityResult.score >= 80 ? '#28a745'
+                                                                                : eligibilityResult.score >= 60 ? '#ffc107'
+                                                                                    : eligibilityResult.score >= 40 ? '#fd7e14'
+                                                                                        : '#dc3545'
+                                                                        } ${eligibilityResult.score * 3.6}deg, #e9ecef 0deg)`,
                                                                         borderRadius: '50%',
                                                                         display: 'flex',
                                                                         alignItems: 'center',
                                                                         justifyContent: 'center',
                                                                         position: 'relative',
-                                                                        boxShadow: '0 8px 32px rgba(0,0,0,0.1)'
+                                                                        boxShadow: 'inset 0 0 0 10px #fff, 0 6px 24px rgba(0,0,0,0.08)',
                                                                     }}
+                                                                    aria-label="Eligibility score"
                                                                 >
                                                                     <div
-                                                                        className="bg-white rounded-circle d-flex align-items-center justify-content-center shadow"
+                                                                        className="bg-white rounded-circle d-flex align-items-center justify-content-center"
                                                                         style={{ width: '120px', height: '120px' }}
                                                                     >
                                                                         <div className="text-center">
-                                                                            <div className="display-5 fw-bold text-primary">
+                                                                            <div className="display-6 fw-bold text-primary">
                                                                                 {eligibilityResult.score}%
                                                                             </div>
                                                                             <small className="text-muted fw-medium">Eligibility Score</small>
@@ -683,57 +483,43 @@ const Prequalify: React.FC = () => {
                                                                 </div>
                                                             </div>
 
-                                                            {/* Enhanced Dynamic Status Badge */}
-                                                            <div className="mb-3">
-                                                        <span className={`badge fs-6 px-4 py-2 rounded-pill shadow-sm animate__animated animate__pulse ${
-                                                            eligibilityResult.score >= 80 ? 'bg-success' :
-                                                                eligibilityResult.score >= 60 ? 'bg-warning' :
-                                                                    eligibilityResult.score >= 40 ? 'bg-info' : 'bg-danger'
-                                                        }`}>
-                                                            <i className={`fas ${
-                                                                eligibilityResult.score >= 80 ? 'fa-check-circle' :
-                                                                    eligibilityResult.score >= 60 ? 'fa-exclamation-circle' :
-                                                                        eligibilityResult.score >= 40 ? 'fa-info-circle' : 'fa-times-circle'
-                                                            } me-2`}></i>
-                                                            {eligibilityResult.score >= 80 ? 'Highly Eligible' :
-                                                                eligibilityResult.score >= 60 ? 'Moderately Eligible' :
-                                                                    eligibilityResult.score >= 40 ? 'Somewhat Eligible' : 'Not Eligible'}
-                                                        </span>
+                                                            {/* Status badge simplified */}
+                                                            <div className="mt-2">
+                              <span className={`badge fs-6 px-3 py-2 rounded-pill shadow-sm ${
+                                  eligibilityResult.score >= 80 ? 'bg-success'
+                                      : eligibilityResult.score >= 60 ? 'bg-warning'
+                                          : eligibilityResult.score >= 40 ? 'bg-info'
+                                              : 'bg-danger'
+                              }`}>
+                                {eligibilityResult.score >= 80 ? 'Highly Eligible'
+                                    : eligibilityResult.score >= 60 ? 'Moderately Eligible'
+                                        : eligibilityResult.score >= 40 ? 'Somewhat Eligible'
+                                            : 'Not Eligible'}
+                              </span>
                                                             </div>
-
-                                                            {eligibilityResult.response_time_ms && (
-                                                                <div className="bg-light rounded-pill px-3 py-1 d-inline-block">
-                                                                    <small className="text-muted">
-                                                                        <i className="fas fa-bolt me-1 text-warning"></i>
-                                                                        Processed in {eligibilityResult.response_time_ms}ms
-                                                                    </small>
-                                                                </div>
-                                                            )}
                                                         </div>
 
-
-
-                                                        {/* Enhanced Scholarship Recommendations */}
+                                                        {/* Recommended scholarships */}
                                                         {eligibilityResult.recommended_scholarships && eligibilityResult.recommended_scholarships.length > 0 && (
                                                             <div className="mb-4">
                                                                 <div className="d-flex justify-content-between align-items-center mb-3">
-                                                                    <h6 className="mb-0 fw-bold">
+                                                                    <h6 className="mb-0 fw-bold d-flex align-items-center">
                                                                         <i className="fas fa-trophy me-2 text-warning"></i>
                                                                         Your Scholarship Matches
                                                                     </h6>
-                                                                    <span className="badge bg-primary rounded-pill fs-6">
-                                                                {eligibilityResult.recommended_scholarships.length} {eligibilityResult.recommended_scholarships.length === 1 ? 'match' : 'matches'}
-                                                            </span>
+                                                                    <span className="badge bg-primary rounded-pill">
+                                  {eligibilityResult.recommended_scholarships.length} {eligibilityResult.recommended_scholarships.length === 1 ? 'match' : 'matches'}
+                                </span>
                                                                 </div>
 
                                                                 <div className="row g-3">
                                                                     {eligibilityResult.recommended_scholarships.map((scholarship: Scholarship, index: number) => (
                                                                         <div key={index} className="col-12">
-                                                                            <div className="card border-0 shadow-sm h-100 hover-card">
+                                                                            <div className="card border-0 shadow-sm h-100">
                                                                                 <div className="card-body p-3">
-                                                                                    <div className="d-flex justify-content-between align-items-start mb-2">
-                                                                                        <div className="flex-grow-1">
-                                                                                            <div className="d-flex align-items-center mb-2">
+                                                                                    <div className="d-flex justify-content-between align-items-start">
+                                                                                        <div className="flex-grow-1 pe-3">
+                                                                                            <div className="d-flex align-items-center mb-1">
                                                                                                 <div className="bg-warning bg-opacity-10 rounded-circle p-2 me-2">
                                                                                                     <i className="fas fa-award text-warning"></i>
                                                                                                 </div>
@@ -741,25 +527,24 @@ const Prequalify: React.FC = () => {
                                                                                                     {scholarship.name}
                                                                                                 </h6>
                                                                                             </div>
-                                                                                            <p className="text-muted small mb-3">
+                                                                                            <p className="text-muted small mb-2">
                                                                                                 {scholarship.description}
                                                                                             </p>
-                                                                                            <div className="d-flex flex-wrap gap-2">
-                                                                                        <span className="badge bg-success shadow-sm">
-                                                                                            <i className="fas fa-peso-sign me-1"></i>
-                                                                                            {scholarship.amount.toLocaleString()}
-                                                                                        </span>
-
+                                                                                            <div className="d-flex gap-2">
+                                              <span className="badge bg-success">
+                                                <i className="fas fa-peso-sign me-1"></i>
+                                                  {scholarship.amount.toLocaleString()}
+                                              </span>
                                                                                             </div>
                                                                                         </div>
-                                                                                        <div className="text-center ms-3">
-                                                                                            <div className="bg-light rounded-circle p-3 shadow-sm" style={{width: '60px', height: '60px'}}>
+                                                                                        <div className="text-center">
+                                                                                            <div className="bg-light rounded-circle p-3" style={{ width: '60px', height: '60px' }}>
                                                                                                 <div className="d-flex align-items-center justify-content-center h-100">
                                                                                                     <div className="text-center">
                                                                                                         <div className="fw-bold text-primary small">
                                                                                                             {scholarship.score}%
                                                                                                         </div>
-                                                                                                        <small className="text-muted" style={{fontSize: '0.7rem'}}>Match</small>
+                                                                                                        <small className="text-muted" style={{ fontSize: '0.7rem' }}>Match</small>
                                                                                                     </div>
                                                                                                 </div>
                                                                                             </div>
@@ -773,24 +558,16 @@ const Prequalify: React.FC = () => {
                                                             </div>
                                                         )}
 
-
-
-                                                        {/* Enhanced Action Buttons */}
+                                                        {/* Actions */}
                                                         <div className="d-grid gap-3">
-                                                            <Link
-                                                                to="/applicant/apply"
-                                                                className="btn btn-primary btn-lg shadow-sm fw-bold"
-                                                            >
+                                                            <Link to="/applicant/apply" className="btn btn-primary btn-lg fw-bold">
                                                                 <i className="fas fa-rocket me-2"></i>
                                                                 Apply for Scholarships Now
                                                             </Link>
                                                             <div className="row g-2">
                                                                 <div className="col-4">
-                                                                    <button
-                                                                        className="btn btn-outline-secondary w-100"
-                                                                        onClick={handleReset}
-                                                                    >
-                                                                        <i className="fas fa-redo me-1"></i>
+                                                                    <button className="btn btn-outline-secondary w-100" onClick={handleReset}>
+                                                                        <i className="fas fa-rotate-left me-1"></i>
                                                                         Reset
                                                                     </button>
                                                                 </div>
@@ -810,44 +587,39 @@ const Prequalify: React.FC = () => {
                                                         </div>
                                                     </>
                                                 ) : (
-                                                    /* Enhanced Empty State */
+                                                    // Empty state
                                                     <div className="text-center py-5">
                                                         <div className="mb-4">
-                                                            <div
-                                                                className="bg-light rounded-circle mx-auto d-flex align-items-center justify-content-center shadow-sm"
-                                                                style={{width: '120px', height: '120px'}}
-                                                            >
-                                                                <i className="fas fa-calculator display-4 text-muted"></i>
+                                                            <div className="bg-light rounded-circle mx-auto d-flex align-items-center justify-content-center shadow-sm" style={{ width: '120px', height: '120px' }}>
+                                                                <i className="fas fa-calculator display-6 text-muted"></i>
                                                             </div>
                                                         </div>
-                                                        <h5 className="text-dark mb-3">Ready to Discover Your Opportunities?</h5>
+                                                        <h5 className="text-dark mb-2">Ready to Discover Opportunities?</h5>
                                                         <p className="text-muted mb-4">
-                                                            Enter your <strong>GWA</strong> and <strong>family income</strong> to unlock
-                                                            your personalized scholarship recommendations.
+                                                            Enter GWA and family income to unlock personalized scholarship recommendations.
                                                         </p>
                                                         <div className="row g-3">
                                                             <div className="col-6">
                                                                 <div className="bg-light rounded p-3 shadow-sm">
-                                                                    <i className="fas fa-bolt text-warning mb-2 d-block fs-3"></i>
-                                                                    <small className="fw-bold">Instant Results</small>
-                                                                    <br/>
+                                                                    <i className="fas fa-bolt text-warning mb-2 d-block fs-5"></i>
+                                                                    <small className="fw-bold d-block">Instant Results</small>
                                                                     <small className="text-muted">Real-time assessment</small>
                                                                 </div>
                                                             </div>
                                                             <div className="col-6">
                                                                 <div className="bg-light rounded p-3 shadow-sm">
-                                                                    <i className="fas fa-shield-alt text-success mb-2 d-block fs-3"></i>
-                                                                    <small className="fw-bold">100% Secure</small>
-                                                                    <br/>
-                                                                    <small className="text-muted">Data protected</small>
+                                                                    <i className="fas fa-shield-alt text-success mb-2 d-block fs-5"></i>
+                                                                    <small className="fw-bold d-block">Secure</small>
+                                                                    <small className="text-muted">Your data is protected</small>
                                                                 </div>
                                                             </div>
                                                         </div>
                                                         <div className="mt-4">
                                                             <div className="bg-primary bg-opacity-10 rounded p-3">
-                                                                <small className="text-primary">
-                                                                    <i className="fas fa-magic me-1"></i>
-                                                                    <strong>Powered by AI:</strong> Our fuzzy logic system analyzes multiple factors for the most accurate eligibility assessment.
+                                                                <small className="text-primary d-flex align-items-center">
+                                                                    <i className="fas fa-magic me-2"></i>
+                                                                    <strong className="me-1">Powered by AI</strong>
+                                                                    Fuzzy logic evaluates multiple factors for accurate assessment.
                                                                 </small>
                                                             </div>
                                                         </div>
@@ -856,63 +628,53 @@ const Prequalify: React.FC = () => {
                                             </div>
                                         </div>
                                     </div>
+                                    {/* End Right Column */}
+                                    <div className="col-12">
+                                        {/* Quick Start */}
+                                        <div className="alert alert-primary border-0 mt-4 shadow-sm" role="alert">
+                                            <div className="d-flex">
+                                                <i className="fas fa-lightbulb me-3 mt-1 fs-5"></i>
+                                                <div>
+                                                    <h6 className="alert-heading mb-2 d-flex align-items-center">
+                                                        <i className="fas fa-rocket me-2"></i>
+                                                        Quick Start Guide
+                                                    </h6>
+                                                    <p className="mb-2">
+                                                        <strong>Step 1:</strong> Enter GWA and family income for instant results<br />
+                                                        <strong>Step 2:</strong> Add optional details to refine matches<br />
+                                                        <strong>Step 3:</strong> Review and apply directly
+                                                    </p>
+                                                    <small className="text-muted d-flex align-items-center">
+                                                        <i className="fas fa-shield-alt me-1"></i>
+                                                        Information is used only for eligibility assessment
+                                                    </small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <style>{`
-        .hover-card {
-            transition: all 0.3s ease;
-            cursor: pointer;
-        }
-        .hover-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 12px 35px rgba(0,0,0,0.15) !important;
-        }
-        .circular-progress {
-            transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        .animate__animated.animate__pulse {
-            animation-duration: 2s;
-            animation-iteration-count: infinite;
-        }
+                {/* Minimal, production polish */}
+                <style>{`
         .form-control:focus, .form-select:focus {
-            box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.15);
-            border-color: #86b7fe;
+          box-shadow: 0 0 0 0.25rem rgba(13,110,253,0.15);
+          border-color: #86b7fe;
         }
-        .is-warning {
-            border-color: #ffc107;
-            background-color: #fff3cd;
-        }
-        .bg-gradient-primary {
-            background: linear-gradient(135deg, #0d6efd 0%, #0056b3 100%);
-        }
-        .bg-gradient-success {
-            background: linear-gradient(135deg, #198754 0%, #146c43 100%);
-        }
-        .transition-all {
-            transition: all 0.3s ease;
-        }
-        .cursor-pointer {
-            cursor: pointer;
-        }
-        .form-check-input:checked ~ .form-check-label {
-            color: #0d6efd;
-        }
-        .badge {
-            font-weight: 500;
-        }
+        .card { border-radius: .75rem; }
+        .card-header { border-top-left-radius: .75rem; border-top-right-radius: .75rem; }
+        .btn { border-radius: .6rem; }
+        .hover-card { transition: transform .2s ease, box-shadow .2s ease; }
+        .hover-card:hover { transform: translateY(-2px); box-shadow: 0 8px 26px rgba(0,0,0,0.12) !important; }
         @media (max-width: 768px) {
-            .sticky-top {
-                position: relative !important;
-                top: auto !important;
-            }
+          .sticky-top { position: relative !important; top: auto !important; }
         }
-    `}</style>
-        </div>
+      `}</style>
+            </div>
+        </>
     );
 };
 

@@ -9,16 +9,15 @@ import {NotificationProvider} from "./context/NotificationContext.tsx";
 
 const App: React.FC = () => {
     return (
-        <Router>
-            <ApiStatusGuard>
-                <Provider store={store}>
+        <Provider store={store}>
+            <Router>
+                <ApiStatusGuard>
                     <NotificationProvider>
                         <AppRoutes />
                     </NotificationProvider>
-                </Provider>
-            </ApiStatusGuard>
-        </Router>
+                </ApiStatusGuard>
+            </Router>
+        </Provider>
     );
 };
-
 export default App;
