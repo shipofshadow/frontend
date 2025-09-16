@@ -1,4 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import {useAuth} from "../../context/AuthContext.tsx";
+
 
 interface FormData {
     email: string;
@@ -6,180 +8,476 @@ interface FormData {
     currentPassword: string;
     newPassword: string;
     confirmPassword: string;
+    emergencyContact: string;
+    emergencyPhone: string;
+}
+
+interface ValidationErrors {
+    email?: string;
+    phone?: string;
+    currentPassword?: string;
+    newPassword?: string;
+    confirmPassword?: string;
+    emergencyContact?: string;
+    emergencyPhone?: string;
+}
+
+interface PasswordStrength {
+    score: number;
+    feedback: string[];
+    isValid: boolean;
 }
 
 const Settings: React.FC = () => {
-    const [activeTab, setActiveTab] = useState<'account' | 'password' | 'notifications'>('account');
+    const [activeTab, setActiveTab] = useState<'account' | 'password' | 'notifications' | 'privacy'>('account');
     const [isLoading, setIsLoading] = useState(false);
+    const [hasChanges, setHasChanges] = useState(false);
+    const [validationErrors, setValidationErrors] = useState<ValidationErrors>({});
     const [showPassword, setShowPassword] = useState({
         current: false,
         new: false,
         confirm: false
     });
+    const [passwordStrength, setPasswordStrength] = useState<PasswordStrength>({
+        score: 0,
+        feedback: [],
+        isValid: false
+    });
+    const { user } = useAuth();
+    const profile = user?.profile;
+
+
+
     const [formData, setFormData] = useState<FormData>({
-        email: 'john.doe@example.com',
-        phone: '+63 912 345 6789',
+        email: user?.email || '',
+        phone: profile?.contact_number || '',
         currentPassword: '',
         newPassword: '',
-        confirmPassword: ''
+        confirmPassword: '',
+        emergencyContact: profile?.emergency_contact_name || '',
+        emergencyPhone: profile?.emergency_contact_number || ''
     });
+
     const [notifications, setNotifications] = useState({
         emailUpdates: true,
         smsAlerts: false,
         pushNotifications: true,
-        academicReminders: true
+        academicReminders: true,
+        applicationStatus: true,
+        scholarshipAlerts: true,
+        maintenanceNotices: false
     });
+
+    const [privacySettings, setPrivacySettings] = useState({
+        profileVisibility: 'friends',
+        showEmail: false,
+        showPhone: false,
+        allowMessaging: true,
+        dataProcessing: true,
+        marketingEmails: false
+    });
+
+    // Validation functions
+    const validateEmail = (email: string): string | undefined => {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!email) return 'Email is required';
+        if (!emailRegex.test(email)) return 'Please enter a valid email address';
+        return undefined;
+    };
+
+    const validatePhone = (phone: string): string | undefined => {
+        const phoneRegex = /^(\+63|0)?[9]\d{9}$/;
+        if (!phone) return 'Phone number is required';
+        if (!phoneRegex.test(phone.replace(/\s+/g, ''))) return 'Please enter a valid Philippine mobile number';
+        return undefined;
+    };
+
+    const assessPasswordStrength = (password: string): PasswordStrength => {
+        if (!password) return { score: 0, feedback: [], isValid: false };
+
+        let score = 0;
+        const feedback: string[] = [];
+
+        if (password.length >= 8) score += 1;
+        else feedback.push('At least 8 characters');
+
+        if (/[A-Z]/.test(password)) score += 1;
+        else feedback.push('One uppercase letter');
+
+        if (/[a-z]/.test(password)) score += 1;
+        else feedback.push('One lowercase letter');
+
+        if (/\d/.test(password)) score += 1;
+        else feedback.push('One number');
+
+        if (/[!@#$%^&*(),.?":{}|<>]/.test(password)) score += 1;
+        else feedback.push('One special character');
+
+        return {
+            score,
+            feedback,
+            isValid: score >= 4
+        };
+    };
 
     const handleInputChange = (field: keyof FormData, value: string) => {
         setFormData(prev => ({ ...prev, [field]: value }));
+        setHasChanges(true);
+
+        // Clear validation error for this field
+        if (validationErrors[field]) {
+            setValidationErrors(prev => ({ ...prev, [field]: undefined }));
+        }
+
+        // Real-time password strength assessment
+        if (field === 'newPassword') {
+            setPasswordStrength(assessPasswordStrength(value));
+        }
     };
 
     const handleNotificationChange = (field: keyof typeof notifications) => {
         setNotifications(prev => ({ ...prev, [field]: !prev[field] }));
+        setHasChanges(true);
+    };
+
+    const handlePrivacyChange = (field: keyof typeof privacySettings, value: string | boolean) => {
+        setPrivacySettings(prev => ({ ...prev, [field]: value }));
+        setHasChanges(true);
+    };
+
+    const validateForm = (): boolean => {
+        const errors: ValidationErrors = {};
+
+        if (activeTab === 'account') {
+            const emailError = validateEmail(formData.email);
+            if (emailError) errors.email = emailError;
+
+            const phoneError = validatePhone(formData.phone);
+            if (phoneError) errors.phone = phoneError;
+
+            if (formData.emergencyContact && formData.emergencyContact.trim().length < 2) {
+                errors.emergencyContact = 'Emergency contact name must be at least 2 characters';
+            }
+
+            if (formData.emergencyPhone) {
+                const emergencyPhoneError = validatePhone(formData.emergencyPhone);
+                if (emergencyPhoneError) errors.emergencyPhone = emergencyPhoneError;
+            }
+        }
+
+        if (activeTab === 'password') {
+            if (!formData.currentPassword) errors.currentPassword = 'Current password is required';
+            if (!formData.newPassword) errors.newPassword = 'New password is required';
+            if (!passwordStrength.isValid) errors.newPassword = 'Password does not meet requirements';
+            if (formData.newPassword !== formData.confirmPassword) {
+                errors.confirmPassword = 'Passwords do not match';
+            }
+            if (formData.currentPassword === formData.newPassword) {
+                errors.newPassword = 'New password must be different from current password';
+            }
+        }
+
+        setValidationErrors(errors);
+        return Object.keys(errors).length === 0;
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        if (!validateForm()) return;
+
         setIsLoading(true);
+
         // Simulate API call
-        await new Promise(resolve => setTimeout(resolve, 1500));
+        await new Promise(resolve => setTimeout(resolve, 2000));
+
         setIsLoading(false);
-        // Show success message (you'd handle this with your notification system)
-        console.log('Form submitted successfully');
+        setHasChanges(false);
+
+        // Reset password fields after successful password change
+        if (activeTab === 'password') {
+            setFormData(prev => ({
+                ...prev,
+                currentPassword: '',
+                newPassword: '',
+                confirmPassword: ''
+            }));
+            setPasswordStrength({ score: 0, feedback: [], isValid: false });
+        }
     };
 
     const togglePasswordVisibility = (field: 'current' | 'new' | 'confirm') => {
         setShowPassword(prev => ({ ...prev, [field]: !prev[field] }));
     };
 
+    const getPasswordStrengthColor = () => {
+        if (passwordStrength.score <= 1) return 'danger';
+        if (passwordStrength.score <= 3) return 'warning';
+        return 'success';
+    };
+
+    const getPasswordStrengthText = () => {
+        if (passwordStrength.score <= 1) return 'Weak';
+        if (passwordStrength.score <= 3) return 'Fair';
+        return 'Strong';
+    };
+
+    // Auto-save indicator
+    useEffect(() => {
+        if (hasChanges) {
+            const timer = setTimeout(() => {
+                // Auto-save logic could go here
+            }, 30000);
+
+            return () => clearTimeout(timer);
+        }
+    }, [hasChanges]);
+
     return (
-        <div className="container py-5">
+        <div className="container-fluid py-4">
             <div className="row justify-content-center">
-                <div className="col-xl-8 col-lg-10">
+                <div className="col-xl-10 col-lg-12">
                     {/* Header */}
-                    <div className="mb-4">
-                        <h2 className="fw-bold mb-1">Settings</h2>
-                        <p className="text-muted mb-0">Manage your account preferences and security settings</p>
+                    <div className="d-flex align-items-center justify-content-between mb-4">
+                        <div>
+                            <h1 className="h2 fw-bold mb-1 text-primary">Settings</h1>
+                            <p className="text-muted mb-0">
+                                Manage your account preferences, security, and privacy settings
+                            </p>
+                        </div>
+                        <div className="d-flex align-items-center gap-2">
+                            {hasChanges && (
+                                <span className="badge bg-warning text-dark">
+                                    <i className="bi bi-clock me-1"></i>
+                                    Unsaved Changes
+                                </span>
+                            )}
+                            <div className="text-end">
+                                <small className="text-muted d-block">
+                                    Welcome back, <strong>{profile?.first_name} {profile?.last_name}</strong>
+                                </small>
+                                <small className="text-muted">
+                                    {profile?.student_id} 
+                                </small>
+                            </div>
+                        </div>
                     </div>
 
-                    <div className="card shadow-sm border-0 rounded-4">
-                        {/* Navigation Tabs */}
-                        <div className="card-header border-0 bg-light bg-opacity-50 rounded-top-4">
-                            <ul className="nav nav-pills nav-fill" role="tablist">
-                                <li className="nav-item" role="presentation">
+                    <div className="card shadow-lg border-0 rounded-4 overflow-hidden">
+                        {/* Enhanced Navigation Tabs */}
+                        <div className="card-header border-0 bg-gradient" style={{background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'}}>
+                            <div className="nav nav-pills nav-justified bg-white bg-opacity-20 rounded-3 p-1" role="tablist">
+                                {[
+                                    { key: 'account', icon: 'person-gear', label: 'Account Info', color: 'primary' },
+                                    { key: 'password', icon: 'shield-lock', label: 'Security', color: 'danger' },
+                                    { key: 'notifications', icon: 'bell', label: 'Notifications', color: 'warning' },
+                                    { key: 'privacy', icon: 'eye-slash', label: 'Privacy', color: 'info' }
+                                ].map(tab => (
                                     <button
-                                        className={`nav-link rounded-3 fw-medium ${activeTab === 'account' ? 'active' : ''}`}
-                                        onClick={() => setActiveTab('account')}
+                                        key={tab.key}
+                                        className={`nav-link fw-medium  border-0 ${activeTab === tab.key ? 'active bg-white text-dark' : '-50'}`}
+                                        onClick={() => setActiveTab(tab.key as typeof activeTab)}
                                         type="button"
                                     >
-                                        <i className="bi bi-person-gear me-2"></i>
-                                        Account Info
+                                        <i className={`bi bi-${tab.icon} me-2`}></i>
+                                        <span className="d-none d-md-inline">{tab.label}</span>
                                     </button>
-                                </li>
-                                <li className="nav-item" role="presentation">
-                                    <button
-                                        className={`nav-link rounded-3 fw-medium ${activeTab === 'password' ? 'active' : ''}`}
-                                        onClick={() => setActiveTab('password')}
-                                        type="button"
-                                    >
-                                        <i className="bi bi-shield-lock me-2"></i>
-                                        Security
-                                    </button>
-                                </li>
-                                <li className="nav-item" role="presentation">
-                                    <button
-                                        className={`nav-link rounded-3 fw-medium ${activeTab === 'notifications' ? 'active' : ''}`}
-                                        onClick={() => setActiveTab('notifications')}
-                                        type="button"
-                                    >
-                                        <i className="bi bi-bell me-2"></i>
-                                        Notifications
-                                    </button>
-                                </li>
-                            </ul>
+                                ))}
+                            </div>
                         </div>
 
-                        <div className="card-body p-4 p-md-5">
+                        <div className="card-body p-0">
                             {/* Account Information Tab */}
                             {activeTab === 'account' && (
-                                <div className="tab-content">
-                                    <div className="d-flex align-items-center mb-4">
-                                        <div className="bg-primary bg-opacity-10 rounded-circle p-3 me-3">
-                                            <i className="bi bi-person-gear fs-4 text-primary"></i>
+                                <div className="p-4 p-md-5">
+                                    <div className="row align-items-center mb-4">
+                                        <div className="col-auto">
+                                            <div className="bg-primary bg-gradient rounded-circle p-3 shadow">
+                                                <i className="bi bi-person-gear fs-3 "></i>
+                                            </div>
                                         </div>
-                                        <div>
-                                            <h4 className="mb-1 fw-bold">Account Information</h4>
+                                        <div className="col">
+                                            <h3 className="mb-1 fw-bold">Account Information</h3>
                                             <p className="text-muted mb-0">Update your personal details and contact information</p>
                                         </div>
                                     </div>
 
                                     <form onSubmit={handleSubmit}>
                                         <div className="row g-4">
+                                            {/* Primary Contact */}
+                                            <div className="col-12">
+                                                <h5 className="fw-bold text-primary border-bottom pb-2 mb-3">
+                                                    <i className="bi bi-telephone-plus me-2"></i>
+                                                    Primary Contact Information
+                                                </h5>
+                                            </div>
+
                                             <div className="col-md-6">
                                                 <label className="form-label fw-medium">
                                                     <i className="bi bi-envelope me-1 text-primary"></i>
-                                                    Email Address
+                                                    Email Address *
                                                 </label>
                                                 <input
                                                     type="email"
-                                                    className="form-control form-control-lg"
+                                                    className={`form-control form-control-lg ${validationErrors.email ? 'is-invalid' : ''}`}
                                                     value={formData.email}
                                                     onChange={(e) => handleInputChange('email', e.target.value)}
                                                     placeholder="your@email.com"
                                                 />
-                                                <div className="form-text">
-                                                    <i className="bi bi-info-circle me-1"></i>
-                                                    We'll send verification to your new email
-                                                </div>
+                                                {validationErrors.email ? (
+                                                    <div className="invalid-feedback">{validationErrors.email}</div>
+                                                ) : (
+                                                    <div className="form-text">
+                                                        <i className="bi bi-info-circle me-1"></i>
+                                                        We'll send verification to your new email
+                                                    </div>
+                                                )}
                                             </div>
 
                                             <div className="col-md-6">
                                                 <label className="form-label fw-medium">
                                                     <i className="bi bi-telephone me-1 text-primary"></i>
-                                                    Phone Number
+                                                    Phone Number *
                                                 </label>
                                                 <input
                                                     type="tel"
-                                                    className="form-control form-control-lg"
+                                                    className={`form-control form-control-lg ${validationErrors.phone ? 'is-invalid' : ''}`}
                                                     value={formData.phone}
                                                     onChange={(e) => handleInputChange('phone', e.target.value)}
                                                     placeholder="+63 9xx xxx xxxx"
                                                 />
-                                                <div className="form-text">
-                                                    <i className="bi bi-shield-check me-1"></i>
-                                                    Used for security notifications
+                                                {validationErrors.phone ? (
+                                                    <div className="invalid-feedback">{validationErrors.phone}</div>
+                                                ) : (
+                                                    <div className="form-text">
+                                                        <i className="bi bi-shield-check me-1"></i>
+                                                        Used for security notifications and SMS alerts
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            {/* Emergency Contact */}
+                                            <div className="col-12">
+                                                <h5 className="fw-bold text-danger border-bottom pb-2 mb-3 mt-4">
+                                                    <i className="bi bi-person-exclamation me-2"></i>
+                                                    Emergency Contact Information
+                                                </h5>
+                                            </div>
+
+                                            <div className="col-md-6">
+                                                <label className="form-label fw-medium">
+                                                    <i className="bi bi-person me-1 text-danger"></i>
+                                                    Emergency Contact Name
+                                                </label>
+                                                <input
+                                                    type="text"
+                                                    className={`form-control form-control-lg ${validationErrors.emergencyContact ? 'is-invalid' : ''}`}
+                                                    value={formData.emergencyContact}
+                                                    onChange={(e) => handleInputChange('emergencyContact', e.target.value)}
+                                                    placeholder="Full name of emergency contact"
+                                                />
+                                                {validationErrors.emergencyContact && (
+                                                    <div className="invalid-feedback">{validationErrors.emergencyContact}</div>
+                                                )}
+                                            </div>
+
+                                            <div className="col-md-6">
+                                                <label className="form-label fw-medium">
+                                                    <i className="bi bi-telephone-forward me-1 text-danger"></i>
+                                                    Emergency Contact Number
+                                                </label>
+                                                <input
+                                                    type="tel"
+                                                    className={`form-control form-control-lg ${validationErrors.emergencyPhone ? 'is-invalid' : ''}`}
+                                                    value={formData.emergencyPhone}
+                                                    onChange={(e) => handleInputChange('emergencyPhone', e.target.value)}
+                                                    placeholder="+63 9xx xxx xxxx"
+                                                />
+                                                {validationErrors.emergencyPhone ? (
+                                                    <div className="invalid-feedback">{validationErrors.emergencyPhone}</div>
+                                                ) : (
+                                                    <div className="form-text">
+                                                        <i className="bi bi-exclamation-triangle me-1"></i>
+                                                        Person to contact in case of emergency
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            {/* Profile Summary */}
+                                            <div className="col-12">
+                                                <div className="card bg-light border-0 mt-4">
+                                                    <div className="card-body">
+                                                        <h6 className="card-title mb-3">
+                                                            <i className="bi bi-person-badge me-1"></i>
+                                                            Profile Summary
+                                                        </h6>
+                                                        <div className="row g-3 text-sm">
+                                                            <div className="col-md-3">
+                                                                <strong>Student ID:</strong><br />
+                                                                <span className="text-muted">{profile?.student_id}</span>
+                                                            </div>
+                                                            <div className="col-md-3">
+                                                                <strong>Civil Status:</strong><br />
+                                                                <span className="text-muted">{profile?.civil_status}</span>
+                                                            </div>
+                                                            <div className="col-md-3">
+                                                                <strong>Citizenship:</strong><br />
+                                                                <span className="text-muted">{profile?.citizenship}</span>
+                                                            </div>
+                                                            <div className="col-md-3">
+                                                                <strong>Address:</strong><br />
+                                                                <span className="text-muted">{profile?.municipality_name}, {profile?.province_name}</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
 
-                                        <hr className="my-4" />
+                                        <hr className="my-5" />
 
                                         <div className="d-flex justify-content-between align-items-center">
                                             <div>
                                                 <small className="text-muted">
                                                     <i className="bi bi-clock-history me-1"></i>
-                                                    Last updated: March 15, 2024
+                                                    Last updated: March 15, 2024 at 2:30 PM
                                                 </small>
                                             </div>
-                                            <div className="d-flex gap-2">
-                                                <button type="button" className="btn btn-outline-secondary">
-                                                    <i className="bi bi-arrow-clockwise me-1"></i>
-                                                    Reset
+                                            <div className="d-flex gap-3">
+                                                <button
+                                                    type="button"
+                                                    className="btn btn-outline-secondary btn-lg"
+                                                    onClick={() => {
+                                                        setFormData({
+                                                            email: profile?.email || email,
+                                                            phone: profile?.contact_number || '',
+                                                            currentPassword: '',
+                                                            newPassword: '',
+                                                            confirmPassword: '',
+                                                            emergencyContact: profile?.emergency_contact_name || '',
+                                                            emergencyPhone: profile?.emergency_contact_number || ''
+                                                        });
+                                                        setHasChanges(false);
+                                                        setValidationErrors({});
+                                                    }}
+                                                >
+                                                    <i className="bi bi-arrow-clockwise me-2"></i>
+                                                    Reset Changes
                                                 </button>
                                                 <button
                                                     type="submit"
-                                                    className="btn btn-primary"
-                                                    disabled={isLoading}
+                                                    className="btn btn-primary btn-lg"
+                                                    disabled={isLoading || !hasChanges}
                                                 >
                                                     {isLoading ? (
                                                         <>
                                                             <span className="spinner-border spinner-border-sm me-2" role="status"></span>
-                                                            Saving...
+                                                            Saving Changes...
                                                         </>
                                                     ) : (
                                                         <>
-                                                            <i className="bi bi-check-lg me-1"></i>
-                                                            Save Changes
+                                                            <i className="bi bi-check-lg me-2"></i>
+                                                            Save Account Info
                                                         </>
                                                     )}
                                                 </button>
@@ -191,14 +489,16 @@ const Settings: React.FC = () => {
 
                             {/* Password Tab */}
                             {activeTab === 'password' && (
-                                <div className="tab-content">
-                                    <div className="d-flex align-items-center mb-4">
-                                        <div className="bg-danger bg-opacity-10 rounded-circle p-3 me-3">
-                                            <i className="bi bi-shield-lock fs-4 text-danger"></i>
+                                <div className="p-4 p-md-5">
+                                    <div className="row align-items-center mb-4">
+                                        <div className="col-auto">
+                                            <div className="bg-danger bg-gradient rounded-circle p-3 shadow">
+                                                <i className="bi bi-shield-lock fs-3 "></i>
+                                            </div>
                                         </div>
-                                        <div>
-                                            <h4 className="mb-1 fw-bold">Security Settings</h4>
-                                            <p className="text-muted mb-0">Update your password and security preferences</p>
+                                        <div className="col">
+                                            <h3 className="mb-1 fw-bold">Security Settings</h3>
+                                            <p className="text-muted mb-0">Update your password and enhance account security</p>
                                         </div>
                                     </div>
 
@@ -207,12 +507,12 @@ const Settings: React.FC = () => {
                                             <div className="col-12">
                                                 <label className="form-label fw-medium">
                                                     <i className="bi bi-key me-1 text-danger"></i>
-                                                    Current Password
+                                                    Current Password *
                                                 </label>
-                                                <div className="input-group">
+                                                <div className="input-group input-group-lg">
                                                     <input
                                                         type={showPassword.current ? 'text' : 'password'}
-                                                        className="form-control form-control-lg"
+                                                        className={`form-control ${validationErrors.currentPassword ? 'is-invalid' : ''}`}
                                                         value={formData.currentPassword}
                                                         onChange={(e) => handleInputChange('currentPassword', e.target.value)}
                                                         placeholder="Enter your current password"
@@ -224,18 +524,21 @@ const Settings: React.FC = () => {
                                                     >
                                                         <i className={`bi bi-eye${showPassword.current ? '-slash' : ''}`}></i>
                                                     </button>
+                                                    {validationErrors.currentPassword && (
+                                                        <div className="invalid-feedback">{validationErrors.currentPassword}</div>
+                                                    )}
                                                 </div>
                                             </div>
 
                                             <div className="col-md-6">
                                                 <label className="form-label fw-medium">
                                                     <i className="bi bi-shield-plus me-1 text-success"></i>
-                                                    New Password
+                                                    New Password *
                                                 </label>
-                                                <div className="input-group">
+                                                <div className="input-group input-group-lg">
                                                     <input
                                                         type={showPassword.new ? 'text' : 'password'}
-                                                        className="form-control form-control-lg"
+                                                        className={`form-control ${validationErrors.newPassword ? 'is-invalid' : ''}`}
                                                         value={formData.newPassword}
                                                         onChange={(e) => handleInputChange('newPassword', e.target.value)}
                                                         placeholder="Enter new password"
@@ -247,18 +550,39 @@ const Settings: React.FC = () => {
                                                     >
                                                         <i className={`bi bi-eye${showPassword.new ? '-slash' : ''}`}></i>
                                                     </button>
+                                                    {validationErrors.newPassword && (
+                                                        <div className="invalid-feedback">{validationErrors.newPassword}</div>
+                                                    )}
                                                 </div>
+
+                                                {/* Password Strength Indicator */}
+                                                {formData.newPassword && (
+                                                    <div className="mt-2">
+                                                        <div className="d-flex justify-content-between align-items-center mb-1">
+                                                            <small className="text-muted">Password Strength:</small>
+                                                            <small className={`text-${getPasswordStrengthColor()} fw-medium`}>
+                                                                {getPasswordStrengthText()}
+                                                            </small>
+                                                        </div>
+                                                        <div className="progress" style={{height: '4px'}}>
+                                                            <div
+                                                                className={`progress-bar bg-${getPasswordStrengthColor()}`}
+                                                                style={{width: `${(passwordStrength.score / 5) * 100}%`}}
+                                                            ></div>
+                                                        </div>
+                                                    </div>
+                                                )}
                                             </div>
 
                                             <div className="col-md-6">
                                                 <label className="form-label fw-medium">
                                                     <i className="bi bi-shield-check me-1 text-success"></i>
-                                                    Confirm New Password
+                                                    Confirm New Password *
                                                 </label>
-                                                <div className="input-group">
+                                                <div className="input-group input-group-lg">
                                                     <input
                                                         type={showPassword.confirm ? 'text' : 'password'}
-                                                        className="form-control form-control-lg"
+                                                        className={`form-control ${validationErrors.confirmPassword ? 'is-invalid' : ''}`}
                                                         value={formData.confirmPassword}
                                                         onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
                                                         placeholder="Confirm new password"
@@ -270,49 +594,52 @@ const Settings: React.FC = () => {
                                                     >
                                                         <i className={`bi bi-eye${showPassword.confirm ? '-slash' : ''}`}></i>
                                                     </button>
+                                                    {validationErrors.confirmPassword && (
+                                                        <div className="invalid-feedback">{validationErrors.confirmPassword}</div>
+                                                    )}
                                                 </div>
+
+                                                {/* Password Match Indicator */}
+                                                {formData.confirmPassword && (
+                                                    <div className="mt-2">
+                                                        <small className={`${formData.newPassword === formData.confirmPassword ? 'text-success' : 'text-danger'}`}>
+                                                            <i className={`bi bi-${formData.newPassword === formData.confirmPassword ? 'check-circle' : 'x-circle'} me-1`}></i>
+                                                            {formData.newPassword === formData.confirmPassword ? 'Passwords match' : 'Passwords do not match'}
+                                                        </small>
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
 
-                                        {/* Password Requirements */}
-                                        <div className="mt-3">
-                                            <div className="card bg-light border-0">
-                                                <div className="card-body p-3">
-                                                    <h6 className="card-title mb-2">
+                                        {/* Enhanced Password Requirements */}
+                                        <div className="mt-4">
+                                            <div className="card border-0 bg-light">
+                                                <div className="card-body p-4">
+                                                    <h6 className="card-title mb-3">
                                                         <i className="bi bi-info-circle me-1"></i>
                                                         Password Requirements:
                                                     </h6>
                                                     <div className="row g-2">
-                                                        <div className="col-md-6">
-                                                            <small className="text-muted d-flex align-items-center">
-                                                                <i className="bi bi-check-circle-fill text-success me-1"></i>
-                                                                At least 8 characters
-                                                            </small>
-                                                        </div>
-                                                        <div className="col-md-6">
-                                                            <small className="text-muted d-flex align-items-center">
-                                                                <i className="bi bi-x-circle-fill text-danger me-1"></i>
-                                                                One uppercase letter
-                                                            </small>
-                                                        </div>
-                                                        <div className="col-md-6">
-                                                            <small className="text-muted d-flex align-items-center">
-                                                                <i className="bi bi-check-circle-fill text-success me-1"></i>
-                                                                One number
-                                                            </small>
-                                                        </div>
-                                                        <div className="col-md-6">
-                                                            <small className="text-muted d-flex align-items-center">
-                                                                <i className="bi bi-x-circle-fill text-danger me-1"></i>
-                                                                One special character
-                                                            </small>
-                                                        </div>
+                                                        {[
+                                                            { text: 'At least 8 characters', check: formData.newPassword.length >= 8 },
+                                                            { text: 'One uppercase letter', check: /[A-Z]/.test(formData.newPassword) },
+                                                            { text: 'One lowercase letter', check: /[a-z]/.test(formData.newPassword) },
+                                                            { text: 'One number', check: /\d/.test(formData.newPassword) },
+                                                            { text: 'One special character', check: /[!@#$%^&*(),.?":{}|<>]/.test(formData.newPassword) }
+                                                        ].map((req, index) => (
+                                                            <div key={index} className="col-md-6">
+                                                                <small className={`d-flex align-items-center ${req.check ? 'text-success' : 'text-muted'}`}>
+                                                                    <i className={`bi bi-${req.check ? 'check-circle-fill text-success' : 'circle text-muted'} me-2`}></i>
+                                                                    {req.text}
+                                                                </small>
+                                                            </div>
+                                                        ))}
                                                     </div>
                                                 </div>
                                             </div>
                                         </div>
 
-                                        <hr className="my-4" />
+                                        <hr className="my-5" />
 
                                         <div className="d-flex justify-content-between align-items-center">
                                             <div>
@@ -323,17 +650,17 @@ const Settings: React.FC = () => {
                                             </div>
                                             <button
                                                 type="submit"
-                                                className="btn btn-danger"
-                                                disabled={isLoading}
+                                                className="btn btn-danger btn-lg"
+                                                disabled={isLoading || !hasChanges}
                                             >
                                                 {isLoading ? (
                                                     <>
                                                         <span className="spinner-border spinner-border-sm me-2" role="status"></span>
-                                                        Updating...
+                                                        Updating Password...
                                                     </>
                                                 ) : (
                                                     <>
-                                                        <i className="bi bi-shield-lock me-1"></i>
+                                                        <i className="bi bi-shield-lock me-2"></i>
                                                         Update Password
                                                     </>
                                                 )}
@@ -345,121 +672,158 @@ const Settings: React.FC = () => {
 
                             {/* Notifications Tab */}
                             {activeTab === 'notifications' && (
-                                <div className="tab-content">
-                                    <div className="d-flex align-items-center mb-4">
-                                        <div className="bg-info bg-opacity-10 rounded-circle p-3 me-3">
-                                            <i className="bi bi-bell fs-4 text-info"></i>
+                                <div className="p-4 p-md-5">
+                                    <div className="row align-items-center mb-4">
+                                        <div className="col-auto">
+                                            <div className="bg-warning bg-gradient rounded-circle p-3 shadow">
+                                                <i className="bi bi-bell fs-3 "></i>
+                                            </div>
                                         </div>
-                                        <div>
-                                            <h4 className="mb-1 fw-bold">Notification Preferences</h4>
+                                        <div className="col">
+                                            <h3 className="mb-1 fw-bold">Notification Preferences</h3>
                                             <p className="text-muted mb-0">Choose how you'd like to receive updates and alerts</p>
                                         </div>
                                     </div>
 
                                     <form onSubmit={handleSubmit}>
                                         <div className="row g-4">
+                                            {/* Academic Notifications */}
                                             <div className="col-12">
-                                                <div className="card border-0 bg-light">
-                                                    <div className="card-body p-4">
-                                                        <div className="row g-3">
-                                                            <div className="col-md-6">
-                                                                <div className="form-check form-switch d-flex align-items-center">
-                                                                    <input
-                                                                        className="form-check-input me-3"
-                                                                        type="checkbox"
-                                                                        checked={notifications.emailUpdates}
-                                                                        onChange={() => handleNotificationChange('emailUpdates')}
-                                                                        id="emailUpdates"
-                                                                    />
-                                                                    <div className="flex-grow-1">
-                                                                        <label className="form-check-label fw-medium" htmlFor="emailUpdates">
-                                                                            <i className="bi bi-envelope me-1 text-primary"></i>
-                                                                            Email Updates
-                                                                        </label>
-                                                                        <div className="form-text mb-0">Receive general updates via email</div>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
+                                                <h5 className="fw-bold text-primary border-bottom pb-2 mb-3">
+                                                    <i className="bi bi-mortarboard me-2"></i>
+                                                    Academic & Scholarship Notifications
+                                                </h5>
+                                            </div>
 
-                                                            <div className="col-md-6">
-                                                                <div className="form-check form-switch d-flex align-items-center">
-                                                                    <input
-                                                                        className="form-check-input me-3"
-                                                                        type="checkbox"
-                                                                        checked={notifications.smsAlerts}
-                                                                        onChange={() => handleNotificationChange('smsAlerts')}
-                                                                        id="smsAlerts"
-                                                                    />
-                                                                    <div className="flex-grow-1">
-                                                                        <label className="form-check-label fw-medium" htmlFor="smsAlerts">
-                                                                            <i className="bi bi-chat-dots me-1 text-success"></i>
-                                                                            SMS Alerts
-                                                                        </label>
-                                                                        <div className="form-text mb-0">Critical alerts via text message</div>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-
-                                                            <div className="col-md-6">
-                                                                <div className="form-check form-switch d-flex align-items-center">
-                                                                    <input
-                                                                        className="form-check-input me-3"
-                                                                        type="checkbox"
-                                                                        checked={notifications.pushNotifications}
-                                                                        onChange={() => handleNotificationChange('pushNotifications')}
-                                                                        id="pushNotifications"
-                                                                    />
-                                                                    <div className="flex-grow-1">
-                                                                        <label className="form-check-label fw-medium" htmlFor="pushNotifications">
-                                                                            <i className="bi bi-app-indicator me-1 text-warning"></i>
-                                                                            Push Notifications
-                                                                        </label>
-                                                                        <div className="form-text mb-0">Browser push notifications</div>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-
-                                                            <div className="col-md-6">
-                                                                <div className="form-check form-switch d-flex align-items-center">
-                                                                    <input
-                                                                        className="form-check-input me-3"
-                                                                        type="checkbox"
-                                                                        checked={notifications.academicReminders}
-                                                                        onChange={() => handleNotificationChange('academicReminders')}
-                                                                        id="academicReminders"
-                                                                    />
-                                                                    <div className="flex-grow-1">
-                                                                        <label className="form-check-label fw-medium" htmlFor="academicReminders">
-                                                                            <i className="bi bi-calendar-check me-1 text-info"></i>
-                                                                            Academic Reminders
-                                                                        </label>
-                                                                        <div className="form-text mb-0">Assignment and exam reminders</div>
-                                                                    </div>
+                                            {[
+                                                {
+                                                    key: 'applicationStatus',
+                                                    icon: 'file-earmark-check',
+                                                    title: 'Application Status Updates',
+                                                    description: 'Get notified when your scholarship application status changes',
+                                                    color: 'primary'
+                                                },
+                                                {
+                                                    key: 'scholarshipAlerts',
+                                                    icon: 'award',
+                                                    title: 'New Scholarship Opportunities',
+                                                    description: 'Receive alerts about new scholarships you may be eligible for',
+                                                    color: 'success'
+                                                },
+                                                {
+                                                    key: 'academicReminders',
+                                                    icon: 'calendar-check',
+                                                    title: 'Academic Reminders',
+                                                    description: 'Deadlines, important dates, and academic requirements',
+                                                    color: 'info'
+                                                }
+                                            ].map(notif => (
+                                                <div key={notif.key} className="col-12">
+                                                    <div className="card border-0 bg-light mb-3">
+                                                        <div className="card-body p-4">
+                                                            <div className="form-check form-switch d-flex align-items-start">
+                                                                <input
+                                                                    className="form-check-input mt-1 me-3"
+                                                                    type="checkbox"
+                                                                    checked={notifications[notif.key as keyof typeof notifications]}
+                                                                    onChange={() => handleNotificationChange(notif.key as keyof typeof notifications)}
+                                                                    id={notif.key}
+                                                                    style={{width: '3em', height: '1.5em'}}
+                                                                />
+                                                                <div className="flex-grow-1">
+                                                                    <label className="form-check-label fw-medium d-flex align-items-center mb-1" htmlFor={notif.key}>
+                                                                        <i className={`bi bi-${notif.icon} me-2 text-${notif.color}`}></i>
+                                                                        {notif.title}
+                                                                    </label>
+                                                                    <div className="form-text mb-0">{notif.description}</div>
                                                                 </div>
                                                             </div>
                                                         </div>
                                                     </div>
                                                 </div>
+                                            ))}
+
+                                            {/* Communication Channels */}
+                                            <div className="col-12">
+                                                <h5 className="fw-bold text-success border-bottom pb-2 mb-3 mt-4">
+                                                    <i className="bi bi-chat-dots me-2"></i>
+                                                    Communication Channels
+                                                </h5>
                                             </div>
+
+                                            {[
+                                                {
+                                                    key: 'emailUpdates',
+                                                    icon: 'envelope',
+                                                    title: 'Email Notifications',
+                                                    description: 'Receive detailed updates via email',
+                                                    color: 'primary'
+                                                },
+                                                {
+                                                    key: 'smsAlerts',
+                                                    icon: 'chat-dots',
+                                                    title: 'SMS Alerts',
+                                                    description: 'Get critical alerts via text message',
+                                                    color: 'success'
+                                                },
+                                                {
+                                                    key: 'pushNotifications',
+                                                    icon: 'app-indicator',
+                                                    title: 'Browser Push Notifications',
+                                                    description: 'Instant notifications in your browser',
+                                                    color: 'warning'
+                                                },
+                                                {
+                                                    key: 'maintenanceNotices',
+                                                    icon: 'tools',
+                                                    title: 'System Maintenance Notices',
+                                                    description: 'Get notified about scheduled system maintenance',
+                                                    color: 'secondary'
+                                                }
+                                            ].map(notif => (
+                                                <div key={notif.key} className="col-md-6">
+                                                    <div className="card border-0 bg-light mb-3 h-100">
+                                                        <div className="card-body p-4">
+                                                            <div className="form-check form-switch d-flex align-items-start">
+                                                                <input
+                                                                    className="form-check-input mt-1 me-3"
+                                                                    type="checkbox"
+                                                                    checked={notifications[notif.key as keyof typeof notifications]}
+                                                                    onChange={() => handleNotificationChange(notif.key as keyof typeof notifications)}
+                                                                    id={notif.key}
+                                                                    style={{width: '3em', height: '1.5em'}}
+                                                                />
+                                                                <div className="flex-grow-1">
+                                                                    <label className="form-check-label fw-medium d-flex align-items-center mb-1" htmlFor={notif.key}>
+                                                                        <i className={`bi bi-${notif.icon} me-2 text-${notif.color}`}></i>
+                                                                        {notif.title}
+                                                                    </label>
+                                                                    <div className="form-text mb-0">{notif.description}</div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))}
                                         </div>
 
-                                        <hr className="my-4" />
+                                        <hr className="my-5" />
 
                                         <div className="d-flex justify-content-end">
                                             <button
                                                 type="submit"
-                                                className="btn btn-primary"
-                                                disabled={isLoading}
+                                                className="btn btn-warning btn-lg"
+                                                disabled={isLoading || !hasChanges}
                                             >
                                                 {isLoading ? (
                                                     <>
                                                         <span className="spinner-border spinner-border-sm me-2" role="status"></span>
-                                                        Saving...
+                                                        Saving Preferences...
                                                     </>
                                                 ) : (
                                                     <>
-                                                        <i className="bi bi-check-lg me-1"></i>
-                                                        Save Preferences
+                                                        <i className="bi bi-check-lg me-2"></i>
+                                                        Save Notification Preferences
                                                     </>
                                                 )}
                                             </button>
@@ -467,6 +831,255 @@ const Settings: React.FC = () => {
                                     </form>
                                 </div>
                             )}
+
+                            {/* Privacy Tab */}
+                            {activeTab === 'privacy' && (
+                                <div className="p-4 p-md-5">
+                                    <div className="row align-items-center mb-4">
+                                        <div className="col-auto">
+                                            <div className="bg-info bg-gradient rounded-circle p-3 shadow">
+                                                <i className="bi bi-eye-slash fs-3 "></i>
+                                            </div>
+                                        </div>
+                                        <div className="col">
+                                            <h3 className="mb-1 fw-bold">Privacy & Data Settings</h3>
+                                            <p className="text-muted mb-0">Control your privacy and data processing preferences</p>
+                                        </div>
+                                    </div>
+
+                                    <form onSubmit={handleSubmit}>
+                                        <div className="row g-4">
+                                            {/* Profile Visibility */}
+                                            <div className="col-12">
+                                                <h5 className="fw-bold text-info border-bottom pb-2 mb-3">
+                                                    <i className="bi bi-person-circle me-2"></i>
+                                                    Profile Visibility
+                                                </h5>
+                                            </div>
+
+                                            <div className="col-12">
+                                                <div className="card border-0 bg-light">
+                                                    <div className="card-body p-4">
+                                                        <label className="form-label fw-medium mb-3">
+                                                            <i className="bi bi-eye me-1 text-info"></i>
+                                                            Who can see your profile information?
+                                                        </label>
+                                                        <div className="d-flex flex-column gap-2">
+                                                            {[
+                                                                { value: 'public', label: 'Everyone (Public)', desc: 'Your basic profile info is visible to all users' },
+                                                                { value: 'students', label: 'Students Only', desc: 'Only other students can see your profile' },
+                                                                { value: 'admin', label: 'Administrators Only', desc: 'Only school administrators can see your profile' },
+                                                                { value: 'private', label: 'Private', desc: 'Only you can see your full profile information' }
+                                                            ].map(option => (
+                                                                <div key={option.value} className="form-check">
+                                                                    <input
+                                                                        className="form-check-input"
+                                                                        type="radio"
+                                                                        name="profileVisibility"
+                                                                        id={option.value}
+                                                                        value={option.value}
+                                                                        checked={privacySettings.profileVisibility === option.value}
+                                                                        onChange={(e) => handlePrivacyChange('profileVisibility', e.target.value)}
+                                                                    />
+                                                                    <label className="form-check-label" htmlFor={option.value}>
+                                                                        <div className="fw-medium">{option.label}</div>
+                                                                        <small className="text-muted">{option.desc}</small>
+                                                                    </label>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* Contact Information Privacy */}
+                                            <div className="col-12">
+                                                <h5 className="fw-bold text-warning border-bottom pb-2 mb-3 mt-4">
+                                                    <i className="bi bi-telephone-x me-2"></i>
+                                                    Contact Information Privacy
+                                                </h5>
+                                            </div>
+
+                                            {[
+                                                {
+                                                    key: 'showEmail',
+                                                    icon: 'envelope-slash',
+                                                    title: 'Show Email Address',
+                                                    description: 'Allow others to see your email address in your profile',
+                                                    color: 'warning'
+                                                },
+                                                {
+                                                    key: 'showPhone',
+                                                    icon: 'telephone-x',
+                                                    title: 'Show Phone Number',
+                                                    description: 'Allow others to see your phone number in your profile',
+                                                    color: 'warning'
+                                                },
+                                                {
+                                                    key: 'allowMessaging',
+                                                    icon: 'chat-square-dots',
+                                                    title: 'Allow Direct Messages',
+                                                    description: 'Allow other users to send you direct messages',
+                                                    color: 'info'
+                                                }
+                                            ].map(setting => (
+                                                <div key={setting.key} className="col-md-6">
+                                                    <div className="card border-0 bg-light mb-3 h-100">
+                                                        <div className="card-body p-4">
+                                                            <div className="form-check form-switch d-flex align-items-start">
+                                                                <input
+                                                                    className="form-check-input mt-1 me-3"
+                                                                    type="checkbox"
+                                                                    checked={privacySettings[setting.key as keyof typeof privacySettings] as boolean}
+                                                                    onChange={() => handlePrivacyChange(setting.key as keyof typeof privacySettings, !privacySettings[setting.key as keyof typeof privacySettings])}
+                                                                    id={setting.key}
+                                                                    style={{width: '3em', height: '1.5em'}}
+                                                                />
+                                                                <div className="flex-grow-1">
+                                                                    <label className="form-check-label fw-medium d-flex align-items-center mb-1" htmlFor={setting.key}>
+                                                                        <i className={`bi bi-${setting.icon} me-2 text-${setting.color}`}></i>
+                                                                        {setting.title}
+                                                                    </label>
+                                                                    <div className="form-text mb-0">{setting.description}</div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))}
+
+                                            {/* Data Processing */}
+                                            <div className="col-12">
+                                                <h5 className="fw-bold text-danger border-bottom pb-2 mb-3 mt-4">
+                                                    <i className="bi bi-database-lock me-2"></i>
+                                                    Data Processing & Marketing
+                                                </h5>
+                                            </div>
+
+                                            {[
+                                                {
+                                                    key: 'dataProcessing',
+                                                    icon: 'database-check',
+                                                    title: 'Allow Data Processing',
+                                                    description: 'Allow the system to process your data for scholarship matching and analytics',
+                                                    color: 'success',
+                                                    required: true
+                                                },
+                                                {
+                                                    key: 'marketingEmails',
+                                                    icon: 'envelope-paper',
+                                                    title: 'Marketing Communications',
+                                                    description: 'Receive promotional emails about events, programs, and opportunities',
+                                                    color: 'primary'
+                                                }
+                                            ].map(setting => (
+                                                <div key={setting.key} className="col-12">
+                                                    <div className="card border-0 bg-light mb-3">
+                                                        <div className="card-body p-4">
+                                                            <div className="form-check form-switch d-flex align-items-start">
+                                                                <input
+                                                                    className="form-check-input mt-1 me-3"
+                                                                    type="checkbox"
+                                                                    checked={privacySettings[setting.key as keyof typeof privacySettings] as boolean}
+                                                                    onChange={() => !setting.required && handlePrivacyChange(setting.key as keyof typeof privacySettings, !privacySettings[setting.key as keyof typeof privacySettings])}
+                                                                    id={setting.key}
+                                                                    disabled={setting.required}
+                                                                    style={{width: '3em', height: '1.5em'}}
+                                                                />
+                                                                <div className="flex-grow-1">
+                                                                    <label className="form-check-label fw-medium d-flex align-items-center mb-1" htmlFor={setting.key}>
+                                                                        <i className={`bi bi-${setting.icon} me-2 text-${setting.color}`}></i>
+                                                                        {setting.title}
+                                                                        {setting.required && <span className="badge bg-danger ms-2">Required</span>}
+                                                                    </label>
+                                                                    <div className="form-text mb-0">
+                                                                        {setting.description}
+                                                                        {setting.required && (
+                                                                            <><br /><strong>Note:</strong> This setting is required for the scholarship system to function properly.</>
+                                                                        )}
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))}
+
+                                            {/* Privacy Notice */}
+                                            <div className="col-12">
+                                                <div className="alert alert-info d-flex align-items-start" role="alert">
+                                                    <i className="bi bi-info-circle-fill me-2 mt-1"></i>
+                                                    <div>
+                                                        <strong>Privacy Notice:</strong> Your data is processed in accordance with our Privacy Policy.
+                                                        You can review how we collect, use, and protect your information by visiting our
+                                                        <a href="#" className="alert-link"> Privacy Policy page</a>.
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <hr className="my-5" />
+
+                                        <div className="d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <small className="text-muted">
+                                                    <i className="bi bi-shield-check me-1"></i>
+                                                    Your privacy settings are encrypted and secure
+                                                </small>
+                                            </div>
+                                            <button
+                                                type="submit"
+                                                className="btn btn-info btn-lg"
+                                                disabled={isLoading || !hasChanges}
+                                            >
+                                                {isLoading ? (
+                                                    <>
+                                                        <span className="spinner-border spinner-border-sm me-2" role="status"></span>
+                                                        Saving Privacy Settings...
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <i className="bi bi-shield-check me-2"></i>
+                                                        Save Privacy Settings
+                                                    </>
+                                                )}
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Footer Information */}
+                    <div className="row mt-4">
+                        <div className="col-12">
+                            <div className="card border-0 bg-light">
+                                <div className="card-body p-4 text-center">
+                                    <div className="row g-4 text-muted">
+                                        <div className="col-md-3">
+                                            <i className="bi bi-shield-lock-fill fs-4 text-success d-block mb-2"></i>
+                                            <strong>Secure</strong><br />
+                                            <small>256-bit SSL encryption</small>
+                                        </div>
+                                        <div className="col-md-3">
+                                            <i className="bi bi-clock-history fs-4 text-info d-block mb-2"></i>
+                                            <strong>Auto-Save</strong><br />
+                                            <small>Changes saved automatically</small>
+                                        </div>
+                                        <div className="col-md-3">
+                                            <i className="bi bi-database-check fs-4 text-warning d-block mb-2"></i>
+                                            <strong>Backed Up</strong><br />
+                                            <small>Data backed up daily</small>
+                                        </div>
+                                        <div className="col-md-3">
+                                            <i className="bi bi-headset fs-4 text-primary d-block mb-2"></i>
+                                            <strong>Support</strong><br />
+                                            <small>24/7 technical support</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
