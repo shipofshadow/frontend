@@ -37,7 +37,6 @@ const Navbar: React.FC = () => {
                     />
                     <div className="d-flex flex-column lh-1">
                         <span className="fw-bold text-primary">iScholar</span>
-                        <small className="text-muted">Student Portal</small>
                     </div>
                 </Link>
 

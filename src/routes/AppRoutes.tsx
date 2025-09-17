@@ -43,6 +43,8 @@ import ManageScholarships from "../pages/admin/scholarships/ManageScholarships.t
 import ScholarshipDashboard from "../pages/admin/scholarships/ScholarshipDashboard.tsx";
 import StudentScholarshipReport from "../pages/admin/reports/StudentScholarshipReport.tsx";
 import Prequalify from "../pages/applicant/Prequalify.tsx";
+import ApplicationsList from "../pages/applicant/ApplicationLists.tsx";
+import ResetPassword from "../pages/ResetPassword.tsx";
 
 export function AuthRedirect() {
     const { isAuthenticated, isAdmin, isStudent } = useAuth();
@@ -127,13 +129,14 @@ const AppRoutes: React.FC = () => {
                     <Route path="settings" element={<Settings />} />
                     <Route path="notifications" element={<Notifications/>} />
                     <Route path="prequalify" element={<Prequalify />} />
+                    <Route path="applications" element={<ApplicationsList />} />
                 </Route>
             </Route>
 
             <Route path="login" element={<Login />} />
             <Route path="register" element={<Register />} />
             <Route path="forgot-password" element={<ForgotPassword />} />
-
+            <Route path="reset-password" element={<ResetPassword />} />
             <Route path="*" element={<NotFound />} />
         </Routes>
     );

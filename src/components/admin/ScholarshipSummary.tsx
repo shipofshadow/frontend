@@ -209,86 +209,6 @@ const ScholarshipSummary: React.FC<ScholarshipSummaryProps> = ({ studentId }) =>
 
     return (
         <div className="scholarship-summary">
-            {/* Report Header - Enhanced with Better Bootstrap 5 Styling */}
-            <div className="container-fluid mb-4">
-                <div className="card border-0 shadow-lg">
-                    <div className="card-header position-relative overflow-hidden"
-                         style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}>
-                        <div className="position-absolute top-0 end-0 opacity-10">
-                            <i className="fas fa-graduation-cap" style={{ fontSize: '5rem' }}></i>
-                        </div>
-                        <div className="position-relative text-white py-3">
-                            <div className="row align-items-center">
-                                <div className="col-12 col-lg-8">
-                                    <h2 className="fw-bold mb-2">
-                                        <i className="fas fa-chart-line me-3"></i>
-                                        Scholarship Summary Report
-                                    </h2>
-                                    <p className="mb-0 fs-6 opacity-90">
-                                        Comprehensive analysis of scholarship applications and performance metrics
-                                    </p>
-                                </div>
-                                <div className="col-12 col-lg-4 text-lg-end mt-3 mt-lg-0">
-                                    <div className="d-inline-flex align-items-center bg-white bg-opacity-20 rounded-pill px-3 py-2">
-                                        <i className="fas fa-shield-alt text-dark me-2"></i>
-                                        <span className="fw-semibold text-dark">iScholar System</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div className="card-body bg-light p-4">
-                        <div className="row g-4">
-                            <div className="col-12 col-md-6 col-lg-3">
-                                <div className="d-flex align-items-center">
-                                    <div className="bg-primary bg-opacity-10 rounded-3 p-3 me-3">
-                                        <i className="fas fa-user text-primary fs-4"></i>
-                                    </div>
-                                    <div>
-                                        <h6 className="text-muted mb-1 small fw-semibold">STUDENT NAME</h6>
-                                        <p className="fw-semibold mb-0">
-                                            {data.student_info.first_name} {data.student_info.middle_name} {data.student_info.last_name}
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="col-12 col-md-6 col-lg-3">
-                                <div className="d-flex align-items-center">
-                                    <div className="bg-info bg-opacity-10 rounded-3 p-3 me-3">
-                                        <i className="fas fa-id-card text-info fs-4"></i>
-                                    </div>
-                                    <div>
-                                        <h6 className="text-muted mb-1 small fw-semibold">STUDENT ID</h6>
-                                        <p className="fw-semibold mb-0">{data.student_info.student_id}</p>
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="col-12 col-md-6 col-lg-3">
-                                <div className="d-flex align-items-center">
-                                    <div className="bg-success bg-opacity-10 rounded-3 p-3 me-3">
-                                        <i className="fas fa-envelope text-success fs-4"></i>
-                                    </div>
-                                    <div>
-                                        <h6 className="text-muted mb-1 small fw-semibold">EMAIL</h6>
-                                        <p className="fw-semibold mb-0 text-break">{data.student_info.email}</p>
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="col-12 col-md-6 col-lg-3">
-                                <div className="d-flex align-items-center">
-                                    <div className="bg-warning bg-opacity-10 rounded-3 p-3 me-3">
-                                        <i className="fas fa-calendar-alt text-warning fs-4"></i>
-                                    </div>
-                                    <div>
-                                        <h6 className="text-muted mb-1 small fw-semibold">GENERATED</h6>
-                                        <p className="fw-semibold mb-0">{formatDate(data.generated_at)}</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
 
             {/* Summary Statistics - Enhanced Grid Layout */}
             <div className="container-fluid mb-4">
@@ -394,10 +314,10 @@ const ScholarshipSummary: React.FC<ScholarshipSummaryProps> = ({ studentId }) =>
             {/* Performance Metrics - Improved Card Design */}
             <div className="container-fluid mb-4">
                 <div className="card border-0 shadow-sm">
-                    <div className="card-header bg-gradient-primary text-white py-3">
+                    <div className="card-header bg-gradient-primary text-dark py-3">
                         <div className="d-flex align-items-center">
                             <div className="bg-white bg-opacity-20 rounded-circle p-2 me-3">
-                                <i className="fas fa-chart-bar text-white"></i>
+                                <i className="fas fa-chart-bar text-primary"></i>
                             </div>
                             <div>
                                 <h5 className="mb-1 fw-bold">Performance Metrics</h5>
@@ -474,11 +394,11 @@ const ScholarshipSummary: React.FC<ScholarshipSummaryProps> = ({ studentId }) =>
             {/* Applications Timeline - Enhanced Mobile-First Design */}
             <div className="container-fluid">
                 <div className="card border-0 shadow-sm">
-                    <div className="card-header bg-gradient-info text-white py-3">
+                    <div className="card-header bg-gradient-info text-dark py-3">
                         <div className="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center">
                             <div className="d-flex align-items-center mb-2 mb-sm-0">
                                 <div className="bg-white bg-opacity-20 rounded-circle p-2 me-3">
-                                    <i className="fas fa-history text-white"></i>
+                                    <i className="fas fa-history text-primary"></i>
                                 </div>
                                 <div>
                                     <h5 className="mb-1 fw-bold">Applications Timeline</h5>
@@ -717,7 +637,7 @@ const ScholarshipSummary: React.FC<ScholarshipSummaryProps> = ({ studentId }) =>
                                                                                     </td>
                                                                                     <td className="text-center">
                                                                                     <span className="badge bg-primary fw-bold">
-                                                                                        {(scholarship.score * 100).toFixed(1)}
+                                                                                        {(scholarship.score).toFixed(2)}%
                                                                                     </span>
                                                                                     </td>
                                                                                     <td className="text-center d-none d-md-table-cell">

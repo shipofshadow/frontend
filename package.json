@@ -1,7 +1,8 @@
 {
   "name": "ischolar",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
+  "description": "iScholar is an intelligent scholarship prequalification and management system designed for academic institutions. It enables students to apply for scholarships, upload required documents, and track their application status, while administrators can evaluate eligibility using fuzzy logic and prescriptive analytics.",
   "type": "module",
   "scripts": {
     "dev": "vite",

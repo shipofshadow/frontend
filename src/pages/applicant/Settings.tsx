@@ -449,7 +449,7 @@ const Settings: React.FC = () => {
                                                     className="btn btn-outline-secondary btn-lg"
                                                     onClick={() => {
                                                         setFormData({
-                                                            email: profile?.email || email,
+                                                            email: user?.email || '',
                                                             phone: profile?.contact_number || '',
                                                             currentPassword: '',
                                                             newPassword: '',

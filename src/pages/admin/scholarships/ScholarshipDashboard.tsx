@@ -488,11 +488,44 @@ const ScholarshipDashboard = () => {
         scholarships: scholarships.length
     };
 
-    function handleDeny(applicationId: number) {
-        if(!applicationId){
-            return;
+    async function handleDeny(applicationId: number) {
+        if (!applicationId) return;
+
+        const result = await Swal.fire({
+            title: 'Are you sure?',
+            text: 'Do you really want to deny this application?',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Yes, deny it!',
+            cancelButtonText: 'Cancel'
+        });
+
+        if (result.isConfirmed) {
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/applicants/${applicationId}/deny`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                });
+
+                if (!response.ok) throw new Error('Failed to deny application');
+
+                await Swal.fire(
+                    'Denied!',
+                    'The application has been denied.',
+                    'success'
+                );
+
+            } catch (error) {
+                await Swal.fire(
+                    'Error',
+                    (error as Error).message || 'Something went wrong',
+                    'error'
+                );
+            }
         }
-        alert(applicationId);
     }
 
     return (
@@ -823,7 +856,7 @@ const ScholarshipDashboard = () => {
 
                                                                             <button
                                                                                 className="btn btn-outline-danger btn-sm d-flex align-items-center justify-content-center gap-2 py-2"
-                                                                                onClick={() => handleDeny(app.id)}
+                                                                                    onClick={() => handleDeny(app.id)}
                                                                                 disabled={app.status === 'denied'}
                                                                             >
                                                                                 <XCircle size={14} />
