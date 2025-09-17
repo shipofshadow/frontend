@@ -19,12 +19,10 @@ import {
     BookOpen,
     Award,
     DollarSign,
-    Activity,
     Star,
     ArrowRight,
     Info,
     ChevronRight,
-    School,
     Library,
     Send
 } from "lucide-react";

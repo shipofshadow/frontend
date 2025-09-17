@@ -4,7 +4,7 @@ import {API_BASE_URL} from "../config.ts";
 import {sha256} from "js-sha256";
 
 const ResetPassword = () => {
-    const navigate = useNavigate();
+    useNavigate();
     const location = useLocation();
     const queryParams = new URLSearchParams(location.search);
     const token = queryParams.get('token');

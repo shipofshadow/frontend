@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import {API_BASE_URL} from "../config.ts";
 
@@ -9,7 +9,7 @@ const ForgotPassword = () => {
     const [error, setError] = useState('');
     const [isSubmitted, setIsSubmitted] = useState(false);
 
-    const handleSubmit = async (e) => {
+    const handleSubmit = async (e: { preventDefault: () => void; }) => {
         e.preventDefault();
         setIsLoading(true);
         setError('');

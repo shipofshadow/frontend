@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../../context/AuthContext';
-import { NotificationBell } from '../../NotificationBell.tsx';
+import { NotificationBell } from './NotificationBell.tsx';
 
 const Navbar: React.FC = () => {
     const navigate = useNavigate();

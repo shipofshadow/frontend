@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import {useNotifications} from "../context/NotificationContext.tsx";
+import {useNotifications} from "../../../context/NotificationContext.tsx";
 
 export function NotificationBell() {
     const { notifications, unreadCount, markAsRead, fetchMore } = useNotifications();

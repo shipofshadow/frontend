@@ -113,6 +113,9 @@ const AppRoutes: React.FC = () => {
                     <Route path="import-students" element={<ImportStudents />} />
                     <Route path="fuzzy-logic" element={<FuzzyLogic />} />
 
+                    <Route path="notifications" element={<Notifications/>} />
+
+
                 </Route>
             </Route>
 
