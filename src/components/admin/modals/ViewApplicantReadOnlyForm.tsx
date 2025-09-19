@@ -5,7 +5,7 @@ import FilePreview from "../FilePreview.tsx";
 import axios from "axios";
 import {API_BASE_URL} from "../../../config.ts";
 import {useAuth} from "../../../context/AuthContext.tsx";
-import ScholarshipSummary from "../ScholarshipSummary.tsx";
+import ScholarshipSummary from "../../common/admin/ScholarshipSummary.tsx";
 interface Props {
     applicant: Applicant;
 }

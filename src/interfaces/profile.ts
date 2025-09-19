@@ -4,6 +4,7 @@ export interface Profile {
     middle_name: string;
     student_id: string;
     extension_name: string;
+    avatar: string;
 
     email: string;
     contact_number: string;

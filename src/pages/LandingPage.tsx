@@ -12,9 +12,6 @@
     GraduationCap,
     Sparkles,
     ChevronRight,
-    Mail,
-    Phone,
-    MapPin,
     Star,
     Quote
   } from 'lucide-react';
@@ -706,106 +703,6 @@
           </section>
 
           {/* Support & Footer */}
-          <footer className="bg-dark text-white py-5">
-            <div className="container">
-              <div className="row g-4">
-                <div className="col-lg-4">
-                  <div className="d-flex align-items-center mb-3">
-                    <img
-                        src="https://ispsctagudin.info/home/assets/img/ispsc_logo.png"
-                        alt="ISPSC Logo"
-                        className="me-3"
-                        style={{ width: '50px', height: '50px' }}
-                    />
-                    <div>
-                      <h5 className="fw-bold mb-0">iScholar</h5>
-                      <small className="text-muted">ISPSC Scholarship System</small>
-                    </div>
-                  </div>
-                  <p className="text-muted">
-                    Empowering students through intelligent scholarship matching and transparent application processes.
-                  </p>
-                </div>
-
-                <div className="col-lg-4">
-                  <h6 className="fw-bold mb-3">Contact Information</h6>
-                  <div className="d-flex align-items-center mb-2">
-                    <MapPin size={16} className="me-2 text-primary" />
-                    <small>Tagudin, Ilocos Sur, Philippines</small>
-                  </div>
-                  <div className="d-flex align-items-center mb-2">
-                    <Phone size={16} className="me-2 text-primary" />
-                    <small>+63 (077) 742-3081</small>
-                  </div>
-                  <div className="d-flex align-items-center mb-2">
-                    <Mail size={16} className="me-2 text-primary" />
-                    <small>info@ispsctagudin.edu.ph</small>
-                  </div>
-                </div>
-
-                <div className="col-lg-4">
-                  <h6 className="fw-bold mb-3">Quick Links</h6>
-                  <div className="row g-2">
-                    <div className="col-6">
-                      <div className="d-grid gap-2">
-                        <button
-                            className="btn btn-outline-light btn-sm"
-                            onClick={() => handleNavigation('/login')}
-                        >
-                          Student Login
-                        </button>
-                        <button
-                            className="btn btn-outline-light btn-sm"
-                            onClick={() => handleNavigation('/register')}
-                        >
-                          Register
-                        </button>
-                      </div>
-                    </div>
-                    <div className="col-6">
-                      <div className="d-grid gap-2">
-                        <button
-                            className="btn btn-outline-light btn-sm"
-                            onClick={() => handleNavigation('/scholarships')}
-                        >
-                          Browse Scholarships
-                        </button>
-                        <button
-                            className="btn btn-outline-light btn-sm"
-                            onClick={() => handleNavigation('/support')}
-                        >
-                          Get Support
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <hr className="my-4 border-secondary" />
-
-              <div className="row align-items-center">
-                <div className="col-md-6">
-                  <small className="text-muted">
-                    © 2025 iScholar - Ilocos Sur Polytechnic State College. All rights reserved.
-                  </small>
-                </div>
-                <div className="col-md-6 text-md-end">
-                  <div className="d-flex justify-content-md-end gap-3">
-                    <a href="#" className="text-muted text-decoration-none">
-                      <small>Privacy Policy</small>
-                    </a>
-                    <a href="#" className="text-muted text-decoration-none">
-                      <small>Terms of Service</small>
-                    </a>
-                    <a href="#" className="text-muted text-decoration-none">
-                      <small>Help Center</small>
-                    </a>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </footer>
 
           {/* Custom Styles */}
           <style>{`

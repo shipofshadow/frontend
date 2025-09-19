@@ -2,6 +2,7 @@ import React from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../../context/AuthContext';
 import { NotificationBell } from './NotificationBell.tsx';
+import {API_BASE_URL} from "../../../config.ts";
 
 const Navbar: React.FC = () => {
     const navigate = useNavigate();
@@ -15,6 +16,11 @@ const Navbar: React.FC = () => {
 
     const isActive = (path: string) => location.pathname.startsWith(path);
     const ariaCurrent = (path: string) => (isActive(path) ? 'page' : undefined);
+
+    const avatar = user?.profile?.avatar;
+    const path = avatar
+        ? `${API_BASE_URL}/api/profile/avatar/${encodeURIComponent(avatar.split("/").pop()!)}`
+        : "/default.png";  // served from public folder
 
     const studentName =
         user?.profile ? `${user.profile.first_name} ${user.profile.last_name}` : 'Student';
@@ -88,7 +94,7 @@ const Navbar: React.FC = () => {
                                         aria-current={ariaCurrent('/applicant/status')}
                                     >
                                         <i className="fa-solid fa-clipboard-check fa-sm fa-fw text-secondary"></i>
-                                        <span>Status</span>
+                                        <span>Applications</span>
                                     </Link>
                                 </li>
                             </>
@@ -123,7 +129,7 @@ const Navbar: React.FC = () => {
                                         aria-label="Open profile menu"
                                     >
                                         <img
-                                            src="/assets/images/avatars/student-avatar.png"
+                                            src={path}
                                             alt={`${studentName} avatar`}
                                             width="28"
                                             height="28"

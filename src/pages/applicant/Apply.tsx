@@ -495,12 +495,13 @@ const Apply = () => {
                       </div>
                       <div className="mb-3 col-md-6">
                         <label>Date of Birth *</label>
-                        <input
-                            className="form-control"
-                            type="date"
-                            value={formData.birthDate}
-                            onChange={(e)=> handleInputChange('birthDate', e.target.value)}
-                        />
+                          <input
+                              className="form-control"
+                              type="date"
+                              value={formData.birthDate ? new Date(formData.birthDate).toISOString().slice(0, 10) : ''}
+                              onChange={(e) => handleInputChange('birthDate', e.target.value)}
+                          />
+
                       </div>
                     </div>
                     <div className="form-group">

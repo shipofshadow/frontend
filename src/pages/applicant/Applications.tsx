@@ -1,5 +1,5 @@
 import {useAuth} from "../../context/AuthContext.tsx";
-import ScholarshipSummary from "../../components/admin/ScholarshipSummary.tsx";
+import ScholarshipSummary from "../../components/common/admin/ScholarshipSummary.tsx";
 
 const Applications = () => {
     const { user } = useAuth();

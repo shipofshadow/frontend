@@ -45,6 +45,8 @@ import StudentScholarshipReport from "../pages/admin/reports/StudentScholarshipR
 import Prequalify from "../pages/applicant/Prequalify.tsx";
 import ApplicationsList from "../pages/applicant/ApplicationLists.tsx";
 import ResetPassword from "../pages/ResetPassword.tsx";
+import ViewApplication from "../pages/applicant/ViewApplication.tsx";
+import {IndexLayout} from "../layouts/IndexLayout.tsx";
 
 export function AuthRedirect() {
     const { isAuthenticated, isAdmin, isStudent } = useAuth();
@@ -63,7 +65,6 @@ const AppRoutes: React.FC = () => {
 
     return (
         <Routes>
-            <Route path="/" element={isAuthenticated ? <Navigate to="/applicant" replace /> : <App />} />
             <Route element={<ProtectedRoute allowedRoles={["admin"]} />}>
                 <Route path="/admin" element={<AdminLayout />}>
                     <Route index element={<Dashboard />} />
@@ -133,14 +134,21 @@ const AppRoutes: React.FC = () => {
                     <Route path="notifications" element={<Notifications/>} />
                     <Route path="prequalify" element={<Prequalify />} />
                     <Route path="applications" element={<ApplicationsList />} />
+                    <Route path="application/view" element={<ViewApplication />} />
                 </Route>
             </Route>
 
-            <Route path="login" element={<Login />} />
-            <Route path="register" element={<Register />} />
-            <Route path="forgot-password" element={<ForgotPassword />} />
-            <Route path="reset-password" element={<ResetPassword />} />
+            <Route element={<IndexLayout/>}>
+                <Route path="/" element={isAuthenticated ? <Navigate to="/applicant" replace /> : <App />} />
+                <Route path="login" element={<Login />} />
+                <Route path="register" element={<Register />} />
+                <Route path="forgot-password" element={<ForgotPassword />} />
+                <Route path="reset-password" element={<ResetPassword />} />
+            </Route>
+
+
             <Route path="*" element={<NotFound />} />
+
         </Routes>
     );
 };

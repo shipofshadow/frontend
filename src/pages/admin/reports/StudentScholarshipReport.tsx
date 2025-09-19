@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { API_BASE_URL } from '../../../config.ts';
 import { useAuth } from '../../../context/AuthContext.tsx';
-import ScholarshipSummary from '../../../components/admin/ScholarshipSummary.tsx';
+import ScholarshipSummary from '../../../components/common/admin/ScholarshipSummary.tsx';
 
 interface Student {
     uuid: string;

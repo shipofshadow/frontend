@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import {useNotifications} from "../../../context/NotificationContext.tsx";
 
 export function NotificationBell() {
-    const { notifications, unreadCount, markAsRead, fetchMore } = useNotifications();
+    const { notifications, unreadCount, markAsRead} = useNotifications();
 
     const priorityBadge = (p?: string) => {
         switch (p) {
@@ -56,45 +56,40 @@ export function NotificationBell() {
                 </li>
                 <li><hr className="dropdown-divider" /></li>
 
-                {notifications.length === 0 && (
+                {notifications.filter(n => !n.read).length === 0 ? (
                     <li className="dropdown-item text-muted small">No new notifications</li>
+                ) : (
+                    notifications
+                        .filter(n => !n.read) // ✅ only unread
+                        .slice(0, 5)          // ✅ show only first 5
+                        .map((n) => (
+                            <li key={n.id}>
+                                <button
+                                    className="dropdown-item small text-wrap d-flex gap-2 bg-light"
+                                    onClick={() => {
+                                        markAsRead(n.id);
+                                        if (n.action_url) window.location.href = n.action_url;
+                                    }}
+                                >
+                                    <i className={`${typeIcon(n.type)} mt-1`} aria-hidden="true"></i>
+                                    <div className="flex-grow-1">
+                                        <div className="d-flex align-items-center gap-2">
+                                            <span className="fw-semibold">{n.title || 'Notification'}</span>
+                                            <span className={`badge rounded-pill ${priorityBadge(n.priority)} ms-auto`}>
+                {n.priority || 'normal'}
+              </span>
+                                        </div>
+                                        <div className="text-muted">{n.message || (n as any).text || '—'}</div>
+                                        <div className="text-secondary" style={{ fontSize: 11 }}>
+                                            {n.timestamp?.toLocaleString?.() || ''}
+                                        </div>
+                                    </div>
+                                    <span className="badge bg-primary align-self-start">New</span>
+                                </button>
+                            </li>
+                        ))
                 )}
 
-                {notifications.slice(0, 5).map((n) => (
-                    <li key={n.id}>
-                        <button
-                            className={`dropdown-item small text-wrap d-flex gap-2 ${n.read ? '' : 'bg-light'}`}
-                            onClick={() => {
-                                markAsRead(n.id);
-                                if (n.action_url) window.location.href = n.action_url;
-                            }}
-                        >
-                            <i className={`${typeIcon(n.type)} mt-1`} aria-hidden="true"></i>
-                            <div className="flex-grow-1">
-                                <div className="d-flex align-items-center gap-2">
-                                    <span className="fw-semibold">{n.title || 'Notification'}</span>
-                                    <span className={`badge rounded-pill ${priorityBadge(n.priority)} ms-auto`}>{n.priority || 'normal'}</span>
-                                </div>
-                                <div className="text-muted">{n.message || (n as any).text || '—'}</div>
-                                <div className="text-secondary" style={{ fontSize: 11 }}>
-                                    {n.timestamp?.toLocaleString?.() || ''}
-                                </div>
-                            </div>
-                            {!n.read && <span className="badge bg-primary align-self-start">New</span>}
-                        </button>
-                    </li>
-                ))}
-
-                {notifications.length > 10 && (
-                    <>
-                        <li><hr className="dropdown-divider" /></li>
-                        <li className="px-3 py-2">
-                            <button className="btn btn-outline-secondary w-100 btn-sm" onClick={() => fetchMore()}>
-                                Load more
-                            </button>
-                        </li>
-                    </>
-                )}
 
                 <li><hr className="dropdown-divider" /></li>
                 <li>

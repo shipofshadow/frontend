@@ -5,11 +5,9 @@ import {
     Eye,
     GraduationCap,
     Plus,
-    Upload,
     User,
     MessageCircle,
     FileText,
-    Target,
     Calendar,
     TrendingUp,
     CheckCircle,
@@ -18,11 +16,9 @@ import {
     AlertTriangle,
     BookOpen,
     Award,
-    DollarSign,
     Star,
     ArrowRight,
     Info,
-    ChevronRight,
     Library,
     Send
 } from "lucide-react";
@@ -34,13 +30,19 @@ import { useDispatch, useSelector } from "react-redux";
 import { fetchSemester } from "../../store/slices/semesterSlice.ts";
 import type { AppDispatch, RootState } from "../../store/slices";
 import {Link} from "react-router-dom";
+import ScholarshipRecommendations from "../../components/common/applicant/ScholarshipRecommendations.tsx";
 
 const Home = () => {
-    const { user, token } = useAuth();
+    const { user, token, applications} = useAuth();
     const [applicationInfo, setApplicationInfo] = useState<ApplicationStatus | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const dispatch = useDispatch<AppDispatch>();
     const { current } = useSelector((state: RootState) => state.semester);
+
+    const applicant = applications?.applications?.[0] ?? null;
+
+    console.log("Applications", applications);
+    console.log("Applicant", applicant);
 
     useEffect(() => {
         setIsLoading(true);
@@ -54,12 +56,8 @@ const Home = () => {
         dispatch(fetchSemester());
     }, [dispatch]);
 
-    // Mock data - replace with actual data from your API
-    const eligibilityScore = 82;
-    const totalApplications = applicationInfo?.has_applied ? 1 : 0;
-    const recommendedScholarships = 5;
-    const documentsUploaded = 4;
-    const documentsTotal = 6;
+    const eligibilityScore = ((applicant?.evaluation?.score ?? 0) * 100).toFixed(2);
+    const recommended = applicant?.recommended_scholarships ?? [];
 
     // Format submitted date
     const formatDate = (dateString: string) => {
@@ -409,60 +407,6 @@ const Home = () => {
                     </div>
                 </section>
 
-                {applicationInfo?.has_applied && (
-
-
-                    <section className="mb-4">
-                        <div className="row g-3">
-                            <div className="col-md-3 col-6">
-                                <div className="card border-0 shadow-sm h-100">
-                                    <div className="card-body text-center">
-                                        <div className="bg-primary bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style={{width: "48px", height: "48px"}}>
-                                            <FileText className="text-primary" size={24} />
-                                        </div>
-                                        <div className="h4 fw-bold text-primary mb-1">{totalApplications}</div>
-                                        <div className="small text-muted">Applications</div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="col-md-3 col-6">
-                                <div className="card border-0 shadow-sm h-100">
-                                    <div className="card-body text-center">
-                                        <div className="bg-success bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style={{width: "48px", height: "48px"}}>
-                                            <Upload className="text-success" size={24} />
-                                        </div>
-                                        <div className="h4 fw-bold text-success mb-1">{documentsUploaded}/{documentsTotal}</div>
-                                        <div className="small text-muted">Documents</div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="col-md-3 col-6">
-                                <div className="card border-0 shadow-sm h-100">
-                                    <div className="card-body text-center">
-                                        <div className="bg-warning bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style={{width: "48px", height: "48px"}}>
-                                            <Award className="text-warning" size={24} />
-                                        </div>
-                                        <div className="h4 fw-bold text-warning mb-1">{recommendedScholarships}</div>
-                                        <div className="small text-muted">Recommendations</div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="col-md-3 col-6">
-                                <div className="card border-0 shadow-sm h-100">
-                                    <div className="card-body text-center">
-                                        <div className="bg-info bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style={{width: "48px", height: "48px"}}>
-                                            <TrendingUp className="text-info" size={24} />
-                                        </div>
-                                        <div className="h4 fw-bold text-info mb-1">{eligibilityScore}%</div>
-                                        <div className="small text-muted">Eligibility</div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </section>
-
-                )}
-
                 {/* Main Content Grid */}
                 <div className="row g-4">
                     {/* Left Column - Primary Content */}
@@ -565,86 +509,7 @@ const Home = () => {
                                 </section>
 
                                 {/* Scholarship Recommendations - Enhanced */}
-                                <section className="card shadow-sm border-0 rounded-4">
-                                    <div className="card-header bg-gradient border-0 rounded-top-4">
-                                        <div className="d-flex align-items-center justify-content-between">
-                                            <div className="d-flex align-items-center">
-                                                <div className="bg-warning bg-opacity-15 rounded-3 p-2 me-3">
-                                                    <Target className="text-white" size={20} />
-                                                </div>
-                                                <h5 className="mb-0 fw-bold">Scholarship Recommendations</h5>
-                                            </div>
-                                            <span className="badge bg-primary px-3 py-2 rounded-pill">{recommendedScholarships} Available</span>
-                                        </div>
-                                    </div>
-                                    <div className="card-body">
-                                        {/* High Match Scholarships */}
-                                        <div className="mb-4">
-                                            <h6 className="text-success fw-bold mb-3">
-                                                <Star size={18} className="me-1" />
-                                                High Match (90%+)
-                                            </h6>
-                                            <div className="row g-3">
-                                                <div className="col-md-6">
-                                                    <div className="border rounded-3 p-3 h-100 bg-success bg-opacity-5 border-success border-opacity-25">
-                                                        <div className="d-flex justify-content-between align-items-start mb-2">
-                                                            <h6 className="fw-bold mb-1">Merit-Based Grant</h6>
-                                                            <span className="badge bg-success rounded-pill">92% Match</span>
-                                                        </div>
-                                                        <p className="text-muted small mb-2">₱20,000 per semester</p>
-                                                        <p className="small mb-3">Recognition for outstanding academic achievement across all programs.</p>
-                                                        <button className="btn btn-success btn-sm">
-                                                            Apply Now <ArrowRight size={14} className="ms-1" />
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        {/* Medium Match Scholarships */}
-                                        <div className="mb-4">
-                                            <h6 className="text-warning fw-bold mb-3">
-                                                <Target size={18} className="me-1" />
-                                                Good Match (70-89%)
-                                            </h6>
-                                            <div className="row g-3">
-                                                <div className="col-md-6">
-                                                    <div className="border rounded-3 p-3 bg-warning bg-opacity-5 border-warning border-opacity-25">
-                                                        <div className="d-flex justify-content-between align-items-start mb-2">
-                                                            <h6 className="fw-bold mb-1">Financial Assistance Program</h6>
-                                                            <span className="badge bg-warning text-dark rounded-pill">78% Match</span>
-                                                        </div>
-                                                        <p className="text-muted small mb-2">₱15,000 per semester</p>
-                                                        <p className="small mb-3">Need-based scholarship for students from low-income families.</p>
-                                                        <button className="btn btn-outline-warning btn-sm">
-                                                            View Details <ChevronRight size={14} className="ms-1" />
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                                <div className="col-md-6">
-                                                    <div className="border rounded-3 p-3 bg-warning bg-opacity-5 border-warning border-opacity-25">
-                                                        <div className="d-flex justify-content-between align-items-start mb-2">
-                                                            <h6 className="fw-bold mb-1">STEM Innovation Grant</h6>
-                                                            <span className="badge bg-warning text-dark rounded-pill">75% Match</span>
-                                                        </div>
-                                                        <p className="text-muted small mb-2">₱18,000 per semester</p>
-                                                        <p className="small mb-3">Supporting future innovators in Science and Technology fields.</p>
-                                                        <button className="btn btn-outline-warning btn-sm">
-                                                            View Details <ChevronRight size={14} className="ms-1" />
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div className="text-center">
-                                            <button className="btn btn-primary">
-                                                <Eye size={18} className="me-2" />
-                                                View All {recommendedScholarships} Scholarships
-                                            </button>
-                                        </div>
-                                    </div>
-                                </section>
+                                <ScholarshipRecommendations recommendedScholarships={recommended}/>
                             </>
                         )}
                     </div>
@@ -794,88 +659,6 @@ const Home = () => {
                             </div>
                         </section>
                     </div>
-                    {/* Additional Information Section - Only show if applied and not denied */}
-                    {applicationInfo?.has_applied && applicationInfo.status !== 'denied' && (
-                        <section className="mt-5">
-                            <div className="row g-4">
-                                {/* Academic Performance Chart */}
-                                <div className="col-lg-6">
-                                    <div className="card shadow-sm border-0 rounded-4">
-                                        <div className="card-header bg-gradient border-0 rounded-top-4">
-                                            <div className="d-flex align-items-center">
-                                                <BookOpen className="text-primary me-2" size={20} />
-                                                <h5 className="fw-bold mb-0">Academic Performance Trend</h5>
-                                            </div>
-                                        </div>
-                                        <div className="card-body">
-                                            <div className="mb-3">
-                                                <div className="d-flex justify-content-between align-items-center mb-2">
-                                                    <span className="fw-medium">Current GWA</span>
-                                                    <span className="badge bg-success px-3 py-2 rounded-pill">1.75</span>
-                                                </div>
-                                                <div className="d-flex justify-content-between align-items-center mb-2">
-                                                    <span className="fw-medium">Previous Semester</span>
-                                                    <span className="badge bg-info px-3 py-2 rounded-pill">1.85</span>
-                                                </div>
-                                                <div className="d-flex justify-content-between align-items-center">
-                                                    <span className="fw-medium">Improvement</span>
-                                                    <span className="badge bg-success px-3 py-2 rounded-pill">+0.10</span>
-                                                </div>
-                                            </div>
-
-                                            <div className="bg-light rounded-3 p-3">
-                                                <div className="d-flex align-items-center mb-2">
-                                                    <TrendingUp className="text-success me-2" size={18} />
-                                                    <span className="fw-semibold text-success">Excellent Progress!</span>
-                                                </div>
-                                                <small className="text-muted">
-                                                    Your GWA improvement qualifies you for academic excellence scholarships.
-                                                </small>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* Financial Information */}
-                                <div className="col-lg-6">
-                                    <div className="card shadow-sm border-0 rounded-4">
-                                        <div className="card-header bg-gradient border-0 rounded-top-4">
-                                            <div className="d-flex align-items-center">
-                                                <DollarSign className="text-success me-2" size={20} />
-                                                <h5 className="fw-bold mb-0">Financial Assessment</h5>
-                                            </div>
-                                        </div>
-                                        <div className="card-body">
-                                            <div className="mb-3">
-                                                <div className="d-flex justify-content-between align-items-center mb-2">
-                                                    <span className="fw-medium">Family Income Bracket</span>
-                                                    <span className="badge bg-warning text-dark px-3 py-2 rounded-pill">Low Income</span>
-                                                </div>
-                                                <div className="d-flex justify-content-between align-items-center mb-2">
-                                                    <span className="fw-medium">Number of Siblings in School</span>
-                                                    <span className="badge bg-info px-3 py-2 rounded-pill">2</span>
-                                                </div>
-                                                <div className="d-flex justify-content-between align-items-center">
-                                                    <span className="fw-medium">4Ps Beneficiary</span>
-                                                    <span className="badge bg-success px-3 py-2 rounded-pill">Yes</span>
-                                                </div>
-                                            </div>
-
-                                            <div className="bg-light rounded-3 p-3">
-                                                <div className="d-flex align-items-center mb-2">
-                                                    <CheckCircle className="text-success me-2" size={18} />
-                                                    <span className="fw-semibold text-success">High Financial Need</span>
-                                                </div>
-                                                <small className="text-muted">
-                                                    Your financial status qualifies you for need-based scholarship programs.
-                                                </small>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </section>
-                    )}
                 </div>
 
 
