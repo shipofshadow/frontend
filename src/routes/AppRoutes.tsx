@@ -38,7 +38,7 @@ import ApplicantsReport from "../pages/admin/reports/ApplicantsReport.tsx";
 import ArchivedDocuments from "../pages/admin/documents/ArchivedDocuments.tsx";
 import SubmittedRequirements from "../pages/admin/documents/SubmittedRequirements.tsx";
 import FuzzyLogic from "../pages/admin/FuzzyLogic.tsx";
-import ImportStudents from "../pages/admin/ImportStudents.tsx";
+import ImportStudents from "../pages/admin/StudentImportTool.tsx";
 import ManageScholarships from "../pages/admin/scholarships/ManageScholarships.tsx";
 import ScholarshipDashboard from "../pages/admin/scholarships/ScholarshipDashboard.tsx";
 import StudentScholarshipReport from "../pages/admin/reports/StudentScholarshipReport.tsx";
@@ -47,6 +47,8 @@ import ApplicationsList from "../pages/applicant/ApplicationLists.tsx";
 import ResetPassword from "../pages/ResetPassword.tsx";
 import ViewApplication from "../pages/applicant/ViewApplication.tsx";
 import {IndexLayout} from "../layouts/IndexLayout.tsx";
+import AuthCallback from "../context/AuthCallback.tsx";
+import CompleteProfile from "../pages/CompleteProfile.tsx";
 
 export function AuthRedirect() {
     const { isAuthenticated, isAdmin, isStudent } = useAuth();
@@ -142,12 +144,14 @@ const AppRoutes: React.FC = () => {
                 <Route path="/" element={isAuthenticated ? <Navigate to="/applicant" replace /> : <App />} />
                 <Route path="login" element={<Login />} />
                 <Route path="register" element={<Register />} />
+                <Route path="/complete-profile" element={<CompleteProfile />} />
                 <Route path="forgot-password" element={<ForgotPassword />} />
                 <Route path="reset-password" element={<ResetPassword />} />
             </Route>
 
 
             <Route path="*" element={<NotFound />} />
+            <Route path="/auth/callback" element={<AuthCallback />} />
 
         </Routes>
     );

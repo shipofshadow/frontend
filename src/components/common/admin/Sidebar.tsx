@@ -2,9 +2,11 @@ import React, { useEffect } from 'react';
 import feather from 'feather-icons';
 import { NavLink, useLocation } from 'react-router-dom';
 import SidebarCollapse from './SidebarCollapse';
+import {useNotifications} from "../../../context/NotificationContext.tsx";
 
 const Sidebar: React.FC = () => {
   const location = useLocation();
+  const { unreadCount } = useNotifications();
 
   useEffect(() => {
     feather.replace();
@@ -156,17 +158,19 @@ const Sidebar: React.FC = () => {
               </NavLink>
 
               {/* Student Communication */}
-              <div className="sidenav-menu-heading">Student Communication</div>
-              <NavLink to="/admin/notices" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
-                <div className="nav-link-icon"><i className="far fa-bell"></i></div>
-                Notices
-              </NavLink>
-              <NavLink to="/admin/messaging" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
-                <div className="nav-link-icon"><i className="far fa-envelope"></i></div>
-                Messaging
-              </NavLink>
+                <div className="sidenav-menu-heading">Student Communication</div>
+                <NavLink to="/admin/notifications" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
+                    <div className="nav-link-icon"><i className="far fa-bell"></i></div>
+                    Notifications
+                    {unreadCount > 0 && (
+                                    <span className="badge bg-danger badge-sm ms-auto rounded-pill">
+                        {unreadCount > 99 ? '99+' : unreadCount}
+                    </span>
+                                )}
+                            </NavLink>
 
-              {/* System */}
+
+                {/* System */}
               <div className="sidenav-menu-heading">System</div>
               <NavLink to="/admin/system" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
                 <div className="nav-link-icon"><i data-feather="sliders"></i></div>

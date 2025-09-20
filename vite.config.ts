@@ -6,7 +6,7 @@ export default defineConfig({
 
     host: '0.0.0.0',
     port: 5173,
-    allowedHosts: ['qoshima.xyz', 'www.qoshima.xyz'],
+      allowedHosts: ['ischolar.test'],
     strictPort: true
   },
   plugins: [react()],

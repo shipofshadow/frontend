@@ -19,8 +19,11 @@ const Navbar: React.FC = () => {
 
     const avatar = user?.profile?.avatar;
     const path = avatar
-        ? `${API_BASE_URL}/api/profile/avatar/${encodeURIComponent(avatar.split("/").pop()!)}`
-        : "/default.png";  // served from public folder
+        ? avatar.startsWith("http")
+            ? avatar
+            : `${API_BASE_URL}/api/profile/avatar/${encodeURIComponent(avatar.split("/").pop()!)}`
+        : "/default.png";
+
 
     const studentName =
         user?.profile ? `${user.profile.first_name} ${user.profile.last_name}` : 'Student';

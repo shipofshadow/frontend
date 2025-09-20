@@ -3,12 +3,21 @@ import { Link, useNavigate } from 'react-router-dom';
 import feather from 'feather-icons';
 import {useAuth} from "../../../context/AuthContext.tsx";
 import {NotificationBell} from "./NotificationBell.tsx";
+import {API_BASE_URL} from "../../../config.ts";
 
 const Navbar: React.FC = () => {
   const navigate = useNavigate();
-  const {logout } = useAuth();
+  const {logout, user } = useAuth();
 
-  useEffect(() => {
+
+    const avatar = user?.profile?.avatar;
+    const path = avatar
+        ? `${API_BASE_URL}/api/profile/avatar/${encodeURIComponent(avatar.split("/").pop()!)}`
+        : "/default.png";  // served from public folder
+
+
+
+    useEffect(() => {
   feather.replace();
 
   const sidebarToggle = document.getElementById('sidebarToggle');
@@ -70,7 +79,7 @@ const Navbar: React.FC = () => {
           >
             <img
               className="img-fluid"
-              src="/assets/img/illustrations/profiles/profile-1.png"
+              src={path}
               alt="User"
             />
           </button>
@@ -81,12 +90,12 @@ const Navbar: React.FC = () => {
             <h6 className="dropdown-header d-flex align-items-center">
               <img
                 className="dropdown-user-img"
-                src="/assets/img/illustrations/profiles/profile-1.png"
+                src={path}
                 alt="Profile"
               />
               <div className="dropdown-user-details">
-                <div className="dropdown-user-details-name">Valerie Luna</div>
-                <div className="dropdown-user-details-email">valerie@email.com</div>
+                <div className="dropdown-user-details-name">{user?.username}</div>
+                <div className="dropdown-user-details-email">{user?.profile?.email}</div>
               </div>
             </h6>
             <div className="dropdown-divider" />

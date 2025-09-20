@@ -2,17 +2,9 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 import { API_BASE_URL } from "../config";
 import SessionModal from "../components/SessionModal";
 import { isTokenExpiredSoon } from "../utils/jwt";
-import type { Profile } from "../interfaces/profile.ts";
 import type { ApplicationData, StudentInfo, SummaryStatistics } from "../interfaces/scholarship_summary.ts";
+import type User from "../types/user.ts";
 
-interface User {
-    id: number;
-    is_active: number;
-    role: string;
-    username: string;
-    profile?: Profile;
-    email: string;
-}
 
 interface ScholarshipSummaryResponse {
     student_info: StudentInfo;

@@ -7,7 +7,7 @@ const Notifications: React.FC = () => {
     return (
         <div className="container py-5">
             <div className="row justify-content-center">
-                <div className="col-xl-8 col-lg-10">
+                <div className="col-xl-12 col-lg-12">
 
                     <NotificationHistory/>
                 </div>
