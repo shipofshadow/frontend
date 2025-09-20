@@ -86,17 +86,9 @@ const Login: React.FC = () => {
     const handleGoogleLogin = async () => {
         try {
             setIsLoading(true);
-            // Replace with your Google OAuth implementation
-            // Example with Google OAuth popup
             window.location.href = `${API_BASE_URL}/auth/google`;
-
-            // Or if using a popup approach:
-            // const popup = window.open(`${API_BASE_URL}/auth/google`, 'google-login', 'width=500,height=600');
-            // Handle popup response...
-
         } catch (error) {
             console.error('Google login failed:', error);
-            // Handle error (show toast notification, etc.)
         } finally {
             setIsLoading(false);
         }
@@ -105,19 +97,10 @@ const Login: React.FC = () => {
     const handleFacebookLogin = async () => {
         try {
             setIsLoading(true);
-            // Replace with your Facebook OAuth implementation
-            // window.location.href = `${API_BASE_URL}/auth/facebook`;
-
-            // Or if using Facebook SDK:
-            // window.FB.login((response) => {
-            //     if (response.authResponse) {
-            //         // Handle successful login
-            //     }
-            // }, { scope: 'email' });
+            window.location.href = `${API_BASE_URL}/auth/facebook`;
 
         } catch (error) {
             console.error('Facebook login failed:', error);
-            // Handle error (show toast notification, etc.)
         } finally {
             setIsLoading(false);
         }
