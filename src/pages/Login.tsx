@@ -326,12 +326,12 @@ const Login: React.FC = () => {
                             )}
                         </button>
 
-                        <div className="position-relative text-center my-3">
-                            <hr />
-                            <span className="position-absolute top-50 start-50 translate-middle px-3 small text-muted login-divider-text">
-                                or continue with
-                            </span>
+                        <div className="d-flex align-items-center my-3">
+                            <hr className="flex-grow-1" />
+                            <span className="mx-2 small text-muted">or continue with</span>
+                            <hr className="flex-grow-1" />
                         </div>
+
 
                         <div className="row g-2 mb-3">
                             <div className="col-6">
