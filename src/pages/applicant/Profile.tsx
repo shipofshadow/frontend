@@ -1,9 +1,18 @@
 import React from "react";
 import { useAuth } from "../../context/AuthContext";
+import { API_BASE_URL } from "../../config";
 
 const Profile: React.FC = () => {
     const { user } = useAuth();
     const profile = user?.profile;
+
+       const avatar = user?.profile?.avatar;
+        const path = avatar
+            ? avatar.startsWith("http")
+                ? avatar
+                : `${API_BASE_URL}/api/profile/avatar/${encodeURIComponent(avatar.split("/").pop()!)}`
+            : "/default.png";
+
 
     if (!profile) {
         return (
@@ -21,6 +30,9 @@ const Profile: React.FC = () => {
                 </div>
             </div>
         );
+
+     
+
     }
 
     return (
@@ -58,37 +70,56 @@ const Profile: React.FC = () => {
 
                         <div className="row align-items-center">
                             <div className="col-lg-8">
-                                <div className="d-flex align-items-center">
-                                    <div className="bg-white bg-opacity-20 rounded-circle p-4 me-4">
-                                        <i className="bi bi-person-fill" style={{fontSize: "3rem"}}></i>
+                             <div className="d-flex align-items-center">
+                                <div
+                                    className="bg-white bg-opacity-20 rounded-circle me-4"
+                                    style={{
+                                    width: "80px",
+                                    height: "80px",
+                                    overflow: "hidden",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    }}
+                                >
+                                    <img
+                                    src={path} // your image path
+                                    alt="Profile"
+                                    style={{
+                                        width: "100%",
+                                        height: "100%",
+                                        objectFit: "cover", // fills the container without distortion
+                                    }}
+                                    />
+                                </div>
+
+                                <div>
+                                    <h1 className="h2 fw-bold mb-2">
+                                    {profile.first_name} {profile.middle_name && profile.middle_name + " "}{profile.last_name}
+                                    {profile.extension_name && " " + profile.extension_name}
+                                    </h1>
+                                    <div className="d-flex flex-wrap gap-3 align-items-center">
+                                    <span className="bg-white bg-opacity-20 rounded-pill px-3 py-2">
+                                        <i className="fal fa-address-card me-2"></i>
+                                        <strong>{profile.student_id || "ID not provided"}</strong>
+                                    </span>
+                                    <span className="bg-white bg-opacity-20 rounded-pill px-3 py-2">
+                                        <i className="fal fa-check-circle me-2"></i>
+                                        Active Student
+                                    </span>
                                     </div>
-                                    <div>
-                                        <h1 className="h2 fw-bold mb-2">
-                                            {profile.first_name} {profile.middle_name && profile.middle_name + " "}{profile.last_name}
-                                            {profile.extension_name && " " + profile.extension_name}
-                                        </h1>
-                                        <div className="d-flex flex-wrap gap-3 align-items-center">
-                      <span className="bg-white bg-opacity-20 rounded-pill px-3 py-2">
-                        <i className="bi bi-card-text me-2"></i>
-                        <strong>{profile.student_id || "ID not provided"}</strong>
-                      </span>
-                                            <span className="bg-white bg-opacity-20 rounded-pill px-3 py-2">
-                        <i className="bi bi-check-circle me-2"></i>
-                        Active Student
-                      </span>
-                                        </div>
-                                    </div>
+                                </div>
                                 </div>
                             </div>
 
                             <div className="col-lg-4 text-end">
                                 <div className="d-flex gap-2 justify-content-end">
                                     <button className="btn btn-light btn-sm d-flex align-items-center gap-2 rounded-pill">
-                                        <i className="bi bi-download"></i>
+                                        <i className="fal fa-download"></i>
                                         Download
                                     </button>
                                     <button className="btn btn-warning btn-sm d-flex align-items-center gap-2 rounded-pill">
-                                        <i className="bi bi-pencil-square"></i>
+                                        <i className="fal fa-pencil"></i>
                                         Edit Profile
                                     </button>
                                 </div>
@@ -106,7 +137,7 @@ const Profile: React.FC = () => {
                             <div className="card-header bg-gradient border-0 rounded-top-4">
                                 <div className="d-flex align-items-center">
                                     <div className="bg-primary bg-opacity-15 rounded-3 p-2 me-3">
-                                        <i className="bi bi-person-lines-fill text-primary fs-5"></i>
+                                        <i className="fal fa-users-line text-white fs-5"></i>
                                     </div>
                                     <h5 className="mb-0 fw-bold">Personal Information</h5>
                                 </div>
@@ -115,7 +146,7 @@ const Profile: React.FC = () => {
                                 <div className="row g-4">
                                     <div className="col-md-6">
                                         <div className="d-flex align-items-center mb-2">
-                                            <i className="bi bi-envelope text-primary me-2"></i>
+                                            <i className="fal fa-envelope text-primary me-2"></i>
                                             <label className="form-label text-muted small fw-semibold mb-0">Email Address</label>
                                         </div>
                                         <div className="fw-semibold text-break">
@@ -124,7 +155,7 @@ const Profile: React.FC = () => {
                                     </div>
                                     <div className="col-md-6">
                                         <div className="d-flex align-items-center mb-2">
-                                            <i className="bi bi-telephone text-primary me-2"></i>
+                                            <i className="fal fa-phone text-primary me-2"></i>
                                             <label className="form-label text-muted small fw-semibold mb-0">Phone Number</label>
                                         </div>
                                         <div className="fw-semibold">
@@ -133,7 +164,7 @@ const Profile: React.FC = () => {
                                     </div>
                                     <div className="col-md-6">
                                         <div className="d-flex align-items-center mb-2">
-                                            <i className="bi bi-calendar-event text-primary me-2"></i>
+                                            <i className="fal fa-calendar text-primary me-2"></i>
                                             <label className="form-label text-muted small fw-semibold mb-0">Date of Birth</label>
                                         </div>
                                         <div className="fw-semibold">
@@ -142,7 +173,7 @@ const Profile: React.FC = () => {
                                     </div>
                                     <div className="col-md-6">
                                         <div className="d-flex align-items-center mb-2">
-                                            <i className="bi bi-flag text-primary me-2"></i>
+                                            <i className="fal fa-flag text-primary me-2"></i>
                                             <label className="form-label text-muted small fw-semibold mb-0">Citizenship</label>
                                         </div>
                                         <div className="fw-semibold">
@@ -151,7 +182,7 @@ const Profile: React.FC = () => {
                                     </div>
                                     <div className="col-md-6">
                                         <div className="d-flex align-items-center mb-2">
-                                            <i className="bi bi-heart text-primary me-2"></i>
+                                            <i className="fal fa-heart text-primary me-2"></i>
                                             <label className="form-label text-muted small fw-semibold mb-0">Civil Status</label>
                                         </div>
                                         <div className="fw-semibold">
@@ -176,7 +207,7 @@ const Profile: React.FC = () => {
                                 <div className="row g-3">
                                     <div className="col-12">
                                         <div className="d-flex align-items-center mb-2">
-                                            <i className="bi bi-house text-info me-2"></i>
+                                            <i className="fal fa-house text-info me-2"></i>
                                             <label className="form-label text-muted small fw-semibold mb-0">Street Address</label>
                                         </div>
                                         <div className="fw-semibold">
@@ -185,7 +216,7 @@ const Profile: React.FC = () => {
                                     </div>
                                     <div className="col-md-6">
                                         <div className="d-flex align-items-center mb-2">
-                                            <i className="bi bi-pin-map text-info me-2"></i>
+                                            <i className="fal fa-map-pin text-info me-2"></i>
                                             <label className="form-label text-muted small fw-semibold mb-0">Barangay</label>
                                         </div>
                                         <div className="fw-semibold">
@@ -194,7 +225,7 @@ const Profile: React.FC = () => {
                                     </div>
                                     <div className="col-md-6">
                                         <div className="d-flex align-items-center mb-2">
-                                            <i className="bi bi-building text-info me-2"></i>
+                                            <i className="fal fa-building text-info me-2"></i>
                                             <label className="form-label text-muted small fw-semibold mb-0">Municipality</label>
                                         </div>
                                         <div className="fw-semibold">
@@ -203,7 +234,7 @@ const Profile: React.FC = () => {
                                     </div>
                                     <div className="col-md-6">
                                         <div className="d-flex align-items-center mb-2">
-                                            <i className="bi bi-map text-info me-2"></i>
+                                            <i className="fal fa-map text-info me-2"></i>
                                             <label className="form-label text-muted small fw-semibold mb-0">Province</label>
                                         </div>
                                         <div className="fw-semibold">
@@ -212,7 +243,7 @@ const Profile: React.FC = () => {
                                     </div>
                                     <div className="col-md-6">
                                         <div className="d-flex align-items-center mb-2">
-                                            <i className="bi bi-globe text-info me-2"></i>
+                                            <i className="fal fa-globe text-info me-2"></i>
                                             <label className="form-label text-muted small fw-semibold mb-0">Region</label>
                                         </div>
                                         <div className="fw-semibold">
@@ -228,7 +259,7 @@ const Profile: React.FC = () => {
                             <div className="card-header bg-gradient border-0 rounded-top-4">
                                 <div className="d-flex align-items-center">
                                     <div className="bg-danger bg-opacity-15 rounded-3 p-2 me-3">
-                                        <i className="bi bi-shield-exclamation text-danger fs-5"></i>
+                                        <i className="fal fa-shield-exclamation text-white fs-5"></i>
                                     </div>
                                     <h5 className="mb-0 fw-bold">Emergency Contact</h5>
                                 </div>
@@ -238,7 +269,7 @@ const Profile: React.FC = () => {
                                     <div className="row g-3">
                                         <div className="col-md-8">
                                             <div className="d-flex align-items-center mb-2">
-                                                <i className="bi bi-person-plus text-danger me-2"></i>
+                                                <i className="fal fa-user-plus text-danger me-2"></i>
                                                 <label className="form-label text-muted small fw-semibold mb-0">Contact Person</label>
                                             </div>
                                             <div className="fw-semibold">
@@ -259,7 +290,7 @@ const Profile: React.FC = () => {
                                     </div>
                                 ) : (
                                     <div className="text-center py-4">
-                                        <i className="bi bi-exclamation-triangle text-warning fs-1 mb-3"></i>
+                                        <i className="fal fa-exclamation-triangle text-warning fs-1 mb-3"></i>
                                         <h6 className="text-muted">No Emergency Contact</h6>
                                         <p className="text-muted small mb-3">Emergency contact information has not been provided.</p>
                                         <button className="btn btn-outline-warning btn-sm">
@@ -279,7 +310,7 @@ const Profile: React.FC = () => {
                             <div className="card-header bg-gradient border-0 rounded-top-4">
                                 <div className="d-flex align-items-center">
                                     <div className="bg-success bg-opacity-15 rounded-3 p-2 me-3">
-                                        <i className="bi bi-people-fill text-success fs-5"></i>
+                                        <i className="fal fa-users text-white fs-5"></i>
                                     </div>
                                     <h5 className="mb-0 fw-bold">Family Background</h5>
                                 </div>
@@ -288,7 +319,7 @@ const Profile: React.FC = () => {
                                 {/* Father's Information */}
                                 <div className="mb-4">
                                     <h6 className="text-muted fw-bold mb-3 d-flex align-items-center">
-                                        <i className="bi bi-person text-primary me-2"></i>
+                                        <i className="fal fa-person text-primary me-2"></i>
                                         Father's Information
                                     </h6>
                                     <div className="row g-3">
@@ -319,7 +350,7 @@ const Profile: React.FC = () => {
                                 {/* Mother's Information */}
                                 <div className="mb-4">
                                     <h6 className="text-muted fw-bold mb-3 d-flex align-items-center">
-                                        <i className="bi bi-person text-danger me-2"></i>
+                                        <i className="fal fa-person text-danger me-2"></i>
                                         Mother's Information
                                     </h6>
                                     <div className="row g-3">
@@ -350,7 +381,7 @@ const Profile: React.FC = () => {
                                 {/* Household Information */}
                                 <div className="bg-light rounded-3 p-3">
                                     <h6 className="text-muted fw-bold mb-3 d-flex align-items-center">
-                                        <i className="bi bi-house-fill text-info me-2"></i>
+                                        <i className="fal fa-house text-info me-2"></i>
                                         Household Information
                                     </h6>
                                     <div className="row g-3 text-center">
@@ -382,7 +413,7 @@ const Profile: React.FC = () => {
                             <div className="card-header bg-gradient border-0 rounded-top-4">
                                 <div className="d-flex align-items-center">
                                     <div className="bg-warning bg-opacity-15 rounded-3 p-2 me-3">
-                                        <i className="bi bi-info-circle-fill text-warning fs-5"></i>
+                                        <i className="fal fa-memo-circle-info text-white fs-5"></i>
                                     </div>
                                     <h5 className="mb-0 fw-bold">Additional Information</h5>
                                 </div>
@@ -391,7 +422,7 @@ const Profile: React.FC = () => {
                                 <div className="row g-4">
                                     <div className="col-md-6">
                                         <div className="d-flex align-items-center mb-2">
-                                            <i className="bi bi-award text-warning me-2"></i>
+                                            <i className="fal fa-award text-warning me-2"></i>
                                             <label className="form-label text-muted small fw-semibold mb-0">4Ps Beneficiary</label>
                                         </div>
                                         <div className="fw-semibold">
@@ -403,7 +434,7 @@ const Profile: React.FC = () => {
                                     </div>
                                     <div className="col-md-6">
                                         <div className="d-flex align-items-center mb-2">
-                                            <i className="bi bi-people text-warning me-2"></i>
+                                            <i className="fal fa-people text-warning me-2"></i>
                                             <label className="form-label text-muted small fw-semibold mb-0">IP Affiliation</label>
                                         </div>
                                         <div className="fw-semibold">
@@ -419,7 +450,7 @@ const Profile: React.FC = () => {
                             <div className="card-header bg-gradient border-0 rounded-top-4">
                                 <div className="d-flex align-items-center">
                                     <div className="bg-secondary bg-opacity-15 rounded-3 p-2 me-3">
-                                        <i className="bi bi-gear-fill text-secondary fs-5"></i>
+                                        <i className="fal fa-gears text-white fs-5"></i>
                                     </div>
                                     <h5 className="mb-0 fw-bold">Profile Actions</h5>
                                 </div>
@@ -428,31 +459,31 @@ const Profile: React.FC = () => {
                                 <div className="d-grid gap-3">
                                     <button className="btn btn-primary d-flex align-items-center justify-content-between rounded-3 py-3">
                                         <div className="d-flex align-items-center">
-                                            <i className="bi bi-pencil-square fs-5 me-3"></i>
+                                            <i className="fal fa-pencil fs-5 me-3"></i>
                                             <span className="fw-semibold">Edit Profile Information</span>
                                         </div>
-                                        <i className="bi bi-chevron-right"></i>
+                                        <i className="fal fa-chevron-right"></i>
                                     </button>
                                     <button className="btn btn-outline-success d-flex align-items-center justify-content-between rounded-3 py-3">
                                         <div className="d-flex align-items-center">
-                                            <i className="bi bi-download fs-5 me-3"></i>
+                                            <i className="fal fa-download fs-5 me-3"></i>
                                             <span className="fw-semibold">Download Profile PDF</span>
                                         </div>
-                                        <i className="bi bi-chevron-right"></i>
+                                        <i className="fal fa-chevron-right"></i>
                                     </button>
                                     <button className="btn btn-outline-info d-flex align-items-center justify-content-between rounded-3 py-3">
                                         <div className="d-flex align-items-center">
-                                            <i className="bi bi-eye fs-5 me-3"></i>
+                                            <i className="fal fa-eye fs-5 me-3"></i>
                                             <span className="fw-semibold">View Application History</span>
                                         </div>
-                                        <i className="bi bi-chevron-right"></i>
+                                        <i className="fal fa-chevron-right"></i>
                                     </button>
                                     <button className="btn btn-outline-warning d-flex align-items-center justify-content-between rounded-3 py-3">
                                         <div className="d-flex align-items-center">
-                                            <i className="bi bi-shield-lock fs-5 me-3"></i>
+                                            <i className="fal fa-shield fs-5 me-3"></i>
                                             <span className="fw-semibold">Privacy Settings</span>
                                         </div>
-                                        <i className="bi bi-chevron-right"></i>
+                                        <i className="fal fa-chevron-right"></i>
                                     </button>
                                 </div>
                             </div>
