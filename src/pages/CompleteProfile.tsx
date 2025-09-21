@@ -49,6 +49,11 @@ const CompleteProfile: React.FC = () => {
     const [success, setSuccess] = useState(false);
     const [prefilledFields, setPrefilledFields] = useState<string[]>([]);
 
+    if (!token || !refresh_token || !user) {
+        window.location.href = "/login";
+    }
+
+
     // Pre-fill form with OAuth data on component mount
     useEffect(() => {
         const prefillData = localStorage.getItem('prefill_profile');

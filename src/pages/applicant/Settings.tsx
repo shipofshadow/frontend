@@ -653,7 +653,7 @@ const Settings: React.FC = () => {
                                     <div className="row align-items-center mb-4">
                                         <div className="col-auto">
                                             <div className="bg-warning bg-gradient rounded-circle p-3 shadow">
-                                                <i className="far fa-bell fs-3 "></i>
+                                                <i className="far fa-bell fs-3 text-white "></i>
                                             </div>
                                         </div>
                                         <div className="col">
@@ -815,7 +815,7 @@ const Settings: React.FC = () => {
                                     <div className="row align-items-center mb-4">
                                         <div className="col-auto">
                                             <div className="bg-info bg-gradient rounded-circle p-3 shadow">
-                                                <i className="far fa-eye-slash fs-3 "></i>
+                                                <i className="far fa-eye-slash fs-3 text-white"></i>
                                             </div>
                                         </div>
                                         <div className="col">
@@ -826,48 +826,8 @@ const Settings: React.FC = () => {
 
                                     <form onSubmit={handleSubmit}>
                                         <div className="row g-4">
-                                            {/* Profile Visibility */}
-                                            <div className="col-12">
-                                                <h5 className="fw-bold text-info border-bottom pb-2 mb-3">
-                                                    <i className="far fa-person-circle me-2"></i>
-                                                    Profile Visibility
-                                                </h5>
-                                            </div>
+                                
 
-                                            <div className="col-12">
-                                                <div className="card border-0 bg-light">
-                                                    <div className="card-body p-4">
-                                                        <label className="form-label fw-medium mb-3">
-                                                            <i className="far fa-eye me-1 text-info"></i>
-                                                            Who can see your profile information?
-                                                        </label>
-                                                        <div className="d-flex flex-column gap-2">
-                                                            {[
-                                                                { value: 'public', label: 'Everyone (Public)', desc: 'Your basic profile info is visible to all users' },
-                                                                { value: 'students', label: 'Students Only', desc: 'Only other students can see your profile' },
-                                                                { value: 'admin', label: 'Administrators Only', desc: 'Only school administrators can see your profile' },
-                                                                { value: 'private', label: 'Private', desc: 'Only you can see your full profile information' }
-                                                            ].map(option => (
-                                                                <div key={option.value} className="form-check">
-                                                                    <input
-                                                                        className="form-check-input"
-                                                                        type="radio"
-                                                                        name="profileVisibility"
-                                                                        id={option.value}
-                                                                        value={option.value}
-                                                                        checked={privacySettings.profileVisibility === option.value}
-                                                                        onChange={(e) => handlePrivacyChange('profileVisibility', e.target.value)}
-                                                                    />
-                                                                    <label className="form-check-label" htmlFor={option.value}>
-                                                                        <div className="fw-medium">{option.label}</div>
-                                                                        <small className="text-muted">{option.desc}</small>
-                                                                    </label>
-                                                                </div>
-                                                            ))}
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
 
                                             {/* Contact Information Privacy */}
                                             <div className="col-12">

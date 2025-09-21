@@ -265,17 +265,6 @@ const ManageScholarships = () => {
         );
     }, []);
 
-    useEffect(() => {
-        if (tableRef.current && scholarships.length > 0) {
-            const newTable = new DataTable(tableRef.current, {
-                searchable: true,
-                sortable: true,
-                paging: true,
-                perPage: 10,
-            });
-            setDatatable(newTable);
-        }
-    }, [scholarships]);
 
     return (
         <>
@@ -343,37 +332,39 @@ const ManageScholarships = () => {
                                             </td>
                                             <td>{scholarship.grant_amount}</td>
                                             <td>
-                                                {scholarship.rules?.min_gwa || scholarship.rules?.max_gwa ?
-                                                    `${scholarship.rules.min_gwa || "—"} - ${scholarship.rules.max_gwa || "—"}`
-                                                    : "—"
-                                                }
+                                                {scholarship.rules?.min_gwa ?? "—"} - {scholarship.rules?.max_gwa ?? "—"}
                                             </td>
+
                                             <td>
-                                                {scholarship.rules?.max_income ?
-                                                    `₱${scholarship.rules.max_income.toLocaleString()}`
-                                                    : "—"
-                                                }
+                                                {scholarship.rules?.max_income != null
+                                                    ? `₱${scholarship.rules.max_income.toLocaleString()}`
+                                                    : "—"}
                                             </td>
+
                                             <td>
                                                 <span className={`badge ${scholarship.rules?.priorities?.must_be_ofw ? 'bg-success' : 'bg-secondary'}`}>
                                                     {scholarship.rules?.priorities?.must_be_ofw ? 'Yes' : 'No'}
                                                 </span>
                                             </td>
+
                                             <td>
                                                 <span className={`badge ${scholarship.rules?.priorities?.prefer_farmers_child ? 'bg-info' : 'bg-secondary'}`}>
                                                     {scholarship.rules?.priorities?.prefer_farmers_child ? 'Yes' : 'No'}
                                                 </span>
                                             </td>
+
                                             <td>
                                                 <span className={`badge ${scholarship.rules?.priorities?.require_ip ? 'bg-warning text-dark' : 'bg-secondary'}`}>
                                                     {scholarship.rules?.priorities?.require_ip ? 'Yes' : 'No'}
                                                 </span>
                                             </td>
+
                                             <td>
                                                 <span className={`badge ${scholarship.rules?.priorities?.prefer_pwd ? 'bg-primary' : 'bg-secondary'}`}>
                                                     {scholarship.rules?.priorities?.prefer_pwd ? 'Yes' : 'No'}
                                                 </span>
                                             </td>
+
                                             <td>
                                                 <span className={`badge ${scholarship.is_active ? 'bg-success' : 'bg-danger'}`}>
                                                     {scholarship.is_active ? 'Active' : 'Inactive'}
@@ -403,7 +394,7 @@ const ManageScholarships = () => {
                                     ))
                                 ) : (
                                     <tr>
-                                        <td colSpan={10} className="text-center text-muted py-4">
+                                        <td colSpan={11} className="text-center text-muted py-4">
                                             <i className="fas fa-inbox fa-2x mb-2"></i>
                                             <p>No scholarships found.</p>
                                         </td>

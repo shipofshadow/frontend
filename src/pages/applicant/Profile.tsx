@@ -324,25 +324,25 @@ const Profile: React.FC = () => {
                                     </h6>
                                     <div className="row g-3">
                                         <div className="col-12">
+                                            <small className="text-muted">Full Name</small> <br/>
                                             <div className="fw-semibold">
                                                 {profile.father_first_name || profile.father_last_name ?
                                                     `${profile.father_first_name || ''} ${profile.father_middle_name ? profile.father_middle_name + ' ' : ''}${profile.father_last_name || ''} ${profile.father_extension || ''}`.trim()
                                                     : "Not provided"
                                                 }
                                             </div>
-                                            <small className="text-muted">Full Name</small>
                                         </div>
                                         <div className="col-md-6">
+                                            <small className="text-muted">Occupation</small> <br/>
                                             <div className="fw-semibold">
                                                 {profile.father_occupation || "Not provided"}
                                             </div>
-                                            <small className="text-muted">Occupation</small>
                                         </div>
                                         <div className="col-md-6">
+                                            <small className="text-muted">Monthly Income</small> <br/>
                                             <div className="fw-semibold">
                                                 {profile.father_income || "Not provided"}
                                             </div>
-                                            <small className="text-muted">Monthly Income</small>
                                         </div>
                                     </div>
                                 </div>
@@ -355,25 +355,25 @@ const Profile: React.FC = () => {
                                     </h6>
                                     <div className="row g-3">
                                         <div className="col-12">
+                                            <small className="text-muted">Full Name</small> <br/>
                                             <div className="fw-semibold">
                                                 {profile.mother_first_name || profile.mother_last_name ?
                                                     `${profile.mother_first_name || ''} ${profile.mother_middle_name ? profile.mother_middle_name + ' ' : ''}${profile.mother_last_name || ''}`.trim()
                                                     : "Not provided"
                                                 }
                                             </div>
-                                            <small className="text-muted">Full Name</small>
                                         </div>
                                         <div className="col-md-6">
+                                            <small className="text-muted">Occupation</small> <br/>
                                             <div className="fw-semibold">
                                                 {profile.mother_occupation || "Not provided"}
                                             </div>
-                                            <small className="text-muted">Occupation</small>
                                         </div>
                                         <div className="col-md-6">
+                                            <small className="text-muted">Monthly Income</small> <br/>
                                             <div className="fw-semibold">
                                                 {profile.mother_income || "Not provided"}
                                             </div>
-                                            <small className="text-muted">Monthly Income</small>
                                         </div>
                                     </div>
                                 </div>
@@ -427,7 +427,7 @@ const Profile: React.FC = () => {
                                         </div>
                                         <div className="fw-semibold">
                       <span className={`badge ${profile.is_4ps_member ? 'bg-success' : 'bg-secondary'} px-3 py-2 rounded-pill`}>
-                        <i className={`bi ${profile.is_4ps_member ? 'bi-check-circle' : 'bi-x-circle'} me-1`}></i>
+                        <i className={`fal ${profile.is_4ps_member ? 'fa-check-circle' : 'fa-x-circle'} me-1`}></i>
                           {profile.is_4ps_member ? "Yes" : "No"}
                       </span>
                                         </div>

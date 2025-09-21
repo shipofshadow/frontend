@@ -49,6 +49,7 @@ import ViewApplication from "../pages/applicant/ViewApplication.tsx";
 import {IndexLayout} from "../layouts/IndexLayout.tsx";
 import AuthCallback from "../context/AuthCallback.tsx";
 import CompleteProfile from "../pages/CompleteProfile.tsx";
+import PrivacyPolicyPage from "../pages/PrivacyPolicyPage.tsx";
 
 export function AuthRedirect() {
     const { isAuthenticated, isAdmin, isStudent } = useAuth();
@@ -144,9 +145,10 @@ const AppRoutes: React.FC = () => {
                 <Route path="/" element={isAuthenticated ? <Navigate to="/applicant" replace /> : <App />} />
                 <Route path="login" element={<Login />} />
                 <Route path="register" element={<Register />} />
-                <Route path="/complete-profile" element={<CompleteProfile />} />
+                <Route path="complete-profile" element={<CompleteProfile />} />
                 <Route path="forgot-password" element={<ForgotPassword />} />
                 <Route path="reset-password" element={<ResetPassword />} />
+                <Route path="privacy-policy" element={<PrivacyPolicyPage/>} />
             </Route>
 
 

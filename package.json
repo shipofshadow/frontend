@@ -14,6 +14,7 @@
     "@dropdowns/psgc": "^1.0.1",
     "@popperjs/core": "^2.11.8",
     "@reduxjs/toolkit": "^2.9.0",
+    "@tanstack/react-table": "^8.21.3",
     "apexcharts": "^5.3.1",
     "axios": "^1.9.0",
     "bootstrap": "^5.3.6",
