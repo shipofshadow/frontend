@@ -321,7 +321,7 @@ const Login: React.FC = () => {
                             ) : (
                                 <>
                                     <LogIn size={18} className="me-2" aria-hidden="true" />
-                                    LOGIN TO DASHBOARD
+                                    Login to Dashboard
                                 </>
                             )}
                         </button>

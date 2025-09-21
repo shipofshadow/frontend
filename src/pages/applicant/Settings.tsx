@@ -49,7 +49,7 @@ const Settings: React.FC = () => {
 
 
     const [formData, setFormData] = useState<FormData>({
-        email: user?.email || '',
+        email: user?.profile?.email || '',
         phone: profile?.contact_number || '',
         currentPassword: '',
         newPassword: '',
@@ -238,38 +238,15 @@ const Settings: React.FC = () => {
             <div className="row justify-content-center">
                 <div className="col-xl-10 col-lg-12">
                     {/* Header */}
-                    <div className="d-flex align-items-center justify-content-between mb-4">
-                        <div>
-                            <h1 className="h2 fw-bold mb-1 text-primary">Settings</h1>
-                            <p className="text-muted mb-0">
-                                Manage your account preferences, security, and privacy settings
-                            </p>
-                        </div>
-                        <div className="d-flex align-items-center gap-2">
-                            {hasChanges && (
-                                <span className="badge bg-warning text-dark">
-                                    <i className="bi bi-clock me-1"></i>
-                                    Unsaved Changes
-                                </span>
-                            )}
-                            <div className="text-end">
-                                <small className="text-muted d-block">
-                                    Welcome back, <strong>{profile?.first_name} {profile?.last_name}</strong>
-                                </small>
-                                <small className="text-muted">
-                                    {profile?.student_id} 
-                                </small>
-                            </div>
-                        </div>
-                    </div>
+                
 
                     <div className="card shadow-lg border-0 rounded-4 overflow-hidden">
                         {/* Enhanced Navigation Tabs */}
                         <div className="card-header border-0 bg-gradient" style={{background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'}}>
                             <div className="nav nav-pills nav-justified bg-white bg-opacity-20 rounded-3 p-1" role="tablist">
                                 {[
-                                    { key: 'account', icon: 'person-gear', label: 'Account Info', color: 'primary' },
-                                    { key: 'password', icon: 'shield-lock', label: 'Security', color: 'danger' },
+                                    { key: 'account', icon: 'person', label: 'Account Info', color: 'primary' },
+                                    { key: 'password', icon: 'shield', label: 'Security', color: 'danger' },
                                     { key: 'notifications', icon: 'bell', label: 'Notifications', color: 'warning' },
                                     { key: 'privacy', icon: 'eye-slash', label: 'Privacy', color: 'info' }
                                 ].map(tab => (
@@ -279,7 +256,7 @@ const Settings: React.FC = () => {
                                         onClick={() => setActiveTab(tab.key as typeof activeTab)}
                                         type="button"
                                     >
-                                        <i className={`bi bi-${tab.icon} me-2`}></i>
+                                        <i className={`far fa-${tab.icon} me-2`}></i>
                                         <span className="d-none d-md-inline">{tab.label}</span>
                                     </button>
                                 ))}
@@ -293,7 +270,7 @@ const Settings: React.FC = () => {
                                     <div className="row align-items-center mb-4">
                                         <div className="col-auto">
                                             <div className="bg-primary bg-gradient rounded-circle p-3 shadow">
-                                                <i className="bi bi-person-gear fs-3 "></i>
+                                                <i className="far fa-user-gear fs-3 text-white"></i>
                                             </div>
                                         </div>
                                         <div className="col">
@@ -307,14 +284,14 @@ const Settings: React.FC = () => {
                                             {/* Primary Contact */}
                                             <div className="col-12">
                                                 <h5 className="fw-bold text-primary border-bottom pb-2 mb-3">
-                                                    <i className="bi bi-telephone-plus me-2"></i>
+                                                    <i className="far fa-telephone-plus me-2"></i>
                                                     Primary Contact Information
                                                 </h5>
                                             </div>
 
                                             <div className="col-md-6">
                                                 <label className="form-label fw-medium">
-                                                    <i className="bi bi-envelope me-1 text-primary"></i>
+                                                    <i className="far fa-envelope me-1 text-primary"></i>
                                                     Email Address *
                                                 </label>
                                                 <input
@@ -328,7 +305,7 @@ const Settings: React.FC = () => {
                                                     <div className="invalid-feedback">{validationErrors.email}</div>
                                                 ) : (
                                                     <div className="form-text">
-                                                        <i className="bi bi-info-circle me-1"></i>
+                                                        <i className="far fa-info-circle me-1"></i>
                                                         We'll send verification to your new email
                                                     </div>
                                                 )}
@@ -336,7 +313,7 @@ const Settings: React.FC = () => {
 
                                             <div className="col-md-6">
                                                 <label className="form-label fw-medium">
-                                                    <i className="bi bi-telephone me-1 text-primary"></i>
+                                                    <i className="far fa-telephone me-1 text-primary"></i>
                                                     Phone Number *
                                                 </label>
                                                 <input
@@ -350,7 +327,7 @@ const Settings: React.FC = () => {
                                                     <div className="invalid-feedback">{validationErrors.phone}</div>
                                                 ) : (
                                                     <div className="form-text">
-                                                        <i className="bi bi-shield-check me-1"></i>
+                                                        <i className="far fa-shield-check me-1"></i>
                                                         Used for security notifications and SMS alerts
                                                     </div>
                                                 )}
@@ -359,14 +336,14 @@ const Settings: React.FC = () => {
                                             {/* Emergency Contact */}
                                             <div className="col-12">
                                                 <h5 className="fw-bold text-danger border-bottom pb-2 mb-3 mt-4">
-                                                    <i className="bi bi-person-exclamation me-2"></i>
+                                                    <i className="far fa-person-exclamation me-2"></i>
                                                     Emergency Contact Information
                                                 </h5>
                                             </div>
 
                                             <div className="col-md-6">
                                                 <label className="form-label fw-medium">
-                                                    <i className="bi bi-person me-1 text-danger"></i>
+                                                    <i className="far fa-person me-1 text-danger"></i>
                                                     Emergency Contact Name
                                                 </label>
                                                 <input
@@ -383,7 +360,7 @@ const Settings: React.FC = () => {
 
                                             <div className="col-md-6">
                                                 <label className="form-label fw-medium">
-                                                    <i className="bi bi-telephone-forward me-1 text-danger"></i>
+                                                    <i className="far fa-telephone-forward me-1 text-danger"></i>
                                                     Emergency Contact Number
                                                 </label>
                                                 <input
@@ -397,7 +374,7 @@ const Settings: React.FC = () => {
                                                     <div className="invalid-feedback">{validationErrors.emergencyPhone}</div>
                                                 ) : (
                                                     <div className="form-text">
-                                                        <i className="bi bi-exclamation-triangle me-1"></i>
+                                                        <i className="far fa-exclamation-triangle me-1"></i>
                                                         Person to contact in case of emergency
                                                     </div>
                                                 )}
@@ -408,7 +385,7 @@ const Settings: React.FC = () => {
                                                 <div className="card bg-light border-0 mt-4">
                                                     <div className="card-body">
                                                         <h6 className="card-title mb-3">
-                                                            <i className="bi bi-person-badge me-1"></i>
+                                                            <i className="far fa-person-badge me-1"></i>
                                                             Profile Summary
                                                         </h6>
                                                         <div className="row g-3 text-sm">
@@ -439,7 +416,7 @@ const Settings: React.FC = () => {
                                         <div className="d-flex justify-content-between align-items-center">
                                             <div>
                                                 <small className="text-muted">
-                                                    <i className="bi bi-clock-history me-1"></i>
+                                                    <i className="far fa-clock-history me-1"></i>
                                                     Last updated: March 15, 2024 at 2:30 PM
                                                 </small>
                                             </div>
@@ -461,7 +438,7 @@ const Settings: React.FC = () => {
                                                         setValidationErrors({});
                                                     }}
                                                 >
-                                                    <i className="bi bi-arrow-clockwise me-2"></i>
+                                                    <i className="far fa-arrow-clockwise me-2"></i>
                                                     Reset Changes
                                                 </button>
                                                 <button
@@ -476,7 +453,7 @@ const Settings: React.FC = () => {
                                                         </>
                                                     ) : (
                                                         <>
-                                                            <i className="bi bi-check-lg me-2"></i>
+                                                            <i className="far fa-check-lg me-2"></i>
                                                             Save Account Info
                                                         </>
                                                     )}
@@ -493,7 +470,7 @@ const Settings: React.FC = () => {
                                     <div className="row align-items-center mb-4">
                                         <div className="col-auto">
                                             <div className="bg-danger bg-gradient rounded-circle p-3 shadow">
-                                                <i className="bi bi-shield-lock fs-3 "></i>
+                                                <i className="far fa-shield fs-3 text-white"></i>
                                             </div>
                                         </div>
                                         <div className="col">
@@ -506,7 +483,7 @@ const Settings: React.FC = () => {
                                         <div className="row g-4">
                                             <div className="col-12">
                                                 <label className="form-label fw-medium">
-                                                    <i className="bi bi-key me-1 text-danger"></i>
+                                                    <i className="far fa-key me-1 text-danger"></i>
                                                     Current Password *
                                                 </label>
                                                 <div className="input-group input-group-lg">
@@ -522,7 +499,7 @@ const Settings: React.FC = () => {
                                                         className="btn btn-outline-secondary"
                                                         onClick={() => togglePasswordVisibility('current')}
                                                     >
-                                                        <i className={`bi bi-eye${showPassword.current ? '-slash' : ''}`}></i>
+                                                        <i className={`far fa-eye${showPassword.current ? '-slash' : ''}`}></i>
                                                     </button>
                                                     {validationErrors.currentPassword && (
                                                         <div className="invalid-feedback">{validationErrors.currentPassword}</div>
@@ -532,7 +509,7 @@ const Settings: React.FC = () => {
 
                                             <div className="col-md-6">
                                                 <label className="form-label fw-medium">
-                                                    <i className="bi bi-shield-plus me-1 text-success"></i>
+                                                    <i className="far fa-shield-plus me-1 text-success"></i>
                                                     New Password *
                                                 </label>
                                                 <div className="input-group input-group-lg">
@@ -548,7 +525,7 @@ const Settings: React.FC = () => {
                                                         className="btn btn-outline-secondary"
                                                         onClick={() => togglePasswordVisibility('new')}
                                                     >
-                                                        <i className={`bi bi-eye${showPassword.new ? '-slash' : ''}`}></i>
+                                                        <i className={`far fa-eye${showPassword.new ? '-slash' : ''}`}></i>
                                                     </button>
                                                     {validationErrors.newPassword && (
                                                         <div className="invalid-feedback">{validationErrors.newPassword}</div>
@@ -576,7 +553,7 @@ const Settings: React.FC = () => {
 
                                             <div className="col-md-6">
                                                 <label className="form-label fw-medium">
-                                                    <i className="bi bi-shield-check me-1 text-success"></i>
+                                                    <i className="far fa-shield-check me-1 text-success"></i>
                                                     Confirm New Password *
                                                 </label>
                                                 <div className="input-group input-group-lg">
@@ -592,7 +569,7 @@ const Settings: React.FC = () => {
                                                         className="btn btn-outline-secondary"
                                                         onClick={() => togglePasswordVisibility('confirm')}
                                                     >
-                                                        <i className={`bi bi-eye${showPassword.confirm ? '-slash' : ''}`}></i>
+                                                        <i className={`far fa-eye${showPassword.confirm ? '-slash' : ''}`}></i>
                                                     </button>
                                                     {validationErrors.confirmPassword && (
                                                         <div className="invalid-feedback">{validationErrors.confirmPassword}</div>
@@ -603,7 +580,7 @@ const Settings: React.FC = () => {
                                                 {formData.confirmPassword && (
                                                     <div className="mt-2">
                                                         <small className={`${formData.newPassword === formData.confirmPassword ? 'text-success' : 'text-danger'}`}>
-                                                            <i className={`bi bi-${formData.newPassword === formData.confirmPassword ? 'check-circle' : 'x-circle'} me-1`}></i>
+                                                            <i className={`far fa-${formData.newPassword === formData.confirmPassword ? 'check-circle' : 'x-circle'} me-1`}></i>
                                                             {formData.newPassword === formData.confirmPassword ? 'Passwords match' : 'Passwords do not match'}
                                                         </small>
                                                     </div>
@@ -616,7 +593,7 @@ const Settings: React.FC = () => {
                                             <div className="card border-0 bg-light">
                                                 <div className="card-body p-4">
                                                     <h6 className="card-title mb-3">
-                                                        <i className="bi bi-info-circle me-1"></i>
+                                                        <i className="far fa-info-circle me-1"></i>
                                                         Password Requirements:
                                                     </h6>
                                                     <div className="row g-2">
@@ -629,7 +606,7 @@ const Settings: React.FC = () => {
                                                         ].map((req, index) => (
                                                             <div key={index} className="col-md-6">
                                                                 <small className={`d-flex align-items-center ${req.check ? 'text-success' : 'text-muted'}`}>
-                                                                    <i className={`bi bi-${req.check ? 'check-circle-fill text-success' : 'circle text-muted'} me-2`}></i>
+                                                                    <i className={`far fa-${req.check ? 'check-circle-fill text-success' : 'circle text-muted'} me-2`}></i>
                                                                     {req.text}
                                                                 </small>
                                                             </div>
@@ -644,7 +621,7 @@ const Settings: React.FC = () => {
                                         <div className="d-flex justify-content-between align-items-center">
                                             <div>
                                                 <small className="text-muted">
-                                                    <i className="bi bi-shield-check me-1"></i>
+                                                    <i className="far fa-shield-check me-1"></i>
                                                     Last password change: January 20, 2024
                                                 </small>
                                             </div>
@@ -660,7 +637,7 @@ const Settings: React.FC = () => {
                                                     </>
                                                 ) : (
                                                     <>
-                                                        <i className="bi bi-shield-lock me-2"></i>
+                                                        <i className="far fa-shield-lock me-2"></i>
                                                         Update Password
                                                     </>
                                                 )}
@@ -676,7 +653,7 @@ const Settings: React.FC = () => {
                                     <div className="row align-items-center mb-4">
                                         <div className="col-auto">
                                             <div className="bg-warning bg-gradient rounded-circle p-3 shadow">
-                                                <i className="bi bi-bell fs-3 "></i>
+                                                <i className="far fa-bell fs-3 "></i>
                                             </div>
                                         </div>
                                         <div className="col">
@@ -690,7 +667,7 @@ const Settings: React.FC = () => {
                                             {/* Academic Notifications */}
                                             <div className="col-12">
                                                 <h5 className="fw-bold text-primary border-bottom pb-2 mb-3">
-                                                    <i className="bi bi-mortarboard me-2"></i>
+                                                    <i className="far fa-mortarboard me-2"></i>
                                                     Academic & Scholarship Notifications
                                                 </h5>
                                             </div>
@@ -732,7 +709,7 @@ const Settings: React.FC = () => {
                                                                 />
                                                                 <div className="flex-grow-1">
                                                                     <label className="form-check-label fw-medium d-flex align-items-center mb-1" htmlFor={notif.key}>
-                                                                        <i className={`bi bi-${notif.icon} me-2 text-${notif.color}`}></i>
+                                                                        <i className={`far fa-${notif.icon} me-2 text-${notif.color}`}></i>
                                                                         {notif.title}
                                                                     </label>
                                                                     <div className="form-text mb-0">{notif.description}</div>
@@ -746,7 +723,7 @@ const Settings: React.FC = () => {
                                             {/* Communication Channels */}
                                             <div className="col-12">
                                                 <h5 className="fw-bold text-success border-bottom pb-2 mb-3 mt-4">
-                                                    <i className="bi bi-chat-dots me-2"></i>
+                                                    <i className="far fa-chat-dots me-2"></i>
                                                     Communication Channels
                                                 </h5>
                                             </div>
@@ -795,7 +772,7 @@ const Settings: React.FC = () => {
                                                                 />
                                                                 <div className="flex-grow-1">
                                                                     <label className="form-check-label fw-medium d-flex align-items-center mb-1" htmlFor={notif.key}>
-                                                                        <i className={`bi bi-${notif.icon} me-2 text-${notif.color}`}></i>
+                                                                        <i className={`far fa-${notif.icon} me-2 text-${notif.color}`}></i>
                                                                         {notif.title}
                                                                     </label>
                                                                     <div className="form-text mb-0">{notif.description}</div>
@@ -822,7 +799,7 @@ const Settings: React.FC = () => {
                                                     </>
                                                 ) : (
                                                     <>
-                                                        <i className="bi bi-check-lg me-2"></i>
+                                                        <i className="far fa-check-lg me-2"></i>
                                                         Save Notification Preferences
                                                     </>
                                                 )}
@@ -838,7 +815,7 @@ const Settings: React.FC = () => {
                                     <div className="row align-items-center mb-4">
                                         <div className="col-auto">
                                             <div className="bg-info bg-gradient rounded-circle p-3 shadow">
-                                                <i className="bi bi-eye-slash fs-3 "></i>
+                                                <i className="far fa-eye-slash fs-3 "></i>
                                             </div>
                                         </div>
                                         <div className="col">
@@ -852,7 +829,7 @@ const Settings: React.FC = () => {
                                             {/* Profile Visibility */}
                                             <div className="col-12">
                                                 <h5 className="fw-bold text-info border-bottom pb-2 mb-3">
-                                                    <i className="bi bi-person-circle me-2"></i>
+                                                    <i className="far fa-person-circle me-2"></i>
                                                     Profile Visibility
                                                 </h5>
                                             </div>
@@ -861,7 +838,7 @@ const Settings: React.FC = () => {
                                                 <div className="card border-0 bg-light">
                                                     <div className="card-body p-4">
                                                         <label className="form-label fw-medium mb-3">
-                                                            <i className="bi bi-eye me-1 text-info"></i>
+                                                            <i className="far fa-eye me-1 text-info"></i>
                                                             Who can see your profile information?
                                                         </label>
                                                         <div className="d-flex flex-column gap-2">
@@ -895,7 +872,7 @@ const Settings: React.FC = () => {
                                             {/* Contact Information Privacy */}
                                             <div className="col-12">
                                                 <h5 className="fw-bold text-warning border-bottom pb-2 mb-3 mt-4">
-                                                    <i className="bi bi-telephone-x me-2"></i>
+                                                    <i className="far fa-telephone-x me-2"></i>
                                                     Contact Information Privacy
                                                 </h5>
                                             </div>
@@ -937,7 +914,7 @@ const Settings: React.FC = () => {
                                                                 />
                                                                 <div className="flex-grow-1">
                                                                     <label className="form-check-label fw-medium d-flex align-items-center mb-1" htmlFor={setting.key}>
-                                                                        <i className={`bi bi-${setting.icon} me-2 text-${setting.color}`}></i>
+                                                                        <i className={`far fa-${setting.icon} me-2 text-${setting.color}`}></i>
                                                                         {setting.title}
                                                                     </label>
                                                                     <div className="form-text mb-0">{setting.description}</div>
@@ -951,7 +928,7 @@ const Settings: React.FC = () => {
                                             {/* Data Processing */}
                                             <div className="col-12">
                                                 <h5 className="fw-bold text-danger border-bottom pb-2 mb-3 mt-4">
-                                                    <i className="bi bi-database-lock me-2"></i>
+                                                    <i className="far fa-database-lock me-2"></i>
                                                     Data Processing & Marketing
                                                 </h5>
                                             </div>
@@ -988,7 +965,7 @@ const Settings: React.FC = () => {
                                                                 />
                                                                 <div className="flex-grow-1">
                                                                     <label className="form-check-label fw-medium d-flex align-items-center mb-1" htmlFor={setting.key}>
-                                                                        <i className={`bi bi-${setting.icon} me-2 text-${setting.color}`}></i>
+                                                                        <i className={`far fa-${setting.icon} me-2 text-${setting.color}`}></i>
                                                                         {setting.title}
                                                                         {setting.required && <span className="badge bg-danger ms-2">Required</span>}
                                                                     </label>
@@ -1008,7 +985,7 @@ const Settings: React.FC = () => {
                                             {/* Privacy Notice */}
                                             <div className="col-12">
                                                 <div className="alert alert-info d-flex align-items-start" role="alert">
-                                                    <i className="bi bi-info-circle-fill me-2 mt-1"></i>
+                                                    <i className="far fa-info-circle-fill me-2 mt-1"></i>
                                                     <div>
                                                         <strong>Privacy Notice:</strong> Your data is processed in accordance with our Privacy Policy.
                                                         You can review how we collect, use, and protect your information by visiting our
@@ -1023,7 +1000,7 @@ const Settings: React.FC = () => {
                                         <div className="d-flex justify-content-between align-items-center">
                                             <div>
                                                 <small className="text-muted">
-                                                    <i className="bi bi-shield-check me-1"></i>
+                                                    <i className="far fa-shield-check me-1"></i>
                                                     Your privacy settings are encrypted and secure
                                                 </small>
                                             </div>
@@ -1039,7 +1016,7 @@ const Settings: React.FC = () => {
                                                     </>
                                                 ) : (
                                                     <>
-                                                        <i className="bi bi-shield-check me-2"></i>
+                                                        <i className="far fa-shield-check me-2"></i>
                                                         Save Privacy Settings
                                                     </>
                                                 )}
@@ -1058,22 +1035,22 @@ const Settings: React.FC = () => {
                                 <div className="card-body p-4 text-center">
                                     <div className="row g-4 text-muted">
                                         <div className="col-md-3">
-                                            <i className="bi bi-shield-lock-fill fs-4 text-success d-block mb-2"></i>
+                                            <i className="far fa-shield-lock-fill fs-4 text-success d-block mb-2"></i>
                                             <strong>Secure</strong><br />
                                             <small>256-bit SSL encryption</small>
                                         </div>
                                         <div className="col-md-3">
-                                            <i className="bi bi-clock-history fs-4 text-info d-block mb-2"></i>
+                                            <i className="far fa-clock-history fs-4 text-info d-block mb-2"></i>
                                             <strong>Auto-Save</strong><br />
                                             <small>Changes saved automatically</small>
                                         </div>
                                         <div className="col-md-3">
-                                            <i className="bi bi-database-check fs-4 text-warning d-block mb-2"></i>
+                                            <i className="far fa-database-check fs-4 text-warning d-block mb-2"></i>
                                             <strong>Backed Up</strong><br />
                                             <small>Data backed up daily</small>
                                         </div>
                                         <div className="col-md-3">
-                                            <i className="bi bi-headset fs-4 text-primary d-block mb-2"></i>
+                                            <i className="far fa-headset fs-4 text-primary d-block mb-2"></i>
                                             <strong>Support</strong><br />
                                             <small>24/7 technical support</small>
                                         </div>
