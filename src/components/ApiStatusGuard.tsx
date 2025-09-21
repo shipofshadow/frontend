@@ -180,11 +180,11 @@ const ApiStatusGuard: React.FC<ApiStatusGuardProps> = ({
         return (
             <div className="d-flex flex-column align-items-center justify-content-center vh-100 bg-gradient"
                  style={{background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'}}>
-                <div className="spinner-border text-light mb-3" role="status" style={{ width: '3rem', height: '3rem' }}>
+                <div className="spinner-border text-dark mb-3" role="status" style={{ width: '3rem', height: '3rem' }}>
                     <span className="visually-hidden">Connecting to iScholar...</span>
                 </div>
-                <h4 className="text-white mb-2">🎓 Connecting to iScholar...</h4>
-                <p className="text-light opacity-75">Preparing your scholarship portal</p>
+                <h4 className="text-dark mb-2">🎓 Connecting to iScholar...</h4>
+                <p className="text-dark opacity-75">Preparing your scholarship portal</p>
             </div>
         );
     }
