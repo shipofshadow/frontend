@@ -1,14 +1,40 @@
 import React, { useState, useRef } from 'react';
 import { Upload, Download, FileText, Users, CheckCircle, AlertCircle, X, Info } from 'lucide-react';
+import * as XLSX from 'xlsx';
 
 interface StudentRecord {
-    name: string;
     studentId: string;
-    email: string;
-    gpa: number;
-    familyIncome: number;
-    status?: 'valid' | 'error' | 'warning';
-    errors?: string[];
+    firstName: string;
+    lastName: string;
+    middleName?: string;
+    extensionName?: string;
+    fullName: string;
+    gender: string;
+    birthDate: string;
+    campus: string;
+    department: string;
+    course: string;
+    yearLevel: string;
+    income: number;
+    totalUnits: number;
+    gwa: number;
+    status: 'valid' | 'error' | 'warning';
+    errors: string[];
+}
+
+interface GradeRecord {
+    studentId: string;
+    subjectName: string;
+    grade: number;
+    units: number;
+    status: 'valid' | 'error' | 'warning';
+    errors: string[];
+}
+
+interface ImportStats {
+    valid: number;
+    warnings: number;
+    errors: number;
 }
 
 const StudentImportTool = () => {
@@ -16,17 +42,10 @@ const StudentImportTool = () => {
     const [dragActive, setDragActive] = useState(false);
     const [uploadStatus, setUploadStatus] = useState<'idle' | 'uploading' | 'success' | 'error'>('idle');
     const [previewData, setPreviewData] = useState<StudentRecord[]>([]);
+    const [gradesData, setGradesData] = useState<GradeRecord[]>([]);
     const [showPreview, setShowPreview] = useState(false);
-    const [importStats, setImportStats] = useState({ valid: 0, errors: 0, warnings: 0 });
+    const [importStats, setImportStats] = useState<ImportStats>({ valid: 0, errors: 0, warnings: 0 });
     const fileInputRef = useRef<HTMLInputElement>(null);
-
-    // Sample data for preview/demonstration
-    const samplePreviewData: StudentRecord[] = [
-        { name: "Juan Dela Cruz", studentId: "2024-001", email: "juan.delacruz@university.edu", gpa: 3.8, familyIncome: 25000, status: 'valid' },
-        { name: "Maria Santos", studentId: "2024-002", email: "maria.santos@university.edu", gpa: 3.2, familyIncome: 45000, status: 'valid' },
-        { name: "Jose Rizal", studentId: "2024-003", email: "invalid-email", gpa: 2.8, familyIncome: 15000, status: 'error', errors: ['Invalid email format'] },
-        { name: "Anna Reyes", studentId: "", email: "anna.reyes@university.edu", gpa: 3.9, familyIncome: 35000, status: 'warning', errors: ['Missing student ID'] },
-    ];
 
     const handleDrag = (e: React.DragEvent) => {
         e.preventDefault();
@@ -77,27 +96,244 @@ const StudentImportTool = () => {
         setSelectedFile(file);
         setShowPreview(false);
         setUploadStatus('idle');
+        setPreviewData([]);
+        setGradesData([]);
+    };
+
+    const validateEmail = (email: string): boolean => {
+        if (!email || email.trim() === '') return true; // Email is optional
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return emailRegex.test(email);
+    };
+
+    const isValidDate = (dateString: string): boolean => {
+        if (!dateString || dateString.trim() === '') return true; // Date might be optional
+        const date = new Date(dateString);
+        return !isNaN(date.getTime());
+    };
+
+    const parseNumericValue = (value: any): number => {
+        if (value === '' || value === null || value === undefined) return 0;
+        const parsed = parseFloat(value);
+        return isNaN(parsed) ? 0 : parsed;
+    };
+
+    const validateStudentRecord = (row: any): { record: StudentRecord; isValid: boolean } => {
+        const errors: string[] = [];
+        
+        // Required field validation
+        const studentId = String(row["Student ID"] || '').trim();
+        if (!studentId) {
+            errors.push("Student ID is required");
+        }
+
+        const firstName = String(row["First Name"] || '').trim();
+        const lastName = String(row["Last Name"] || '').trim();
+        const middleName = String(row["Middle Name"] || '').trim();
+        const extensionName = String(row["Extension Name"] || '').trim();
+        
+        if (!firstName) errors.push("First Name is required");
+        if (!lastName) errors.push("Last Name is required");
+
+        // Optional email validation
+        const email = String(row["Email"] || '').trim();
+        if (email && !validateEmail(email)) {
+            errors.push("Invalid email format");
+        }
+
+        // Numeric field validation
+        const income = parseNumericValue(row["Income"]);
+        const gwa = parseNumericValue(row["GWA"]);
+        const totalUnits = parseNumericValue(row["Total Units"]);
+
+        if (row["Income"] !== '' && row["Income"] !== null && row["Income"] !== undefined && isNaN(parseFloat(row["Income"]))) {
+            errors.push("Income must be a valid number");
+        }
+
+        if (row["GWA"] !== '' && row["GWA"] !== null && row["GWA"] !== undefined && isNaN(parseFloat(row["GWA"]))) {
+            errors.push("GWA must be a valid number");
+        }
+
+        if (row["Total Units"] !== '' && row["Total Units"] !== null && row["Total Units"] !== undefined && isNaN(parseFloat(row["Total Units"]))) {
+            errors.push("Total Units must be a valid number");
+        }
+
+        // Birth date validation
+        const birthDate = String(row["Birth Date"] || '').trim();
+        if (birthDate && !isValidDate(birthDate)) {
+            errors.push("Invalid birth date format");
+        }
+
+        // Determine status
+        let status: 'valid' | 'error' | 'warning' = 'valid';
+        if (errors.length > 0) {
+            const hasRequiredFieldErrors = errors.some(error => 
+                error.includes("required") || 
+                error.includes("Invalid email") || 
+                error.includes("must be a valid number")
+            );
+            status = hasRequiredFieldErrors ? 'error' : 'warning';
+        }
+
+        const record: StudentRecord = {
+            studentId,
+            firstName,
+            lastName,
+            middleName,
+            extensionName,
+            fullName: `${firstName} ${middleName} ${lastName} ${extensionName}`.trim(),
+            gender: String(row["Gender"] || '').trim(),
+            birthDate,
+            campus: String(row["Campus"] || '').trim(),
+            department: String(row["Department"] || '').trim(),
+            course: String(row["Course"] || '').trim(),
+            yearLevel: String(row["Year Level"] || '').trim(),
+            income,
+            totalUnits,
+            gwa,
+            status,
+            errors
+        };
+
+        return { record, isValid: status === 'valid' };
+    };
+
+    const validateGradeRecord = (row: any): { record: GradeRecord; isValid: boolean } => {
+        const errors: string[] = [];
+        
+        const studentId = String(row["Student ID"] || '').trim();
+        if (!studentId) {
+            errors.push("Student ID is required");
+        }
+
+        const subjectName = String(row["Subject Name"] || '').trim();
+        if (!subjectName) {
+            errors.push("Subject Name is required");
+        }
+
+        const grade = parseNumericValue(row["Grade"]);
+        const units = parseNumericValue(row["Units"]);
+
+        if (row["Grade"] !== '' && row["Grade"] !== null && row["Grade"] !== undefined && isNaN(parseFloat(row["Grade"]))) {
+            errors.push("Grade must be a valid number");
+        }
+
+        if (row["Units"] !== '' && row["Units"] !== null && row["Units"] !== undefined && isNaN(parseFloat(row["Units"]))) {
+            errors.push("Units must be a valid number");
+        }
+
+        let status: 'valid' | 'error' | 'warning' = 'valid';
+        if (errors.length > 0) {
+            status = errors.some(error => error.includes("required") || error.includes("must be a valid number")) ? 'error' : 'warning';
+        }
+
+        const record: GradeRecord = {
+            studentId,
+            subjectName,
+            grade,
+            units,
+            status,
+            errors
+        };
+
+        return { record, isValid: status === 'valid' };
     };
 
     const handlePreview = () => {
         if (!selectedFile) {
-            alert('Please select a file first.');
+            alert("Please select a file first.");
             return;
         }
 
-        // Simulate file parsing and validation
-        setUploadStatus('uploading');
+        setUploadStatus("uploading");
 
-        setTimeout(() => {
-            setPreviewData(samplePreviewData);
-            setImportStats({
-                valid: samplePreviewData.filter(record => record.status === 'valid').length,
-                errors: samplePreviewData.filter(record => record.status === 'error').length,
-                warnings: samplePreviewData.filter(record => record.status === 'warning').length
-            });
-            setShowPreview(true);
-            setUploadStatus('success');
-        }, 2000);
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                const data = new Uint8Array(e.target?.result as ArrayBuffer);
+                const workbook = XLSX.read(data, { type: "array" });
+
+                // Parse ImportedStudents sheet
+                let studentsSheet = null;
+                let studentsSheetName = '';
+                
+                // Look for ImportedStudents sheet (case insensitive)
+                for (const sheetName of workbook.SheetNames) {
+                    if (sheetName.toLowerCase().includes('students') || sheetName.toLowerCase() === 'importedstudents') {
+                        studentsSheet = workbook.Sheets[sheetName];
+                        studentsSheetName = sheetName;
+                        break;
+                    }
+                }
+
+                // Fallback to first sheet if ImportedStudents not found
+                if (!studentsSheet && workbook.SheetNames.length > 0) {
+                    studentsSheetName = workbook.SheetNames[0];
+                    studentsSheet = workbook.Sheets[studentsSheetName];
+                }
+
+                if (!studentsSheet) {
+                    throw new Error("No valid sheet found in the file");
+                }
+
+                // Parse students data
+                const studentsJsonData: any[] = XLSX.utils.sheet_to_json(studentsSheet, { defval: "" });
+                const parsedStudents: StudentRecord[] = [];
+                
+                studentsJsonData.forEach((row, index) => {
+                    if (index === 0 && Object.keys(row).length === 0) return; // Skip empty first row
+                    
+                    const { record } = validateStudentRecord(row);
+                    parsedStudents.push(record);
+                });
+
+                // Parse ImportedGrades sheet (optional)
+                let gradesSheet = null;
+                for (const sheetName of workbook.SheetNames) {
+                    if (sheetName.toLowerCase().includes('grades') || sheetName.toLowerCase() === 'importedgrades') {
+                        gradesSheet = workbook.Sheets[sheetName];
+                        break;
+                    }
+                }
+
+                const parsedGrades: GradeRecord[] = [];
+                if (gradesSheet) {
+                    const gradesJsonData: any[] = XLSX.utils.sheet_to_json(gradesSheet, { defval: "" });
+                    
+                    gradesJsonData.forEach((row, index) => {
+                        if (index === 0 && Object.keys(row).length === 0) return; // Skip empty first row
+                        
+                        const { record } = validateGradeRecord(row);
+                        parsedGrades.push(record);
+                    });
+                }
+
+                // Calculate statistics
+                const stats: ImportStats = {
+                    valid: parsedStudents.filter(r => r.status === 'valid').length,
+                    warnings: parsedStudents.filter(r => r.status === 'warning').length,
+                    errors: parsedStudents.filter(r => r.status === 'error').length
+                };
+
+                setPreviewData(parsedStudents);
+                setGradesData(parsedGrades);
+                setImportStats(stats);
+                setShowPreview(true);
+                setUploadStatus("success");
+
+            } catch (error) {
+                console.error("Error parsing file:", error);
+                setUploadStatus("error");
+                alert("Error parsing file. Please check the file format and try again.");
+            }
+        };
+
+        reader.onerror = () => {
+            setUploadStatus("error");
+            alert("Error reading file. Please try again.");
+        };
+
+        reader.readAsArrayBuffer(selectedFile);
     };
 
     const handleUpload = async () => {
@@ -119,6 +355,19 @@ const StudentImportTool = () => {
             const formData = new FormData();
             formData.append('file', selectedFile);
 
+            // Add processed data as JSON for the backend
+            const validStudents = previewData.filter(student => student.status === 'valid');
+            const validGrades = gradesData.filter(grade => grade.status === 'valid');
+
+            formData.append('studentsData', JSON.stringify(validStudents));
+            formData.append('gradesData', JSON.stringify(validGrades));
+
+            // TODO: Replace with actual API call
+            // const response = await fetch('/api/import-students', {
+            //     method: 'POST',
+            //     body: formData,
+            // });
+
             // Simulate API call
             setTimeout(() => {
                 setUploadStatus('success');
@@ -127,31 +376,88 @@ const StudentImportTool = () => {
                 setSelectedFile(null);
                 setShowPreview(false);
                 setPreviewData([]);
+                setGradesData([]);
                 if (fileInputRef.current) {
                     fileInputRef.current.value = '';
                 }
             }, 2000);
 
-        } catch  {
+        } catch (error) {
+            console.error("Upload error:", error);
             setUploadStatus('error');
             alert('Upload failed. Please try again.');
         }
     };
 
     const handleDownloadSample = () => {
-        // In a real app, this would download an actual file
-        const csvContent = `Name,Student ID,Email,GPA,Family Income
-Juan Dela Cruz,2024-001,juan.delacruz@university.edu,3.8,25000
-Maria Santos,2024-002,maria.santos@university.edu,3.2,45000
-Jose Rizal,2024-003,jose.rizal@university.edu,2.8,15000`;
+        // Create sample data for the template
+        const studentsData = [
+            {
+                "Student ID": "2024-001",
+                "First Name": "Juan",
+                "Last Name": "Dela Cruz",
+                "Middle Name": "Dela Cruz",
+                "Extension Name": "Dela Cruz",
+                "Gender": "Male",
+                "Birth Date": "2000-01-15",
+                "Campus": "Main Campus",
+                "Department": "Engineering",
+                "Course": "Computer Engineering",
+                "Year Level": "3rd Year",
+                "Email": "juan.delacruz@university.edu",
+                "Income": 25000,
+                "Total Units": 21,
+                "GWA": 1.75
+            },
+            {
+                "Student ID": "2024-002",
+                "First Name": "Maria",
+                "Last Name": "Santos",
+                "Middle Name": "Dela Cruz",
+                "Extension Name": "Dela Cruz",
+                "Gender": "Female",
+                "Birth Date": "1999-12-08",
+                "Campus": "Main Campus",
+                "Department": "Business",
+                "Course": "Business Administration",
+                "Year Level": "2nd Year",
+                "Email": "maria.santos@university.edu",
+                "Income": 45000,
+                "Total Units": 18,
+                "GWA": 2.25
+            }
+        ];
 
-        const blob = new Blob([csvContent], { type: 'text/csv' });
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'student-import-template.csv';
-        a.click();
-        window.URL.revokeObjectURL(url);
+        const gradesData = [
+            {
+                "Student ID": "2024-001",
+                "Subject Name": "Data Structures",
+                "Grade": 1.50,
+                "Units": 3
+            },
+            {
+                "Student ID": "2024-001",
+                "Subject Name": "Database Systems",
+                "Grade": 2.00,
+                "Units": 3
+            },
+            {
+                "Student ID": "2024-002",
+                "Subject Name": "Business Math",
+                "Grade": 2.25,
+                "Units": 3
+            }
+        ];
+
+        // Create workbook with two sheets
+        const wb = XLSX.utils.book_new();
+        const studentsWs = XLSX.utils.json_to_sheet(studentsData);
+        const gradesWs = XLSX.utils.json_to_sheet(gradesData);
+        
+        XLSX.utils.book_append_sheet(wb, studentsWs, "ImportedStudents");
+        XLSX.utils.book_append_sheet(wb, gradesWs, "ImportedGrades");
+        
+        XLSX.writeFile(wb, "imported_students_template.xlsx");
     };
 
     const getStatusIcon = (status: string) => {
@@ -167,6 +473,7 @@ Jose Rizal,2024-003,jose.rizal@university.edu,2.8,15000`;
         setSelectedFile(null);
         setShowPreview(false);
         setPreviewData([]);
+        setGradesData([]);
         setUploadStatus('idle');
         if (fileInputRef.current) {
             fileInputRef.current.value = '';
@@ -176,29 +483,29 @@ Jose Rizal,2024-003,jose.rizal@university.edu,2.8,15000`;
     return (
         <>
             <style>{`
-        .drag-active {
-          border-color: #0d6efd !important;
-          background-color: rgba(13, 110, 253, 0.05) !important;
-        }
-        .upload-area {
-          transition: all 0.3s ease;
-          cursor: pointer;
-        }
-        .upload-area:hover {
-          background-color: #f8f9fa;
-          border-color: #6c757d;
-        }
-        .fade-in {
-          animation: fadeIn 0.3s ease-in;
-        }
-        @keyframes fadeIn {
-          from { opacity: 0; transform: translateY(10px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        .progress-bar {
-          transition: width 0.3s ease;
-        }
-      `}</style>
+                .drag-active {
+                  border-color: #0d6efd !important;
+                  background-color: rgba(13, 110, 253, 0.05) !important;
+                }
+                .upload-area {
+                  transition: all 0.3s ease;
+                  cursor: pointer;
+                }
+                .upload-area:hover {
+                  background-color: #f8f9fa;
+                  border-color: #6c757d;
+                }
+                .fade-in {
+                  animation: fadeIn 0.3s ease-in;
+                }
+                @keyframes fadeIn {
+                  from { opacity: 0; transform: translateY(10px); }
+                  to { opacity: 1; transform: translateY(0); }
+                }
+                .progress-bar {
+                  transition: width 0.3s ease;
+                }
+            `}</style>
 
             <div className="min-vh-100 bg-light">
                 {/* Header */}
@@ -236,28 +543,23 @@ Jose Rizal,2024-003,jose.rizal@university.edu,2.8,15000`;
                                             <Info className="text-info" size={20} />
                                         </div>
                                         <div className="flex-grow-1">
-                                            <h6 className="fw-bold mb-2">Before You Start</h6>
+                                            <h6 className="fw-bold mb-2">Template Requirements</h6>
                                             <div className="row g-3">
-                                                <div className="col-md-4">
+                                                <div className="col-md-6">
                                                     <div className="d-flex align-items-center mb-2">
                                                         <span className="badge bg-primary rounded-circle me-2">1</span>
-                                                        <strong>Download Template</strong>
+                                                        <strong>ImportedStudents Sheet</strong>
                                                     </div>
-                                                    <small className="text-muted">Use our template to ensure proper formatting</small>
+                                                    <small className="text-muted">Required: Student ID*, First Name*, Last Name*<br/>
+                                                    Optional: Gender, Birth Date, Campus, Department, Course, Year Level, Email, Income, Total Units, GWA</small>
                                                 </div>
-                                                <div className="col-md-4">
+                                                <div className="col-md-6">
                                                     <div className="d-flex align-items-center mb-2">
                                                         <span className="badge bg-primary rounded-circle me-2">2</span>
-                                                        <strong>Fill Your Data</strong>
+                                                        <strong>ImportedGrades Sheet (Optional)</strong>
                                                     </div>
-                                                    <small className="text-muted">Include: Name, Student ID, Email, GPA, Family Income</small>
-                                                </div>
-                                                <div className="col-md-4">
-                                                    <div className="d-flex align-items-center mb-2">
-                                                        <span className="badge bg-primary rounded-circle me-2">3</span>
-                                                        <strong>Upload & Review</strong>
-                                                    </div>
-                                                    <small className="text-muted">Preview and fix any errors before importing</small>
+                                                    <small className="text-muted">Columns: Student ID*, Subject Name*, Grade, Units<br/>
+                                                    Links subjects to students for detailed grade tracking</small>
                                                 </div>
                                             </div>
                                         </div>
@@ -404,6 +706,14 @@ Jose Rizal,2024-003,jose.rizal@university.edu,2.8,15000`;
                                                 </div>
                                             </div>
 
+                                            {gradesData.length > 0 && (
+                                                <div className="mt-3 p-2 bg-info bg-opacity-10 rounded">
+                                                    <small className="text-info fw-medium">
+                                                        📊 Found {gradesData.length} grade records
+                                                    </small>
+                                                </div>
+                                            )}
+
                                             {importStats.errors > 0 && (
                                                 <div className="alert alert-warning mt-3 mb-0">
                                                     <small>
@@ -424,13 +734,13 @@ Jose Rizal,2024-003,jose.rizal@university.edu,2.8,15000`;
                     </div>
 
                     {/* Preview Table */}
-                    {showPreview && (
+                    {showPreview && previewData.length > 0 && (
                         <div className="row g-4 mt-2">
                             <div className="col-12">
                                 <div className="card border-0 shadow-sm fade-in">
                                     <div className="card-header bg-white border-bottom">
                                         <div className="d-flex justify-content-between align-items-center">
-                                            <h5 className="card-title mb-0 fw-bold">Data Preview</h5>
+                                            <h5 className="card-title mb-0 fw-bold">Student Records Preview</h5>
                                             <span className="badge bg-primary">{previewData.length} records found</span>
                                         </div>
                                     </div>
@@ -438,15 +748,16 @@ Jose Rizal,2024-003,jose.rizal@university.edu,2.8,15000`;
                                         <div className="table-responsive">
                                             <table className="table table-hover mb-0">
                                                 <thead className="table-light">
-                                                <tr>
-                                                    <th className="border-0">Status</th>
-                                                    <th className="border-0">Name</th>
-                                                    <th className="border-0">Student ID</th>
-                                                    <th className="border-0">Email</th>
-                                                    <th className="border-0">GPA</th>
-                                                    <th className="border-0">Family Income</th>
-                                                    <th className="border-0">Issues</th>
-                                                </tr>
+                                                    <tr>
+                                                        <th className="border-0">Status</th>
+                                                        <th className="border-0">Student ID</th>
+                                                        <th className="border-0">Name</th>
+                                                        <th className="border-0">Course</th>
+                                                        <th className="border-0">Year Level</th>
+                                                        <th className="border-0">GWA</th>
+                                                        <th className="border-0">Income</th>
+                                                        <th className="border-0">Issues</th>
+                                                    </tr>
                                                 </thead>
                                                 <tbody>
                                                 {previewData.map((record, index) => (
@@ -456,16 +767,27 @@ Jose Rizal,2024-003,jose.rizal@university.edu,2.8,15000`;
                                                     }>
                                                         <td>
                                                             <div className="d-flex align-items-center">
-                                                                {getStatusIcon(record.status || 'valid')}
+                                                                {getStatusIcon(record.status)}
                                                             </div>
                                                         </td>
-                                                        <td className="fw-medium">{record.name}</td>
-                                                        <td>{record.studentId || <span className="text-muted">—</span>}</td>
-                                                        <td>{record.email}</td>
+                                                        <td className="fw-medium">{record.studentId || <span className="text-muted">—</span>}</td>
+                                                        <td>{record.fullName}</td>
+                                                        <td>{record.course || <span className="text-muted">—</span>}</td>
+                                                        <td>{record.yearLevel || <span className="text-muted">—</span>}</td>
                                                         <td>
-                                                            <span className="badge bg-primary">{record.gpa}</span>
+                                                            {record.gwa > 0 ? (
+                                                                <span className="badge bg-primary">{record.gwa.toFixed(2)}</span>
+                                                            ) : (
+                                                                <span className="text-muted">—</span>
+                                                            )}
                                                         </td>
-                                                        <td>₱{record.familyIncome.toLocaleString()}</td>
+                                                        <td>
+                                                            {record.income > 0 ? (
+                                                                `₱${record.income.toLocaleString()}`
+                                                            ) : (
+                                                                <span className="text-muted">—</span>
+                                                            )}
+                                                        </td>
                                                         <td>
                                                             {record.errors && record.errors.length > 0 ? (
                                                                 <small className="text-danger">
@@ -480,6 +802,78 @@ Jose Rizal,2024-003,jose.rizal@university.edu,2.8,15000`;
                                                 </tbody>
                                             </table>
                                         </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Grades Preview (if available) */}
+                    {showPreview && gradesData.length > 0 && (
+                        <div className="row g-4 mt-2">
+                            <div className="col-12">
+                                <div className="card border-0 shadow-sm fade-in">
+                                    <div className="card-header bg-white border-bottom">
+                                        <div className="d-flex justify-content-between align-items-center">
+                                            <h5 className="card-title mb-0 fw-bold">Grade Records Preview</h5>
+                                            <span className="badge bg-info">{gradesData.length} grade records found</span>
+                                        </div>
+                                    </div>
+                                    <div className="card-body p-0">
+                                        <div className="table-responsive">
+                                            <table className="table table-hover mb-0">
+                                                <thead className="table-light">
+                                                    <tr>
+                                                        <th className="border-0">Status</th>
+                                                        <th className="border-0">Student ID</th>
+                                                        <th className="border-0">Subject Name</th>
+                                                        <th className="border-0">Grade</th>
+                                                        <th className="border-0">Units</th>
+                                                        <th className="border-0">Issues</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                {gradesData.slice(0, 10).map((record, index) => (
+                                                    <tr key={index} className={
+                                                        record.status === 'error' ? 'table-danger' :
+                                                            record.status === 'warning' ? 'table-warning' : ''
+                                                    }>
+                                                        <td>
+                                                            <div className="d-flex align-items-center">
+                                                                {getStatusIcon(record.status)}
+                                                            </div>
+                                                        </td>
+                                                        <td className="fw-medium">{record.studentId}</td>
+                                                        <td>{record.subjectName}</td>
+                                                        <td>
+                                                            {record.grade > 0 ? (
+                                                                <span className="badge bg-secondary">{record.grade.toFixed(2)}</span>
+                                                            ) : (
+                                                                <span className="text-muted">—</span>
+                                                            )}
+                                                        </td>
+                                                        <td>{record.units > 0 ? record.units : <span className="text-muted">—</span>}</td>
+                                                        <td>
+                                                            {record.errors && record.errors.length > 0 ? (
+                                                                <small className="text-danger">
+                                                                    {record.errors.join(', ')}
+                                                                </small>
+                                                            ) : (
+                                                                <span className="text-success small">✓ Valid</span>
+                                                            )}
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                        {gradesData.length > 10 && (
+                                            <div className="card-footer bg-light text-center">
+                                                <small className="text-muted">
+                                                    Showing first 10 of {gradesData.length} grade records
+                                                </small>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             </div>

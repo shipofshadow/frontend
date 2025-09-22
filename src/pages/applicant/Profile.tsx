@@ -316,96 +316,277 @@ const Profile: React.FC = () => {
                                 </div>
                             </div>
                             <div className="card-body">
-                                {/* Father's Information */}
-                                <div className="mb-4">
-                                    <h6 className="text-muted fw-bold mb-3 d-flex align-items-center">
-                                        <i className="fal fa-person text-primary me-2"></i>
-                                        Father's Information
-                                    </h6>
-                                    <div className="row g-3">
-                                        <div className="col-12">
-                                            <small className="text-muted">Full Name</small> <br/>
-                                            <div className="fw-semibold">
-                                                {profile.father_first_name || profile.father_last_name ?
-                                                    `${profile.father_first_name || ''} ${profile.father_middle_name ? profile.father_middle_name + ' ' : ''}${profile.father_last_name || ''} ${profile.father_extension || ''}`.trim()
-                                                    : "Not provided"
-                                                }
-                                            </div>
-                                        </div>
-                                        <div className="col-md-6">
-                                            <small className="text-muted">Occupation</small> <br/>
-                                            <div className="fw-semibold">
-                                                {profile.father_occupation || "Not provided"}
-                                            </div>
-                                        </div>
-                                        <div className="col-md-6">
-                                            <small className="text-muted">Monthly Income</small> <br/>
-                                            <div className="fw-semibold">
-                                                {profile.father_income || "Not provided"}
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
+    {/* Father's Information */}
+    <div className="mb-5">
+        <div className="d-flex align-items-center mb-4">
+            <div className="me-3 p-2 rounded-circle" style={{
+                background: 'linear-gradient(135deg, #3b82f6, #1e40af)',
+                width: '40px',
+                height: '40px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+            }}>
+                <i className="fal fa-person text-white" style={{ fontSize: '16px' }}></i>
+            </div>
+            <h6 className="fw-bold mb-0 text-dark">Father's Information</h6>
+        </div>
 
-                                {/* Mother's Information */}
-                                <div className="mb-4">
-                                    <h6 className="text-muted fw-bold mb-3 d-flex align-items-center">
-                                        <i className="fal fa-person text-danger me-2"></i>
-                                        Mother's Information
-                                    </h6>
-                                    <div className="row g-3">
-                                        <div className="col-12">
-                                            <small className="text-muted">Full Name</small> <br/>
-                                            <div className="fw-semibold">
-                                                {profile.mother_first_name || profile.mother_last_name ?
-                                                    `${profile.mother_first_name || ''} ${profile.mother_middle_name ? profile.mother_middle_name + ' ' : ''}${profile.mother_last_name || ''}`.trim()
-                                                    : "Not provided"
-                                                }
-                                            </div>
-                                        </div>
-                                        <div className="col-md-6">
-                                            <small className="text-muted">Occupation</small> <br/>
-                                            <div className="fw-semibold">
-                                                {profile.mother_occupation || "Not provided"}
-                                            </div>
-                                        </div>
-                                        <div className="col-md-6">
-                                            <small className="text-muted">Monthly Income</small> <br/>
-                                            <div className="fw-semibold">
-                                                {profile.mother_income || "Not provided"}
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* Household Information */}
-                                <div className="bg-light rounded-3 p-3">
-                                    <h6 className="text-muted fw-bold mb-3 d-flex align-items-center">
-                                        <i className="fal fa-house text-info me-2"></i>
-                                        Household Information
-                                    </h6>
-                                    <div className="row g-3 text-center">
-                                        <div className="col-4">
-                                            <div className="fw-bold text-primary fs-4">
-                                                {profile.household_number || "0"}
-                                            </div>
-                                            <small className="text-muted">Family Members</small>
-                                        </div>
-                                        <div className="col-4">
-                                            <div className="fw-bold text-warning fs-4">
-                                                {profile.siblings || "0"}
-                                            </div>
-                                            <small className="text-muted">Siblings</small>
-                                        </div>
-                                        <div className="col-4">
-                                            <div className="fw-bold text-success fs-4">
-                                                {profile.siblings_studying || "0"}
-                                            </div>
-                                            <small className="text-muted">In School</small>
-                                        </div>
-                                    </div>
+        <div className="card border-0 shadow-sm rounded-4" style={{
+            background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.05), rgba(30, 64, 175, 0.03))'
+        }}>
+            <div className="card-body p-4">
+                <div className="row g-4">
+                    <div className="col-12">
+                        <div className="d-flex align-items-start">
+                            <div className="me-3 mt-1">
+                                <div className="rounded-circle bg-primary bg-opacity-10 d-flex align-items-center justify-content-center"
+                                     style={{ width: '32px', height: '32px' }}>
+                                    <i className="fal fa-user text-primary" style={{ fontSize: '14px' }}></i>
                                 </div>
                             </div>
+                            <div className="flex-grow-1">
+                                <small className="text-muted text-uppercase fw-medium mb-1 d-block">Full Name</small>
+                                <div className="fw-semibold fs-6 text-dark">
+                                    {profile.father_first_name || profile.father_last_name ?
+                                        `${profile.father_first_name || ''} ${profile.father_middle_name ? profile.father_middle_name + ' ' : ''}${profile.father_last_name || ''} ${profile.father_extension || ''}`.trim()
+                                        : <span className="text-muted fst-italic">Not provided</span>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div className="col-md-6">
+                        <div className="d-flex align-items-start">
+                            <div className="me-3 mt-1">
+                                <div className="rounded-circle bg-success bg-opacity-10 d-flex align-items-center justify-content-center"
+                                     style={{ width: '32px', height: '32px' }}>
+                                    <i className="fal fa-briefcase text-success" style={{ fontSize: '14px' }}></i>
+                                </div>
+                            </div>
+                            <div className="flex-grow-1">
+                                <small className="text-muted text-uppercase fw-medium mb-1 d-block">Occupation</small>
+                                <div className="fw-semibold fs-6 text-dark">
+                                    {profile.father_occupation || <span className="text-muted fst-italic">Not provided</span>}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div className="col-md-6">
+                        <div className="d-flex align-items-start">
+                            <div className="me-3 mt-1">
+                                <div className="rounded-circle bg-warning bg-opacity-10 d-flex align-items-center justify-content-center"
+                                     style={{ width: '32px', height: '32px' }}>
+                                    <i className="fal fa-coins text-warning" style={{ fontSize: '14px' }}></i>
+                                </div>
+                            </div>
+                            <div className="flex-grow-1">
+                                <small className="text-muted text-uppercase fw-medium mb-1 d-block">Monthly Income</small>
+                                <div className="fw-semibold fs-6 text-dark">
+                                    {profile.father_income ? 
+                                        `₱${parseFloat(profile.father_income).toLocaleString('en-US', { minimumFractionDigits: 2 })}` : 
+                                        <span className="text-muted fst-italic">Not provided</span>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {/* Mother's Information */}
+    <div className="mb-5">
+        <div className="d-flex align-items-center mb-4">
+            <div className="me-3 p-2 rounded-circle" style={{
+                background: 'linear-gradient(135deg, #ec4899, #be185d)',
+                width: '40px',
+                height: '40px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+            }}>
+                <i className="fal fa-person text-white" style={{ fontSize: '16px' }}></i>
+            </div>
+            <h6 className="fw-bold mb-0 text-dark">Mother's Information</h6>
+        </div>
+
+        <div className="card border-0 shadow-sm rounded-4" style={{
+            background: 'linear-gradient(135deg, rgba(236, 72, 153, 0.05), rgba(190, 24, 93, 0.03))'
+        }}>
+            <div className="card-body p-4">
+                <div className="row g-4">
+                    <div className="col-12">
+                        <div className="d-flex align-items-start">
+                            <div className="me-3 mt-1">
+                                <div className="rounded-circle bg-danger bg-opacity-10 d-flex align-items-center justify-content-center"
+                                     style={{ width: '32px', height: '32px' }}>
+                                    <i className="fal fa-user text-danger" style={{ fontSize: '14px' }}></i>
+                                </div>
+                            </div>
+                            <div className="flex-grow-1">
+                                <small className="text-muted text-uppercase fw-medium mb-1 d-block">Full Name</small>
+                                <div className="fw-semibold fs-6 text-dark">
+                                    {profile.mother_first_name || profile.mother_last_name ?
+                                        `${profile.mother_first_name || ''} ${profile.mother_middle_name ? profile.mother_middle_name + ' ' : ''}${profile.mother_last_name || ''}`.trim()
+                                        : <span className="text-muted fst-italic">Not provided</span>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div className="col-md-6">
+                        <div className="d-flex align-items-start">
+                            <div className="me-3 mt-1">
+                                <div className="rounded-circle bg-success bg-opacity-10 d-flex align-items-center justify-content-center"
+                                     style={{ width: '32px', height: '32px' }}>
+                                    <i className="fal fa-briefcase text-success" style={{ fontSize: '14px' }}></i>
+                                </div>
+                            </div>
+                            <div className="flex-grow-1">
+                                <small className="text-muted text-uppercase fw-medium mb-1 d-block">Occupation</small>
+                                <div className="fw-semibold fs-6 text-dark">
+                                    {profile.mother_occupation || <span className="text-muted fst-italic">Not provided</span>}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div className="col-md-6">
+                        <div className="d-flex align-items-start">
+                            <div className="me-3 mt-1">
+                                <div className="rounded-circle bg-warning bg-opacity-10 d-flex align-items-center justify-content-center"
+                                     style={{ width: '32px', height: '32px' }}>
+                                    <i className="fal fa-coins text-warning" style={{ fontSize: '14px' }}></i>
+                                </div>
+                            </div>
+                            <div className="flex-grow-1">
+                                <small className="text-muted text-uppercase fw-medium mb-1 d-block">Monthly Income</small>
+                                <div className="fw-semibold fs-6 text-dark">
+                                    {profile.mother_income ? 
+                                        `₱${parseFloat(profile.mother_income).toLocaleString('en-US', { minimumFractionDigits: 2 })}` : 
+                                        <span className="text-muted fst-italic">Not provided</span>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {/* Household Information */}
+    <div>
+        <div className="d-flex align-items-center mb-4">
+            <div className="me-3 p-2 rounded-circle" style={{
+                background: 'linear-gradient(135deg, #06b6d4, #0891b2)',
+                width: '40px',
+                height: '40px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+            }}>
+                <i className="fal fa-house text-white" style={{ fontSize: '16px' }}></i>
+            </div>
+            <h6 className="fw-bold mb-0 text-dark">Household Information</h6>
+        </div>
+
+        <div className="card border-0 shadow-sm rounded-4" style={{
+            background: 'linear-gradient(135deg, rgba(6, 182, 212, 0.05), rgba(8, 145, 178, 0.03))'
+        }}>
+            <div className="card-body p-4">
+                <div className="row g-4">
+                    <div className="col-lg-4 col-md-6">
+                        <div className="text-center p-4 rounded-3" style={{
+                            background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(30, 64, 175, 0.05))',
+                            border: '1px solid rgba(59, 130, 246, 0.1)'
+                        }}>
+                            <div className="mb-2">
+                                <i className="fal fa-users text-primary" style={{ fontSize: '24px' }}></i>
+                            </div>
+                            <div className="fw-bold text-primary display-6 mb-1">
+                                {profile.household_number || "0"}
+                            </div>
+                            <small className="text-muted text-uppercase fw-medium">Family Members</small>
+                        </div>
+                    </div>
+                    
+                    <div className="col-lg-4 col-md-6">
+                        <div className="text-center p-4 rounded-3" style={{
+                            background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(217, 119, 6, 0.05))',
+                            border: '1px solid rgba(245, 158, 11, 0.1)'
+                        }}>
+                            <div className="mb-2">
+                                <i className="fal fa-child text-warning" style={{ fontSize: '24px' }}></i>
+                            </div>
+                            <div className="fw-bold text-warning display-6 mb-1">
+                                {profile.siblings || "0"}
+                            </div>
+                            <small className="text-muted text-uppercase fw-medium">Siblings</small>
+                        </div>
+                    </div>
+                    
+                    <div className="col-lg-4 col-md-12">
+                        <div className="text-center p-4 rounded-3" style={{
+                            background: 'linear-gradient(135deg, rgba(34, 197, 94, 0.1), rgba(21, 128, 61, 0.05))',
+                            border: '1px solid rgba(34, 197, 94, 0.1)'
+                        }}>
+                            <div className="mb-2">
+                                <i className="fal fa-graduation-cap text-success" style={{ fontSize: '24px' }}></i>
+                            </div>
+                            <div className="fw-bold text-success display-6 mb-1">
+                                {profile.siblings_studying || "0"}
+                            </div>
+                            <small className="text-muted text-uppercase fw-medium">Currently Studying</small>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Additional Family Info */}
+                {(profile.is_4ps_member || profile.ip_affiliation) && (
+                    <div className="mt-4 pt-4 border-top">
+                        <div className="row g-3">
+                            {profile.is_4ps_member && (
+                                <div className="col-md-6">
+                                    <div className="d-flex align-items-center p-3 rounded-3" style={{
+                                        background: 'linear-gradient(135deg, rgba(34, 197, 94, 0.1), rgba(21, 128, 61, 0.05))',
+                                        border: '1px solid rgba(34, 197, 94, 0.2)'
+                                    }}>
+                                        <i className="fal fa-check-circle text-success me-3" style={{ fontSize: '20px' }}></i>
+                                        <div>
+                                            <div className="fw-semibold text-dark">4Ps Member</div>
+                                            <small className="text-muted">Pantawid Pamilyang Pilipino Program</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                            {profile.ip_affiliation && (
+                                <div className="col-md-6">
+                                    <div className="d-flex align-items-center p-3 rounded-3" style={{
+                                        background: 'linear-gradient(135deg, rgba(168, 85, 247, 0.1), rgba(124, 58, 237, 0.05))',
+                                        border: '1px solid rgba(168, 85, 247, 0.2)'
+                                    }}>
+                                        <i className="fal fa-leaf text-purple me-3" style={{ fontSize: '20px' }}></i>
+                                        <div>
+                                            <div className="fw-semibold text-dark">IP Affiliation</div>
+                                            <small className="text-muted">{profile.ip_affiliation}</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                )}
+            </div>
+        </div>
+    </div>
+</div>
+
                         </div>
 
                         {/* Additional Information */}
@@ -427,7 +608,7 @@ const Profile: React.FC = () => {
                                         </div>
                                         <div className="fw-semibold">
                       <span className={`badge ${profile.is_4ps_member ? 'bg-success' : 'bg-secondary'} px-3 py-2 rounded-pill`}>
-                        <i className={`fal ${profile.is_4ps_member ? 'fa-check-circle' : 'fa-x-circle'} me-1`}></i>
+                        <i className={`bi ${profile.is_4ps_member ? 'bi-check-circle' : 'bi-x-circle'} me-1`}></i>
                           {profile.is_4ps_member ? "Yes" : "No"}
                       </span>
                                         </div>
