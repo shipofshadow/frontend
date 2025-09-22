@@ -45,12 +45,12 @@ import StudentScholarshipReport from "../pages/admin/reports/StudentScholarshipR
 import Prequalify from "../pages/applicant/Prequalify.tsx";
 import ApplicationsList from "../pages/applicant/ApplicationLists.tsx";
 import ResetPassword from "../pages/ResetPassword.tsx";
-import ViewApplication from "../pages/applicant/ViewApplication.tsx";
+import ViewApplication from "../pages/admin/ViewApplication.tsx";
 import {IndexLayout} from "../layouts/IndexLayout.tsx";
 import AuthCallback from "../context/AuthCallback.tsx";
 import CompleteProfile from "../pages/CompleteProfile.tsx";
 import PrivacyPolicyPage from "../pages/PrivacyPolicyPage.tsx";
-
+import SelectedScholarshipView from "../pages/applicant/SelectedScholarshipView.tsx";   
 export function AuthRedirect() {
     const { isAuthenticated, isAdmin, isStudent } = useAuth();
 
@@ -119,6 +119,9 @@ const AppRoutes: React.FC = () => {
 
                     <Route path="notifications" element={<Notifications/>} />
 
+                    <Route path="applications/:id/mock" element={<ViewApplication/>} />
+
+
 
                 </Route>
             </Route>
@@ -138,6 +141,7 @@ const AppRoutes: React.FC = () => {
                     <Route path="prequalify" element={<Prequalify />} />
                     <Route path="applications" element={<ApplicationsList />} />
                     <Route path="application/view" element={<ViewApplication />} />
+                    <Route path="test" element={<SelectedScholarshipView />} />
                 </Route>
             </Route>
 
