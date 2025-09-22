@@ -398,7 +398,7 @@
                           <Brain size={28} />
                         </div>
                         <h5 className="fw-bold">4. Get Matched</h5>
-                        <p className="text-muted">Our AI system evaluates and recommends the best scholarships for you.</p>
+                        <p className="text-muted">Our System evaluates and recommends the best scholarships for you.</p>
                       </div>
                     </div>
                   </div>
@@ -718,7 +718,7 @@
             }
             
             .accordion-button:not(.collapsed) {
-              color: #0d6efd;
+              color: #2F3D7E;
               box-shadow: none;
             }
             
