@@ -50,7 +50,7 @@ import {IndexLayout} from "../layouts/IndexLayout.tsx";
 import AuthCallback from "../context/AuthCallback.tsx";
 import CompleteProfile from "../pages/CompleteProfile.tsx";
 import PrivacyPolicyPage from "../pages/PrivacyPolicyPage.tsx";
-import SelectedScholarshipView from "../pages/applicant/SelectedScholarshipView.tsx";   
+import Application from "../pages/applicant/Application.tsx";
 export function AuthRedirect() {
     const { isAuthenticated, isAdmin, isStudent } = useAuth();
 
@@ -141,7 +141,7 @@ const AppRoutes: React.FC = () => {
                     <Route path="prequalify" element={<Prequalify />} />
                     <Route path="applications" element={<ApplicationsList />} />
                     <Route path="application/view" element={<ViewApplication />} />
-                    <Route path="test" element={<SelectedScholarshipView />} />
+                    <Route path="application/:application_id" element={<Application />} />
                 </Route>
             </Route>
 
