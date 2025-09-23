@@ -358,7 +358,7 @@ const Apply = () => {
     };
 
     return (
-        <div className="container p-2">
+        <div className="container-fluid p-2">
             <div className="card">
                 <div className="card-header border-bottom">
                     <div className="nav nav-pills nav-justified flex-column flex-xl-row nav-wizard">

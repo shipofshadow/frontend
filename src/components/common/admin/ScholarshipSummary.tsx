@@ -499,95 +499,10 @@ const ScholarshipSummary: React.FC<ScholarshipSummaryProps> = ({ studentId }) =>
                                                                                     {appData.evaluation.classification}
                                                                                 </span>
                                                                                     </div>
-                                                                                    <div className="d-flex justify-content-between align-items-center">
-                                                                                        <span className="fw-medium">Reviewed:</span>
-                                                                                        <span className={`badge ${appData.evaluation.admin_reviewed ? 'bg-success' : 'bg-danger'}`}>
-                                                                                    <i className={`fas fa-${appData.evaluation.admin_reviewed ? 'check' : 'times'} me-1`}></i>
-                                                                                            {appData.evaluation.admin_reviewed ? 'Yes' : 'No'}
-                                                                                </span>
-                                                                                    </div>
+
                                                                                 </div>
                                                                             </div>
                                                                         </div>
-                                                                    </div>
-                                                                </div>
-                                                            )}
-
-                                                            {/* Recommended Scholarships */}
-                                                            {appData.recommended_scholarships.length > 0 && (
-                                                                <div className="mb-4">
-                                                                    <div className="d-flex align-items-center justify-content-between mb-3">
-                                                                        <h6 className="text-info fw-bold mb-0">
-                                                                            <i className="fas fa-lightbulb me-2"></i>
-                                                                            Recommended Scholarships
-                                                                        </h6>
-                                                                        <span className="badge bg-info">
-                                                                    {appData.recommended_scholarships.length} Recommendation{appData.recommended_scholarships.length !== 1 ? 's' : ''}
-                                                                </span>
-                                                                    </div>
-                                                                    <div className="table-responsive">
-                                                                        <table className="table table-hover mb-0">
-                                                                            <thead className="table-light">
-                                                                            <tr>
-                                                                                <th className="border-0 fw-semibold">Scholarship</th>
-                                                                                <th className="border-0 fw-semibold d-none d-sm-table-cell">Amount</th>
-                                                                                <th className="border-0 fw-semibold text-center">Score</th>
-                                                                                <th className="border-0 fw-semibold text-center d-none d-md-table-cell">Classification</th>
-                                                                                <th className="border-0 fw-semibold d-none d-lg-table-cell">Eligibility</th>
-                                                                            </tr>
-                                                                            </thead>
-                                                                            <tbody>
-                                                                            {appData.recommended_scholarships.map((scholarship) => (
-                                                                                <tr key={scholarship.id} className="align-middle">
-                                                                                    <td>
-                                                                                        <div>
-                                                                                            <div className="fw-semibold text-dark">{scholarship.scholarship_name}</div>
-                                                                                            {scholarship.scholarship_description && (
-                                                                                                <small className="text-muted d-block mt-1">
-                                                                                                    {scholarship.scholarship_description}
-                                                                                                </small>
-                                                                                            )}
-                                                                                            <div className="d-sm-none mt-2">
-                                                                                            <span className="badge bg-success me-2">
-                                                                                                {formatCurrency(scholarship.grant_amount)}
-                                                                                            </span>
-                                                                                                <span className={`badge ${getClassificationBadgeClass(scholarship.classification)} d-md-none`}>
-                                                                                                {scholarship.classification}
-                                                                                            </span>
-                                                                                            </div>
-                                                                                        </div>
-                                                                                    </td>
-                                                                                    <td className="d-none d-sm-table-cell">
-                                                                                    <span className="fw-medium text-success">
-                                                                                        {formatCurrency(scholarship.grant_amount)}
-                                                                                    </span>
-                                                                                    </td>
-                                                                                    <td className="text-center">
-                                                                                    <span className="badge bg-primary fw-bold">
-                                                                                        {(scholarship.score).toFixed(2)}%
-                                                                                    </span>
-                                                                                    </td>
-                                                                                    <td className="text-center d-none d-md-table-cell">
-                                                                                    <span className={`badge ${getClassificationBadgeClass(scholarship.classification)}`}>
-                                                                                        {scholarship.classification}
-                                                                                    </span>
-                                                                                    </td>
-                                                                                    <td className="d-none d-lg-table-cell">
-                                                                                        {scholarship.eligibility_reasons && (
-                                                                                            <small className="text-muted">
-                                                                                                {typeof scholarship.eligibility_reasons === 'string'
-                                                                                                    ? scholarship.eligibility_reasons
-                                                                                                    : Array.isArray(scholarship.eligibility_reasons)
-                                                                                                        ? scholarship.eligibility_reasons.join(', ')
-                                                                                                        : JSON.stringify(scholarship.eligibility_reasons)
-                                                                                                }
-                                                                                            </small>
-                                                                                        )}
-                                                                                    </td>
-                                                                                </tr>
-                                                                            ))}
-                                                                            </tbody>
-                                                                        </table>
                                                                     </div>
                                                                 </div>
                                                             )}
@@ -674,6 +589,89 @@ const ScholarshipSummary: React.FC<ScholarshipSummaryProps> = ({ studentId }) =>
                                                                     </div>
                                                                 </div>
                                                             )}
+
+                                                            {/* Recommended Scholarships */}
+                                                            {appData.recommended_scholarships.length > 0 && (
+                                                                <div className="mb-4">
+                                                                    <div className="d-flex align-items-center justify-content-between mb-3">
+                                                                        <h6 className="text-info fw-bold mb-0">
+                                                                            <i className="fas fa-lightbulb me-2"></i>
+                                                                            Recommended Scholarships
+                                                                        </h6>
+                                                                        <span className="badge bg-info">
+                                                                    {appData.recommended_scholarships.length} Recommendation{appData.recommended_scholarships.length !== 1 ? 's' : ''}
+                                                                </span>
+                                                                    </div>
+                                                                    <div className="table-responsive">
+                                                                        <table className="table table-hover mb-0">
+                                                                            <thead className="table-light">
+                                                                            <tr>
+                                                                                <th className="border-0 fw-semibold">Scholarship</th>
+                                                                                <th className="border-0 fw-semibold d-none d-sm-table-cell">Amount</th>
+                                                                                <th className="border-0 fw-semibold text-center">Score</th>
+                                                                                <th className="border-0 fw-semibold text-center d-none d-md-table-cell">Classification</th>
+                                                                                <th className="border-0 fw-semibold d-none d-lg-table-cell">Eligibility</th>
+                                                                            </tr>
+                                                                            </thead>
+                                                                            <tbody>
+
+
+                                                                            {appData.recommended_scholarships.map((scholarship) => (
+                                                                                <tr key={scholarship.id} className="align-middle">
+                                                                                    <td>
+                                                                                        <div>
+                                                                                            <div className="fw-semibold text-dark">{scholarship.scholarship_name}</div>
+                                                                                            {scholarship.scholarship_description && (
+                                                                                                <small className="text-muted d-block mt-1">
+                                                                                                    {scholarship.scholarship_description}
+                                                                                                </small>
+                                                                                            )}
+                                                                                            <div className="d-sm-none mt-2">
+                                                                                            <span className="badge bg-success me-2">
+                                                                                                {formatCurrency(scholarship.grant_amount)}
+                                                                                            </span>
+                                                                                                <span className={`badge ${getClassificationBadgeClass(scholarship.classification)} d-md-none`}>
+                                                                                                {scholarship.classification}
+                                                                                            </span>
+                                                                                            </div>
+                                                                                        </div>
+                                                                                    </td>
+                                                                                    <td className="d-none d-sm-table-cell">
+                                                                                    <span className="fw-medium text-success">
+                                                                                        {formatCurrency(scholarship.grant_amount)}
+                                                                                    </span>
+                                                                                    </td>
+                                                                                    <td className="text-center">
+                                                                                    <span className="badge bg-primary fw-bold">
+                                                                                        {(scholarship.score).toFixed(2)}%
+                                                                                    </span>
+                                                                                    </td>
+                                                                                    <td className="text-center d-none d-md-table-cell">
+                                                                                    <span className={`badge ${getClassificationBadgeClass(scholarship.classification)}`}>
+                                                                                        {scholarship.classification}
+                                                                                    </span>
+                                                                                    </td>
+                                                                                    <td className="d-none d-lg-table-cell">
+                                                                                        {scholarship.eligibility_reasons && (
+                                                                                            <small className="text-muted">
+                                                                                                {typeof scholarship.eligibility_reasons === 'string'
+                                                                                                    ? scholarship.eligibility_reasons
+                                                                                                    : Array.isArray(scholarship.eligibility_reasons)
+                                                                                                        ? scholarship.eligibility_reasons.join(', ')
+                                                                                                        : JSON.stringify(scholarship.eligibility_reasons)
+                                                                                                }
+                                                                                            </small>
+                                                                                        )}
+                                                                                    </td>
+                                                                                </tr>
+                                                                            ))}
+                                                                            </tbody>
+                                                                        </table>
+                                                                    </div>
+                                                                </div>
+                                                            )}
+
+
 
                                                             {/* No Additional Data Message */}
                                                             {!appData.evaluation && appData.recommended_scholarships.length === 0 && appData.selected_scholarships.length === 0 && (

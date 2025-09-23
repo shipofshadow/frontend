@@ -43,7 +43,6 @@ import ManageScholarships from "../pages/admin/scholarships/ManageScholarships.t
 import ScholarshipDashboard from "../pages/admin/scholarships/ScholarshipDashboard.tsx";
 import StudentScholarshipReport from "../pages/admin/reports/StudentScholarshipReport.tsx";
 import Prequalify from "../pages/applicant/Prequalify.tsx";
-import ApplicationsList from "../pages/applicant/ApplicationLists.tsx";
 import ResetPassword from "../pages/ResetPassword.tsx";
 import ViewApplication from "../pages/admin/ViewApplication.tsx";
 import {IndexLayout} from "../layouts/IndexLayout.tsx";
@@ -139,7 +138,6 @@ const AppRoutes: React.FC = () => {
                     <Route path="settings" element={<Settings />} />
                     <Route path="notifications" element={<Notifications/>} />
                     <Route path="prequalify" element={<Prequalify />} />
-                    <Route path="applications" element={<ApplicationsList />} />
                     <Route path="application/view" element={<ViewApplication />} />
                     <Route path="application/:application_id" element={<Application />} />
                 </Route>

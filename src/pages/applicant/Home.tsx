@@ -41,9 +41,6 @@ const Home = () => {
 
     const applicant = applications?.applications?.[0] ?? null;
 
-    console.log("Applications", applications);
-    console.log("Applicant", applicant);
-
     useEffect(() => {
         setIsLoading(true);
         hasApplied(token)
@@ -60,13 +57,14 @@ const Home = () => {
     const recommended = applicant?.recommended_scholarships ?? [];
 
     // Format submitted date
-    const formatDate = (dateString: string) => {
-        return new Date(dateString).toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
+    const formatDate = (dateString) => {
+        if (!dateString) return "N/A";
+        return new Date(dateString).toLocaleDateString("en-US", {
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
         });
     };
 
@@ -77,6 +75,8 @@ const Home = () => {
                 return { class: 'bg-success', icon: CheckCircle, text: 'Approved' };
             case 'pending':
                 return { class: 'bg-warning text-dark', icon: Clock, text: 'Under Review' };
+            case 'evaluated':
+                return { class: 'bg-secondary text-white', icon: Clock, text: 'Evaluated' };
             case 'denied':
                 return { class: 'bg-danger', icon: XCircle, text: 'Not Approved' };
             default:
@@ -199,7 +199,7 @@ const Home = () => {
                                             <span className="fw-medium">Submitted</span>
                                         </div>
                                         <span className="fw-bold">
-                                            {applicationInfo?.submitted_at ? formatDate(applicationInfo.submitted_at) : 'N/A'}
+                                            {applicant?.application?.submitted_at ? formatDate(applicant?.application?.submitted_at) : 'N/A'}
                                         </span>
                                     </div>
                                 </div>
@@ -279,10 +279,14 @@ const Home = () => {
                     )}
 
                     <div className="d-flex gap-2 flex-wrap">
-                        <button className="btn btn-primary">
+                        <Link
+                            to={`/applicant/application/${applicant?.application?.id}`}
+                            className="btn btn-primary"
+                        >
                             <Eye size={18} className="me-2" />
                             View Full Application
-                        </button>
+                        </Link>
+
                         <button className="btn btn-outline-secondary">
                             <Download size={18} className="me-2" />
                             Download PDF
@@ -414,104 +418,55 @@ const Home = () => {
                         {/* Conditional Application Status */}
                         {applicationInfo?.has_applied ? <AppliedView /> : <NotAppliedView />}
 
-                        {/* Show additional sections only if applied and approved/pending */}
-                        {applicationInfo?.has_applied && applicationInfo.status !== 'denied' && (
-                            <>
-                                {/* Enhanced Eligibility Assessment */}
-                                <section className="card shadow-sm border-0 rounded-4 mb-4">
-                                    <div className="card-header bg-gradient border-0 rounded-top-4">
-                                        <div className="d-flex align-items-center">
-                                            <div className="bg-success bg-opacity-15 rounded-3 p-2 me-3">
-                                                <TrendingUp className="text-white" size={20} />
-                                            </div>
-                                            <h5 className="mb-0 fw-bold">Eligibility Assessment</h5>
-                                        </div>
+
+
+                        {/* Support & Help */}
+                        <section className="card shadow-sm border-0 rounded-4">
+                            <div className="card-header bg-gradient border-0 rounded-top-4">
+                                <div className="d-flex align-items-center">
+                                    <MessageCircle className="text-success me-2" size={20} />
+                                    <h5 className="fw-bold mb-0">Need Help?</h5>
+                                </div>
+                            </div>
+                            <div className="card-body">
+                                <div className="text-center mb-3">
+                                    <div className="bg-success bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style={{width: "64px", height: "64px"}}>
+                                        <MessageCircle className="text-success" size={32} />
                                     </div>
-                                    <div className="card-body">
-                                        <div className="row mb-4">
-                                            <div className="col-md-4 text-center mb-3">
-                                                <div className="position-relative d-inline-block">
-                                                    <svg width="120" height="120" viewBox="0 0 120 120">
-                                                        <circle cx="60" cy="60" r="50" fill="none" stroke="#e9ecef" strokeWidth="8"/>
-                                                        <circle cx="60" cy="60" r="50" fill="none" stroke="#198754" strokeWidth="8"
-                                                                strokeDasharray="314" strokeDashoffset="56" strokeLinecap="round"
-                                                                transform="rotate(-90 60 60)"/>
-                                                    </svg>
-                                                    <div className="position-absolute top-50 start-50 translate-middle text-center">
-                                                        <div className="display-6 fw-bold text-success">{eligibilityScore}</div>
-                                                        <small className="text-muted">Score</small>
-                                                    </div>
-                                                </div>
-                                                <div className="mt-3">
-                                                    <span className="badge bg-success-subtle text-success px-3 py-2 rounded-pill fs-6">
-                                                        <Star size={16} className="me-1" />
-                                                        Highly Qualified
-                                                    </span>
-                                                </div>
-                                            </div>
-                                            <div className="col-md-8">
-                                                <h6 className="text-muted mb-3">Assessment Breakdown</h6>
-                                                <div className="mb-3">
-                                                    <div className="d-flex justify-content-between align-items-center mb-2">
-                                                        <div className="d-flex align-items-center">
-                                                            <CheckCircle className="text-success me-2" size={18} />
-                                                            <span className="fw-medium">Academic Performance (GWA: 1.75)</span>
-                                                        </div>
-                                                        <span className="fw-bold text-success">95%</span>
-                                                    </div>
-                                                    <div className="progress mb-3" style={{height: "6px"}}>
-                                                        <div className="progress-bar bg-success" style={{width: "95%"}}></div>
-                                                    </div>
-                                                </div>
+                                    <h6 className="fw-bold mb-2">Get Support</h6>
+                                    <p className="small text-muted mb-3">
+                                        Our support team is here to help with your scholarship application process.
+                                    </p>
+                                </div>
 
-                                                <div className="mb-3">
-                                                    <div className="d-flex justify-content-between align-items-center mb-2">
-                                                        <div className="d-flex align-items-center">
-                                                            <CheckCircle className="text-success me-2" size={18} />
-                                                            <span className="fw-medium">Financial Need Assessment</span>
-                                                        </div>
-                                                        <span className="fw-bold text-success">85%</span>
-                                                    </div>
-                                                    <div className="progress mb-3" style={{height: "6px"}}>
-                                                        <div className="progress-bar bg-success" style={{width: "85%"}}></div>
-                                                    </div>
-                                                </div>
+                                <div className="d-grid gap-2">
+                                    <button className="btn btn-success">
+                                        <MessageCircle size={18} className="me-2" />
+                                        Live Chat Support
+                                    </button>
+                                    <button className="btn btn-outline-secondary">
+                                        <BookOpen size={18} className="me-2" />
+                                        View FAQ
+                                    </button>
+                                    <button className="btn btn-outline-info">
+                                        <FileText size={18} className="me-2" />
+                                        User Guide
+                                    </button>
+                                </div>
 
-                                                <div className="mb-3">
-                                                    <div className="d-flex justify-content-between align-items-center mb-2">
-                                                        <div className="d-flex align-items-center">
-                                                            <AlertTriangle className="text-warning me-2" size={18} />
-                                                            <span className="fw-medium">Documentation Completeness</span>
-                                                        </div>
-                                                        <span className="fw-bold text-warning">67%</span>
-                                                    </div>
-                                                    <div className="progress mb-3" style={{height: "6px"}}>
-                                                        <div className="progress-bar bg-warning" style={{width: "67%"}}></div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
+                                <hr className="my-3" />
 
-                                        <div className="bg-light rounded-3 p-3">
-                                            <div className="d-flex align-items-start">
-                                                <Info className="text-primary me-2 mt-1 flex-shrink-0" size={20} />
-                                                <div>
-                                                    <h6 className="mb-2">Recommendation to Improve Score:</h6>
-                                                    <ul className="mb-0 small">
-                                                        <li>Upload missing Income Tax Return document (+15 points)</li>
-                                                        <li>Submit updated Certificate of Enrollment (+8 points)</li>
-                                                        <li>Complete family background information (+5 points)</li>
-                                                    </ul>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </section>
+                                <div className="text-center">
+                                    <small className="text-muted">
+                                        <strong>Office Hours:</strong><br />
+                                        Monday - Friday: 8:00 AM - 5:00 PM<br />
+                                        <strong>Email:</strong> scholarships@university.edu.ph
+                                    </small>
+                                </div>
+                            </div>
+                        </section>
 
-                                {/* Scholarship Recommendations - Enhanced */}
-                                <ScholarshipRecommendations recommendedScholarships={recommended}/>
-                            </>
-                        )}
+
                     </div>
 
                     {/* Right Column - Secondary Content */}
@@ -523,13 +478,13 @@ const Home = () => {
                             </div>
                             <div className="card-body d-grid gap-3">
                                 {!applicationInfo?.has_applied ? (
-                                    <button className="btn btn-primary d-flex align-items-center justify-content-between rounded-3 py-3">
+                                    <Link to="/applicant/apply" className="btn btn-primary d-flex align-items-center justify-content-between rounded-3 py-3">
                                         <div className="d-flex align-items-center">
                                             <Plus size={20} className="me-3" />
                                             <span className="fw-semibold">New Application</span>
                                         </div>
                                         <ArrowRight size={18} />
-                                    </button>
+                                    </Link>
                                 ) : (
                                     <button className="btn btn-outline-primary d-flex align-items-center justify-content-between rounded-3 py-3">
                                         <div className="d-flex align-items-center">
@@ -613,51 +568,6 @@ const Home = () => {
                             </div>
                         </section>
 
-                        {/* Support & Help */}
-                        <section className="card shadow-sm border-0 rounded-4">
-                            <div className="card-header bg-gradient border-0 rounded-top-4">
-                                <div className="d-flex align-items-center">
-                                    <MessageCircle className="text-success me-2" size={20} />
-                                    <h5 className="fw-bold mb-0">Need Help?</h5>
-                                </div>
-                            </div>
-                            <div className="card-body">
-                                <div className="text-center mb-3">
-                                    <div className="bg-success bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style={{width: "64px", height: "64px"}}>
-                                        <MessageCircle className="text-success" size={32} />
-                                    </div>
-                                    <h6 className="fw-bold mb-2">Get Support</h6>
-                                    <p className="small text-muted mb-3">
-                                        Our support team is here to help with your scholarship application process.
-                                    </p>
-                                </div>
-
-                                <div className="d-grid gap-2">
-                                    <button className="btn btn-success">
-                                        <MessageCircle size={18} className="me-2" />
-                                        Live Chat Support
-                                    </button>
-                                    <button className="btn btn-outline-secondary">
-                                        <BookOpen size={18} className="me-2" />
-                                        View FAQ
-                                    </button>
-                                    <button className="btn btn-outline-info">
-                                        <FileText size={18} className="me-2" />
-                                        User Guide
-                                    </button>
-                                </div>
-
-                                <hr className="my-3" />
-
-                                <div className="text-center">
-                                    <small className="text-muted">
-                                        <strong>Office Hours:</strong><br />
-                                        Monday - Friday: 8:00 AM - 5:00 PM<br />
-                                        <strong>Email:</strong> scholarships@university.edu.ph
-                                    </small>
-                                </div>
-                            </div>
-                        </section>
                     </div>
                 </div>
 
