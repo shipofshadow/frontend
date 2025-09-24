@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import {
     Award,
     Calendar,
@@ -34,6 +34,11 @@ interface ScholarshipStatusResponse {
     selection_reason: string;
     denial_reason?: string;
     status: "pending" | "evaluated" | "approved" | "denied";  // overall state
+    admin_contact: {
+        name: string;
+        email: string;
+        phone: string;
+    }
     common: {
         application: {
             id: number;
@@ -70,7 +75,7 @@ interface ScholarshipStatusResponse {
 
 
 const Application = () => {
-    const [scholarship, setScholarship] = useState<ScholarshipStatusResponse>(null);
+    const [scholarship, setScholarship] = useState<ScholarshipStatusResponse>();
     const [activeTab, setActiveTab] = useState("overview");
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -91,8 +96,8 @@ const Application = () => {
                     }
                 );
                 setScholarship(res.data);
-            } catch (err: any) {
-                setError(err.response?.data?.error || err.message || "Failed to fetch scholarship data");
+            } catch {
+                setError("Failed to fetch scholarship data");
             } finally {
                 setLoading(false);
             }
@@ -107,7 +112,7 @@ const Application = () => {
 
 
 
-    const getStatusConfig = (status) => {
+    const getStatusConfig = (status: string) => {
         switch (status) {
             case "pending":
                 return {
@@ -157,7 +162,7 @@ const Application = () => {
         }
     };
 
-    const formatDate = (dateString) => {
+    const formatDate = (dateString: string) => {
         if (!dateString) return "N/A";
         return new Date(dateString).toLocaleDateString("en-US", {
             year: "numeric",
@@ -168,7 +173,7 @@ const Application = () => {
         });
     };
 
-    const formatCurrency = (amount) => {
+    const formatCurrency = (amount: number) => {
         return new Intl.NumberFormat("en-PH", {
             style: "currency",
             currency: "PHP",
@@ -736,7 +741,7 @@ const Application = () => {
                                                     }
                                                 };
 
-                                                const getFileTypeLabel = (type) => {
+                                                const getFileTypeLabel = (type: string) => {
                                                     switch(type) {
                                                         case 'itr': return 'Income Tax Return';
                                                         case 'grades': return 'Academic Records';
