@@ -13,14 +13,12 @@ import {
     CheckCircle,
     Clock,
     XCircle,
-    AlertTriangle,
     BookOpen,
     Award,
-    Star,
     ArrowRight,
     Info,
     Library,
-    Send
+    Send, Search
 } from "lucide-react";
 
 import type { ApplicationStatus } from "../../interfaces/application_status.ts";
@@ -30,7 +28,6 @@ import { useDispatch, useSelector } from "react-redux";
 import { fetchSemester } from "../../store/slices/semesterSlice.ts";
 import type { AppDispatch, RootState } from "../../store/slices";
 import {Link} from "react-router-dom";
-import ScholarshipRecommendations from "../../components/common/applicant/ScholarshipRecommendations.tsx";
 
 const Home = () => {
     const { user, token, applications} = useAuth();
@@ -54,10 +51,9 @@ const Home = () => {
     }, [dispatch]);
 
     const eligibilityScore = ((applicant?.evaluation?.score ?? 0) * 100).toFixed(2);
-    const recommended = applicant?.recommended_scholarships ?? [];
 
     // Format submitted date
-    const formatDate = (dateString) => {
+    const formatDate = (dateString: string) => {
         if (!dateString) return "N/A";
         return new Date(dateString).toLocaleDateString("en-US", {
             year: "numeric",
@@ -216,6 +212,7 @@ const Home = () => {
                                 <div className="fw-bold mb-1">{statusInfo.text}</div>
                                 <small className="text-muted">
                                     {applicationInfo?.status === 'pending' && 'Processing your application'}
+                                    {applicationInfo?.status === 'evaluated' && 'Processing your application!'}
                                     {applicationInfo?.status === 'approved' && 'Congratulations!'}
                                     {applicationInfo?.status === 'denied' && 'Please review requirements'}
                                 </small>
@@ -241,6 +238,7 @@ const Home = () => {
                             </div>
                         </div>
                     )}
+
 
                     {applicationInfo?.status === 'approved' && (
                         <div className="bg-success bg-opacity-10 rounded-3 p-3 mb-4">
@@ -273,6 +271,47 @@ const Home = () => {
                                     <small className="text-muted">
                                         You can contact the scholarship office for feedback and guidance.
                                     </small>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {applicationInfo?.status === 'evaluated' && (
+                        <div className="bg-info bg-opacity-10 rounded-3 p-3 mb-4">
+                            <div className="d-flex align-items-start">
+                                <Search className="text-info me-2 mt-1 flex-shrink-0" size={20} />
+                                <div>
+                                    <h6 className="fw-bold text-info mb-2">Application Evaluated</h6>
+                                    <p className="mb-2 small">
+                                        Your scholarship application has been successfully evaluated by our system.
+                                        Our admissions team is now reviewing the evaluation results for final decision.
+                                    </p>
+                                    <small className="text-muted">
+                                        Final approval decision will be communicated within 3-5 business days.
+                                    </small>
+
+                                    {applicant?.evaluation && (
+                                        <div className="mt-3 p-2 bg-light rounded-2">
+                                            <div className="d-flex align-items-center justify-content-between">
+                                                <span className="small fw-medium">Eligibility Score:</span>
+                                                <span className={`badge ${
+                                                    applicant?.evaluation?.score * 100 >= 80 ? 'bg-success' :
+                                                        applicant?.evaluation?.score * 100 >= 60 ? 'bg-warning' : 'bg-secondary'
+                                                } px-2 py-1`}>
+                                                    {applicant?.evaluation?.score * 100}
+                                                </span>
+                                            </div>
+                                            <div className="progress mt-2" style={{height: '4px'}}>
+                                                <div
+                                                    className={`progress-bar ${
+                                                        applicant?.evaluation?.score * 100 >= 80 ? 'bg-success' :
+                                                            applicant?.evaluation?.score * 100 >= 60 ? 'bg-warning' : 'bg-secondary'
+                                                    }`}
+                                                    style={{width: `${applicant?.evaluation?.score * 100}%`}}
+                                                ></div>
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </div>

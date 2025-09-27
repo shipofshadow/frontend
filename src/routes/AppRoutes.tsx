@@ -44,7 +44,6 @@ import ScholarshipDashboard from "../pages/admin/scholarships/ScholarshipDashboa
 import StudentScholarshipReport from "../pages/admin/reports/StudentScholarshipReport.tsx";
 import Prequalify from "../pages/applicant/Prequalify.tsx";
 import ResetPassword from "../pages/ResetPassword.tsx";
-import ViewApplication from "../pages/admin/ViewApplication.tsx";
 import {IndexLayout} from "../layouts/IndexLayout.tsx";
 import AuthCallback from "../context/AuthCallback.tsx";
 import CompleteProfile from "../pages/CompleteProfile.tsx";
@@ -118,9 +117,6 @@ const AppRoutes: React.FC = () => {
 
                     <Route path="notifications" element={<Notifications/>} />
 
-                    <Route path="applications/:id/mock" element={<ViewApplication/>} />
-
-
 
                 </Route>
             </Route>
@@ -138,7 +134,6 @@ const AppRoutes: React.FC = () => {
                     <Route path="settings" element={<Settings />} />
                     <Route path="notifications" element={<Notifications/>} />
                     <Route path="prequalify" element={<Prequalify />} />
-                    <Route path="application/view" element={<ViewApplication />} />
                     <Route path="application/:application_id" element={<Application />} />
                 </Route>
             </Route>

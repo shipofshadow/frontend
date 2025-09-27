@@ -491,16 +491,30 @@ const ScholarshipDashboard = () => {
     async function handleDeny(applicationId: number) {
         if (!applicationId) return;
 
-        const result = await Swal.fire({
-            title: 'Are you sure?',
-            text: 'Do you really want to deny this application?',
-            icon: 'warning',
+        const { value: reason } = await Swal.fire({
+            title: 'Deny Application',
+            text: 'Please provide a reason for denying this application:',
+            input: 'textarea',
+            inputPlaceholder: 'Enter reason for denial...',
+            inputAttributes: {
+                'aria-label': 'Reason for denial',
+                'rows': '4'
+            },
             showCancelButton: true,
-            confirmButtonText: 'Yes, deny it!',
-            cancelButtonText: 'Cancel'
+            confirmButtonText: 'Deny Application',
+            cancelButtonText: 'Cancel',
+            icon: 'warning',
+            inputValidator: (value) => {
+                if (!value || value.trim().length === 0) {
+                    return 'Please provide a reason for denial';
+                }
+                if (value.trim().length < 10) {
+                    return 'Reason must be at least 10 characters long';
+                }
+            }
         });
 
-        if (result.isConfirmed) {
+        if (reason) {
             try {
                 const response = await fetch(`${API_BASE_URL}/api/applicants/${applicationId}/deny`, {
                     method: 'POST',
@@ -508,13 +522,16 @@ const ScholarshipDashboard = () => {
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${token}`
                     },
+                    body: JSON.stringify({
+                        reason: reason.trim()
+                    })
                 });
 
                 if (!response.ok) throw new Error('Failed to deny application');
 
                 await Swal.fire(
-                    'Denied!',
-                    'The application has been denied.',
+                    'Application Denied',
+                    'The application has been denied and the applicant will be notified.',
                     'success'
                 );
 
@@ -527,7 +544,6 @@ const ScholarshipDashboard = () => {
             }
         }
     }
-
     return (
         <>
             <div className="min-vh-100 bg-light">
@@ -1037,29 +1053,50 @@ const ScholarshipDashboard = () => {
                                                             </div>
                                                         ) : evaluation ? (
                                                             /* No Eligible Scholarships State */
-                                                            <div className="text-center py-5">
-                                                                <div className="bg-warning bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-4" style={{width: '100px', height: '100px'}}>
-                                                                    <AlertCircle className="text-warning" size={40} />
+                                                            <div className="text-center py-6">
+                                                                <div className="bg-warning bg-opacity-10 rounded-3 d-inline-flex align-items-center justify-content-center mb-4 shadow-sm"
+                                                                     style={{width: '120px', height: '120px'}}>
+                                                                    <AlertCircle className="text-warning" size={48} />
                                                                 </div>
-                                                                <h5 className="text-warning fw-bold mb-3">No Eligible Scholarships Found</h5>
-                                                                <p className="text-muted mb-4 px-lg-5">
+
+                                                                <h4 className="text-warning fw-bold mb-4 fs-4">No Eligible Scholarships Found</h4>
+
+                                                                <p className="text-muted mb-5 px-lg-4 lh-base" style={{maxWidth: '500px', margin: '0 auto'}}>
                                                                     This applicant has been evaluated but doesn't meet the criteria for currently available scholarships.
                                                                     Consider reviewing scholarship requirements or waiting for new opportunities.
                                                                 </p>
-                                                                <div className="d-flex gap-3 justify-content-center flex-wrap mb-3">
-                                                                    <div className="bg-info bg-opacity-10 rounded-pill px-4 py-3 d-flex align-items-center gap-2">
-                                                                        <i className="bi bi-graph-up text-info"></i>
+
+                                                                <div className="d-flex gap-4 justify-content-center align-items-center flex-wrap mb-5">
+                                                                    <div className="bg-info bg-opacity-10 rounded-pill px-4 py-3 d-flex align-items-center gap-2 shadow-sm">
+                                                                        <i className="bi bi-graph-up text-info fs-5"></i>
                                                                         <span className="fw-semibold text-info">
-                                                    Evaluation Score: {(evaluation.score * 100).toFixed(12)}%
-                                                </span>
+                Evaluation Score: {(evaluation.score * 100).toFixed(2)}%
+            </span>
                                                                     </div>
+
                                                                     <div className="d-flex align-items-center">
                                                                         {getClassificationBadge(evaluation.classification)}
                                                                     </div>
                                                                 </div>
-                                                                <div className="alert alert-info bg-info bg-opacity-5 border-0 d-inline-block">
-                                                                    <small className="text-info">
-                                                                        <i className="bi bi-info-circle me-1"></i>
+
+                                                                <div className="d-flex justify-content-center mb-5">
+                                                                    <div className="bg-light bg-opacity-50 rounded-3 p-3 border">
+                                                                        <button
+                                                                            className="btn btn-outline-danger d-flex align-items-center justify-content-center gap-2 px-4 py-2"
+                                                                            onClick={() => handleDeny(app.id)}
+                                                                            disabled={app.status === 'denied'}
+                                                                        >
+                                                                            <XCircle size={16} />
+                                                                            <span className="fw-medium">
+                    {app.status === 'denied' ? 'Application Denied' : 'Deny Application'}
+                </span>
+                                                                        </button>
+                                                                    </div>
+                                                                </div>
+
+                                                                <div className="alert alert-info bg-info bg-opacity-5 border-info border-opacity-25 rounded-3 d-inline-block shadow-sm">
+                                                                    <small className="text-white fw-medium d-flex align-items-center justify-content-center gap-2">
+                                                                        <i className="fas fa-info-circle"></i>
                                                                         Student may be eligible for future scholarship opportunities
                                                                     </small>
                                                                 </div>
