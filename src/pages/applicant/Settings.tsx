@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import {useAuth} from "../../context/AuthContext.tsx";
+import { API_BASE_URL } from '../../config.ts';
+import Swal from 'sweetalert2';
+import { sha256 } from 'js-sha256';
 
 
 interface FormData {
@@ -43,9 +46,8 @@ const Settings: React.FC = () => {
         feedback: [],
         isValid: false
     });
-    const { user } = useAuth();
+    const { user, token } = useAuth();
     const profile = user?.profile;
-
 
 
     const [formData, setFormData] = useState<FormData>({
@@ -196,6 +198,8 @@ const Settings: React.FC = () => {
 
         // Reset password fields after successful password change
         if (activeTab === 'password') {
+
+            await handlePasswordChange();
             setFormData(prev => ({
                 ...prev,
                 currentPassword: '',
@@ -203,6 +207,64 @@ const Settings: React.FC = () => {
                 confirmPassword: ''
             }));
             setPasswordStrength({ score: 0, feedback: [], isValid: false });
+            setHasChanges(false);
+            setValidationErrors({});
+        }
+    };
+
+
+    
+    // Password change API call
+    const handlePasswordChange = async () => {
+        try {
+            const hashedNewPassword = sha256(formData.newPassword);
+            const hashedConfirmPassword = sha256(formData.confirmPassword);
+            const hashedCurrentPassword = sha256(formData.currentPassword);
+
+            const response = await fetch(`${API_BASE_URL}/api/profile/change-password`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    old_password: hashedCurrentPassword,
+                    new_password: hashedNewPassword,
+                    confirm_password: hashedConfirmPassword
+                })
+            });
+
+            const data = await response.json();
+            if (!response.ok) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Oops...',
+                    text: data.error || 'Failed to change password',
+                });
+                throw new Error(data.error || 'Failed to change password');
+            } else {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Success!',
+                    text: data.message || 'Password changed successfully',
+                });
+                console.log('Password changed successfully:', data.message);
+            }
+                
+            // Reset password fields after successful change
+            setFormData(prev => ({
+                ...prev,
+                currentPassword: '',
+                newPassword: '',
+                confirmPassword: ''
+            }));
+            setPasswordStrength({ score: 0, feedback: [], isValid: false });
+            setHasChanges(false);
+            setValidationErrors({});
+
+          
+        } catch (error) {
+            console.error('Password change error:', error);
         }
     };
 
@@ -235,6 +297,7 @@ const Settings: React.FC = () => {
 
     return (
         <div className="container-fluid py-4">
+            
             <div className="row justify-content-center">
                 <div className="col-xl-10 col-lg-12">
                     {/* Header */}

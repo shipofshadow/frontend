@@ -18,11 +18,13 @@ const Navbar: React.FC = () => {
     const ariaCurrent = (path: string) => (isActive(path) ? 'page' : undefined);
 
     const avatar = user?.profile?.avatar;
-    const path = avatar
-        ? avatar.startsWith("http")
-            ? avatar
-            : `${API_BASE_URL}/api/profile/avatar/${encodeURIComponent(avatar.split("/").pop()!)}`
-        : "/default.png";
+  const path = avatar
+    ? avatar.startsWith("http")
+        ? avatar
+        : `${API_BASE_URL}/api/profile/avatar/${encodeURIComponent(
+              avatar.replace(/^.*[\\/]/, "") // strip folders + normalize slashes
+          )}`
+    : "/default.png";
 
 
     const studentName =

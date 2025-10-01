@@ -8,32 +8,13 @@ const Profile: React.FC = () => {
 
        const avatar = user?.profile?.avatar;
         const path = avatar
-            ? avatar.startsWith("http")
-                ? avatar
-                : `${API_BASE_URL}/api/profile/avatar/${encodeURIComponent(avatar.split("/").pop()!)}`
-            : "/default.png";
+    ? avatar.startsWith("http")
+        ? avatar
+        : `${API_BASE_URL}/api/profile/avatar/${encodeURIComponent(
+              avatar.replace(/^.*[\\/]/, "") // strip folders + normalize slashes
+          )}`
+    : "/default.png";
 
-
-    if (!profile) {
-        return (
-            <div className="container py-5">
-                <div className="row justify-content-center">
-                    <div className="col-lg-6">
-                        <div className="alert alert-warning border-0 rounded-4 shadow-sm d-flex align-items-center gap-3">
-                            <i className="bi bi-exclamation-triangle-fill fs-4 text-warning"></i>
-                            <div>
-                                <h6 className="alert-heading mb-1">No Profile Data</h6>
-                                <p className="mb-0 small">Profile information could not be loaded.</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        );
-
-     
-
-    }
 
     return (
         <main className="min-vh-100 bg-light">
