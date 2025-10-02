@@ -98,12 +98,12 @@ const Register = () => {
 
         try {
             const hashedPassword = sha256(form.password);
-            await registerUser({
+            const response = await registerUser({
                 ...form,
                 password: hashedPassword
             });
 
-            notyf.success('Registration successful! Please login with your credentials.');
+            notyf.success(response.message || 'Registration successful! Please log in.');
             navigate('/login');
         } catch (err) {
             notyf.error(err instanceof Error ? err.message : 'Registration failed');
