@@ -11,7 +11,7 @@ import Dashboard from '../pages/admin/Dashboard';
 import NotFound from '../pages/errors/NotFound';
 import Apply from '../pages/applicant/Apply.tsx';
 import ProtectedRoute from './ProtectedRoute';
-import Profile from '../pages/applicant/Profile';
+import UserProfile from '../pages/applicant/UserProfile.tsx';
 import Home from '../pages/applicant/Home.tsx';
 import Register from '../pages/Register';
 import ForgotPassword from '../pages/ForgotPassword.tsx';
@@ -49,6 +49,7 @@ import AuthCallback from "../context/AuthCallback.tsx";
 import CompleteProfile from "../pages/CompleteProfile.tsx";
 import PrivacyPolicyPage from "../pages/PrivacyPolicyPage.tsx";
 import Application from "../pages/applicant/Application.tsx";
+import TermsOfServicePage from "../pages/TermsOfServicePage.tsx";
 export function AuthRedirect() {
     const { isAuthenticated, isAdmin, isStudent } = useAuth();
 
@@ -130,7 +131,7 @@ const AppRoutes: React.FC = () => {
                     <Route path="apply" element={<Apply />} />
                     <Route path="status" element={<Applications />} />
                     <Route path="home" element={<Home />} />
-                    <Route path="profile" element={<Profile />} />
+                    <Route path="profile" element={<UserProfile />} />
                     <Route path="settings" element={<Settings />} />
                     <Route path="notifications" element={<Notifications/>} />
                     <Route path="prequalify" element={<Prequalify />} />
@@ -146,6 +147,7 @@ const AppRoutes: React.FC = () => {
                 <Route path="forgot-password" element={<ForgotPassword />} />
                 <Route path="reset-password" element={<ResetPassword />} />
                 <Route path="privacy-policy" element={<PrivacyPolicyPage/>} />
+                <Route path="terms-of-service" element={<TermsOfServicePage/>} />
             </Route>
 
 

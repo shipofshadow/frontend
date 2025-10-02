@@ -73,22 +73,12 @@ const Footer = () => {
                             Contact Information
                         </h5>
 
-                        <div className="d-flex align-items-start mb-3 hover-effect">
-                            <MapPin size={18} className="me-3 mt-1 text-primary flex-shrink-0" />
-                            <div>
-                                <div className="text-white mb-1">Main Campus</div>
-                                <small className="text-muted">
-                                    Ilocos Sur Polytechnic State College<br />
-                                    Tagudin, Ilocos Sur, Philippines 2714
-                                </small>
-                            </div>
-                        </div>
 
                         <div className="d-flex align-items-center mb-3 hover-effect">
                             <Phone size={18} className="me-3 text-primary flex-shrink-0" />
                             <div>
                                 <div className="text-white mb-1">Phone</div>
-                                <small className="text-muted">+63 (077) 742-3081</small>
+                                <small className="text-muted">(077) 742-3081</small>
                             </div>
                         </div>
 
@@ -96,7 +86,7 @@ const Footer = () => {
                             <Mail size={18} className="me-3 text-primary flex-shrink-0" />
                             <div>
                                 <div className="text-white mb-1">Email</div>
-                                <small className="text-muted">info@ispsctagudin.edu.ph</small>
+                                <small className="text-muted">info@ispsc.edu.ph</small>
                             </div>
                         </div>
 

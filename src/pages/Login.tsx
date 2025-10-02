@@ -334,7 +334,7 @@ const Login: React.FC = () => {
 
 
                         <div className="row g-2 mb-3">
-                            <div className="col-6">
+                            <div className="col-12">
                                 <button
                                     type="button"
                                     className="btn btn-outline-secondary btn-sm w-100 d-flex align-items-center justify-content-center"
@@ -353,7 +353,7 @@ const Login: React.FC = () => {
                             <div className="col-6">
                                 <button
                                     type="button"
-                                    className="btn btn-primary btn-sm w-100 d-flex align-items-center justify-content-center"
+                                    className="btn btn-primary btn-sm w-100 d-flex align-items-center justify-content-center d-none"
                                     disabled={isLoading}
                                     onClick={() => handleFacebookLogin()}
                                     style={{ backgroundColor: '#1877F2', borderColor: '#1877F2' }}
@@ -378,8 +378,8 @@ const Login: React.FC = () => {
                         <div className="mt-3">
                             <small className="text-muted">
                                 By logging in, you agree to our
-                                <Link to="/terms" className="text-primary ms-1 me-1 text-decoration-none">Terms</Link> and
-                                <Link to="/privacy" className="text-primary ms-1 text-decoration-none">Privacy Policy</Link>
+                                <Link to="/terms-of-service" className="text-primary ms-1 me-1 text-decoration-none">Terms</Link> and
+                                <Link to="/privacy-policy" className="text-primary ms-1 text-decoration-none">Privacy Policy</Link>
                             </small>
                         </div>
                     </footer>
