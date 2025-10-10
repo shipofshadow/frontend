@@ -198,7 +198,7 @@ const Application = () => {
     };
 
     const handleBackToApplications = () => {
-        navigate("/applicant/home");
+        navigate("/applicant/status");
     };
 
     const getFileIcon = (type: string): JSX.Element => {

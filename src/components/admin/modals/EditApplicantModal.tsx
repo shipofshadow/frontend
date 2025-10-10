@@ -12,6 +12,7 @@ const EditApplicantModal: React.FC<Props> = ({ applicant }) => {
             </div>
         </div>
     );
+
     return (
         <>
             <p>Edit Applicant</p>

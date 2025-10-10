@@ -3,10 +3,10 @@ import React from "react";
 const PrivacyPolicyPage: React.FC = () => {
     return (
         <>
-            <div className="container py-4">
+            <div className="container py-5 mt-5">
                 <div className="row">
                     <div className="col-lg-12">
-                        <div className="card">
+                        <div className="card mt-5">
                             <div className="card-body">
                                 <h2>Privacy Policy</h2>
 

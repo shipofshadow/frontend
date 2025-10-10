@@ -40,7 +40,7 @@ export interface ApplicantData {
     is_ofw: boolean;
     is_pwd?: boolean;
     name: string;
-    status: 'pending' | 'approved' | 'denied' | string;
+    status: 'pending' | 'approved' | 'denied' | 'evaluated' | string;
     user_id: number;
     year_level: string;
 }
@@ -73,7 +73,6 @@ interface Selection {
 const ScholarshipDashboard = () => {
     const [activeTab, setActiveTab] = useState('evaluate');
     const [searchTerm, setSearchTerm] = useState('');
-    const [filterStatus] = useState('all');
     const {token} = useAuth();
     const [applications, setApplications] = useState<ApplicantData[]>([]);
     const [scholarships, setScholarships] = useState<Scholarship[]>([]);
@@ -439,7 +438,8 @@ const ScholarshipDashboard = () => {
         const variants: Record<string, { class: string; text: string; icon: React.ComponentType<any> }> = {
             pending: { class: 'text-bg-warning', text: 'Pending', icon: Clock },
             approved: { class: 'text-bg-success', text: 'Approved', icon: CheckCircle },
-            rejected: { class: 'text-bg-danger', text: 'Rejected', icon: AlertCircle }
+            rejected: { class: 'text-bg-danger', text: 'Rejected', icon: AlertCircle },
+            evaluated: { class: 'text-bg-primary', text: 'Evaluated', icon: Clock }
         };
 
         const config = variants[status] || variants.pending;
@@ -475,11 +475,15 @@ const ScholarshipDashboard = () => {
 
     const filteredApplications = applications.filter(app => {
         const courseInfo = getCourseInfo(app.course_id);
-        const matchesSearch = app.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        const matchesSearch =
+            app.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
             courseInfo.name.toLowerCase().includes(searchTerm.toLowerCase());
-        const matchesStatus = filterStatus === 'all' || app.status === filterStatus;
+
+        const matchesStatus = ['pending', 'evaluated'].includes(app.status);
+
         return matchesSearch && matchesStatus;
     });
+
 
     const stats = {
         total: applications.length,
@@ -724,6 +728,7 @@ const ScholarshipDashboard = () => {
                             <div className="row g-3">
                                 {filteredApplications.map((app) => {
                                     const evaluation = evaluationResults[app.id];
+                                    const hasBeenApproved = app.status === 'approved';
                                     const hasBeenEvaluated = !!evaluation;
                                     const courseInfo = getCourseInfo(app.course_id);
                                     const gwa = evaluation?.gwa || calculateGWA(app.grades);
@@ -842,37 +847,38 @@ const ScholarshipDashboard = () => {
                                                                     </button>
 
                                                                     {/* Evaluate Button */}
-                                                                    <button
-                                                                        className={`btn d-flex align-items-center justify-content-center gap-2 py-2 fw-medium ${
-                                                                            hasBeenEvaluated
-                                                                                ? 'btn-outline-warning border-2'
-                                                                                : 'btn-primary shadow-sm'
-                                                                        }`}
-                                                                        onClick={() => handleEvaluate(app.id)}
-                                                                        disabled={loadingId === app.id}
-                                                                    >
-                                                                        {loadingId === app.id ? (
-                                                                            <>
-                                                                                <div className="spinner-border spinner-border-sm" role="status">
-                                                                                    <span className="visually-hidden">Loading...</span>
-                                                                                </div>
-                                                                                <span>Evaluating...</span>
-                                                                            </>
-                                                                        ) : (
-                                                                            <>
-                                                                                <Star size={16} fill={hasBeenEvaluated ? "currentColor" : "none"} />
-                                                                                <span>{hasBeenEvaluated ? 'Re-evaluate' : 'Evaluate Application'}</span>
-                                                                            </>
-                                                                        )}
-                                                                    </button>
+                                                                    {!hasBeenApproved && (
+                                                                        <button
+                                                                            className={`btn d-flex align-items-center justify-content-center gap-2 py-2 fw-medium ${
+                                                                                hasBeenEvaluated
+                                                                                    ? 'btn-outline-warning border-2'
+                                                                                    : 'btn-primary shadow-sm'
+                                                                            }`}
+                                                                            onClick={() => handleEvaluate(app.id)}
+                                                                            disabled={loadingId === app.id}
+                                                                        >
+                                                                            {loadingId === app.id ? (
+                                                                                <>
+                                                                                    <div className="spinner-border spinner-border-sm" role="status">
+                                                                                        <span className="visually-hidden">Loading...</span>
+                                                                                    </div>
+                                                                                    <span>Evaluating...</span>
+                                                                                </>
+                                                                            ) : (
+                                                                                <>
+                                                                                    <Star size={16} fill={hasBeenEvaluated ? "currentColor" : "none"} />
+                                                                                    <span>{hasBeenEvaluated ? 'Re-evaluate' : 'Evaluate Application'}</span>
+                                                                                </>
+                                                                            )}
+                                                                        </button>
+                                                                    )}
 
                                                                     {/* Action Buttons for Evaluated Applications */}
                                                                     {hasBeenEvaluated && (
                                                                         <div className="d-flex flex-column gap-2 pt-2 border-top border-opacity-25">
-
                                                                             <button
                                                                                 className="btn btn-outline-danger btn-sm d-flex align-items-center justify-content-center gap-2 py-2"
-                                                                                    onClick={() => handleDeny(app.id)}
+                                                                                onClick={() => handleDeny(app.id)}
                                                                                 disabled={app.status === 'denied'}
                                                                             >
                                                                                 <XCircle size={14} />
@@ -880,6 +886,7 @@ const ScholarshipDashboard = () => {
                                                                             </button>
                                                                         </div>
                                                                     )}
+
 
                                                                     {/* Additional Quick Actions */}
                                                                     {hasBeenEvaluated && evaluation.classification === 'Eligible' && (

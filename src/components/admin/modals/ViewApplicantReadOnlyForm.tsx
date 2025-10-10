@@ -106,7 +106,6 @@ const ViewApplicantReadOnlyForm: React.FC<Props> = ({ applicant }) => {
 
         // Additional safety check
         if (!Array.isArray(recommendedScholarships) || recommendedScholarships.length === 0) {
-            console.log('recommendedScholarships is not an array or is empty:', recommendedScholarships);
             return (
                 <div className="alert alert-info">
                     <i className="bi bi-info-circle me-2"></i>

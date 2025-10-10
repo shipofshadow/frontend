@@ -143,7 +143,7 @@ const Register = () => {
                 }}
             />
 
-            <div className="container-fluid h-100 position-relative" style={{ zIndex: 2 }}>
+            <div className="container-fluid h-100 position-relative" style={{ zIndex: 2, margin: '5rem auto' }}>
                 <div className="row h-100 align-items-center justify-content-center">
                     {/* Left Panel - Information */}
                     <div className="col-lg-7 col-xl-6 d-none d-lg-block p-4">

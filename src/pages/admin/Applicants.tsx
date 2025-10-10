@@ -8,8 +8,6 @@ import {API_BASE_URL} from "../../config.ts";
 import {useAuth} from "../../context/AuthContext.tsx";
 import ViewApplicantReadOnlyForm from '../../components/admin/modals/ViewApplicantReadOnlyForm.tsx';
 import type {Applicant} from "../../interfaces/applicant.ts";
-import EditApplicantModal from "../../components/admin/modals/EditApplicantModal.tsx";
-
 
 const ApplicantsTable = () => {
     const tableRef = useRef(null);
@@ -104,7 +102,6 @@ const ApplicantsTable = () => {
                 headers: { Authorization: `Bearer ${token}` },
             });
             setSelectedApplicant(response.data);
-            console.log(response.data);
         } catch (error) {
             console.error('Error viewing applicant:', error);
             await Swal.fire('Error', 'Failed to load applicant details.', 'error');
@@ -131,7 +128,7 @@ const ApplicantsTable = () => {
                 await fetchApplicants();
             } catch (error) {
                 console.error('Delete error:', error);
-                Swal.fire('Error', 'Failed to delete applicant.', 'error');
+                await Swal.fire('Error', 'Failed to delete applicant.', 'error');
             }
         }
     };
@@ -369,15 +366,6 @@ const ApplicantsTable = () => {
                                                         <i className="fa-regular fa-eye"></i>
                                                     </button>
 
-                                                    <button
-                                                        className="btn btn-outline-secondary btn-sm"
-                                                        onClick={() => viewApplicant(applicant.id)}
-                                                        data-bs-toggle="modal"
-                                                        data-bs-target="#editModal"
-                                                        title="Edit Application"
-                                                    >
-                                                        <i className="fa-regular fa-pen-to-square"></i>
-                                                    </button>
 
                                                     <button
                                                         className="btn btn-outline-danger btn-sm"
@@ -428,24 +416,6 @@ const ApplicantsTable = () => {
                     </div>
                 </div>
             </div>
-
-            {/* Edit Modal */}
-            <div className="modal fade" id="editModal" tabIndex={-1} aria-hidden="true">
-                <div className="modal-dialog modal-xl modal-dialog-centered">
-                    <div className="modal-content">
-                        <div className="modal-header">
-                            <h5 className="modal-title">Edit Applicant</h5>
-                            <button id="editModalClose" type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                        </div>
-                        <div className="modal-body">
-                            <EditApplicantModal applicant={selectedApplicant}/>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-
-
         </div>
     );
 };

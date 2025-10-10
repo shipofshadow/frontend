@@ -178,22 +178,22 @@ const NotApplied = () => {
 
     return (
         <div>
-            <header className="page-header page-header-compact page-header-light border-bottom bg-white mb-4">
+            <header className="page-header page-header-compact page-header-light border-bottom bg-white mb-4 shadow-sm">
                 <div className="container-fluid px-4">
                     <div className="page-header-content">
                         <div className="row align-items-center justify-content-between pt-3">
                             <div className="col-auto mb-3">
-                                <h1 className="page-header-title">
-                                    <div className="page-header-icon">
+                                <h1 className="page-header-title d-flex align-items-center gap-3">
+                                    <div className="page-header-icon bg-primary bg-gradient text-white rounded-3 p-3">
                                         <i className="far fa-user-check" aria-hidden="true"></i>
                                     </div>
-                                    Potential Applicants
+                                    <span>Potential Applicants</span>
                                 </h1>
                             </div>
                             <div className="col-auto mb-3">
-                                <span className="badge bg-info">
-                                    {students.length} {students.length === 1 ? 'Student' : 'Students'}
-                                </span>
+                        <span className="badge bg-primary bg-gradient rounded-pill px-3 py-2 fs-6">
+                            {students.length} {students.length === 1 ? 'Student' : 'Students'}
+                        </span>
                             </div>
                         </div>
                     </div>
@@ -201,111 +201,117 @@ const NotApplied = () => {
             </header>
 
             <div className="container-xl px-4">
-                <div className="card mb-4">
-                    <div className="card-header d-flex justify-content-between align-items-center">
-                        <h5 className="card-title mb-0">Students Not Yet Applied</h5>
-                        <div className="d-flex gap-2">
-                            <button
-                                className="btn btn-outline-secondary btn-sm"
-                                onClick={handleRetry}
-                                disabled={loading}
-                                title="Refresh data"
-                            >
-                                <i className={`fas fa-sync-alt ${loading ? 'fa-spin' : ''}`} aria-hidden="true"></i>
-                                {loading ? ' Loading...' : ' Refresh'}
-                            </button>
-                            <button
-                                className="btn btn-success btn-sm"
-                                data-bs-toggle="modal"
-                                data-bs-target="#addModal"
-                                disabled={loading}
-                            >
-                                <i className="fas fa-plus" aria-hidden="true"></i> Add New Student
-                            </button>
+                <div className="card mb-4 shadow-sm border-0 rounded-3">
+                    <div className="card-header bg-white border-bottom py-3">
+                        <div className="row align-items-center">
+                            <div className="col">
+                                <h5 className="card-title mb-0 fw-bold text-dark">
+                                    <i className="fas fa-users me-2 text-primary"></i>
+                                    Students Not Yet Applied
+                                </h5>
+                            </div>
+                            <div className="col-auto">
+                                <div className="d-flex gap-2">
+                                  
+                                    <button
+                                        className="btn btn-success btn-sm rounded-pill px-3 shadow-sm"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#addModal"
+                                        disabled={loading}
+                                    >
+                                        <i className="fas fa-plus me-1" aria-hidden="true"></i> Add Student
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
-                    <div className="card-body">
+                    <div className="card-body p-0">
                         {error && (
-                            <div className="alert alert-danger d-flex align-items-center" role="alert">
-                                <i className="fas fa-exclamation-triangle me-2" aria-hidden="true"></i>
-                                <div>
+                            <div className="alert alert-danger m-4 d-flex align-items-center rounded-3 border-0 shadow-sm" role="alert">
+                                <i className="fas fa-exclamation-triangle me-3 fs-4" aria-hidden="true"></i>
+                                <div className="flex-grow-1">
                                     <strong>Error:</strong> {error}
-                                    <button
-                                        className="btn btn-link btn-sm ms-2 p-0"
-                                        onClick={handleRetry}
-                                    >
-                                        Try again
-                                    </button>
                                 </div>
+                                <button
+                                    className="btn btn-sm btn-outline-danger rounded-pill ms-2"
+                                    onClick={handleRetry}
+                                >
+                                    Try again
+                                </button>
                             </div>
                         )}
 
                         {loading ? (
                             <div className="text-center py-5">
-                                <div className="spinner-border text-primary" role="status">
+                                <div className="spinner-border text-primary mb-3" role="status" style={{ width: '3rem', height: '3rem' }}>
                                     <span className="visually-hidden">Loading...</span>
                                 </div>
-                                <p className="mt-2 text-muted">Loading students...</p>
+                                <p className="mt-2 text-muted fw-medium">Loading students...</p>
                             </div>
                         ) : (
                             <div className="table-responsive">
                                 <table
                                     ref={tableRef}
                                     id="datatablesSimple"
-                                    className="table table-striped table-bordered table-hover"
+                                    className="table table-hover align-middle mb-0"
                                     role="table"
                                     aria-label="Students not yet applied"
                                 >
-                                    <thead className="table-dark">
+                                    <thead className="bg-light border-bottom">
                                     <tr>
-                                        <th scope="col">Student Number</th>
-                                        <th scope="col">Last Name</th>
-                                        <th scope="col">First Name</th>
-                                        <th scope="col">Middle Name</th>
-                                        <th scope="col">Gender</th>
-                                        <th scope="col">Birthdate</th>
-                                        <th scope="col">Username</th>
-                                        <th scope="col">Email</th>
-                                        <th scope="col" className="text-center">Actions</th>
+                                        <th scope="col" className="py-3 px-4 text-muted fw-semibold">Student Number</th>
+                                        <th scope="col" className="py-3 px-4 text-muted fw-semibold">Last Name</th>
+                                        <th scope="col" className="py-3 px-4 text-muted fw-semibold">First Name</th>
+                                        <th scope="col" className="py-3 px-4 text-muted fw-semibold">Middle Name</th>
+                                        <th scope="col" className="py-3 px-4 text-muted fw-semibold">Gender</th>
+                                        <th scope="col" className="py-3 px-4 text-muted fw-semibold">Birthdate</th>
+                                        <th scope="col" className="py-3 px-4 text-muted fw-semibold">Username</th>
+                                        <th scope="col" className="py-3 px-4 text-muted fw-semibold">Email</th>
+                                        <th scope="col" className="py-3 px-4 text-center text-muted fw-semibold">Actions</th>
                                     </tr>
                                     </thead>
                                     <tbody>
                                     {students.length > 0 ? (
                                         students.map((student) => (
-                                            <tr key={student.student_id}>
-                                                <td>
-                                                    <strong>{student.student_number}</strong>
+                                            <tr key={student.student_id} className="border-bottom">
+                                                <td className="px-4 py-3">
+                                                    <span className="badge bg-light text-dark border fw-semibold">{student.student_number}</span>
                                                 </td>
-                                                <td>{student.last_name}</td>
-                                                <td>{student.first_name}</td>
-                                                <td>
-                                                        <span className={student.middle_name ? '' : 'text-muted fst-italic'}>
-                                                            {student.middle_name || 'N/A'}
-                                                        </span>
+                                                <td className="px-4 py-3 fw-medium">{student.last_name}</td>
+                                                <td className="px-4 py-3">{student.first_name}</td>
+                                                <td className="px-4 py-3">
+                                            <span className={student.middle_name ? '' : 'text-muted fst-italic'}>
+                                                {student.middle_name || 'N/A'}
+                                            </span>
                                                 </td>
-                                                <td>
-                                                        <span className={`badge ${student.gender === 'Male' ? 'bg-primary' : 'bg-danger'}`}>
-                                                            {student.gender}
-                                                        </span>
+                                                <td className="px-4 py-3">
+                                            <span className={`badge rounded-pill ${student.gender === 'Male' ? 'bg-primary' : 'bg-danger'}`}>
+                                                <i className={`fas ${student.gender === 'Male' ? 'fa-mars' : 'fa-venus'} me-1`}></i>
+                                                {student.gender}
+                                            </span>
                                                 </td>
-                                                <td>{formatDate(student.birth_date)}</td>
-                                                <td>
-                                                    <code className="text-primary">{student.username}</code>
+                                                <td className="px-4 py-3 text-muted">
+                                                    <i className="far fa-calendar me-1"></i>
+                                                    {formatDate(student.birth_date)}
                                                 </td>
-                                                <td>
+                                                <td className="px-4 py-3">
+                                                    <code className="bg-light text-primary px-2 py-1 rounded">{student.username}</code>
+                                                </td>
+                                                <td className="px-4 py-3">
                                                     <a
                                                         href={`mailto:${student.email}`}
-                                                        className="text-decoration-none"
+                                                        className="text-decoration-none text-primary d-flex align-items-center"
                                                         title={`Send email to ${student.email}`}
                                                     >
+                                                        <i className="far fa-envelope me-2"></i>
                                                         {student.email}
                                                     </a>
                                                 </td>
-                                                <td className="text-center">
+                                                <td className="px-4 py-3 text-center">
                                                     <button
                                                         type="button"
-                                                        className="btn btn-sm btn-outline-danger"
+                                                        className="btn btn-sm btn-outline-danger rounded-pill"
                                                         onClick={() => handleArchiveStudent(
                                                             student.student_id,
                                                             `${student.first_name} ${student.last_name}`
@@ -313,17 +319,20 @@ const NotApplied = () => {
                                                         title={`Archive ${student.first_name} ${student.last_name}`}
                                                         aria-label={`Archive student ${student.first_name} ${student.last_name}`}
                                                     >
-                                                        <i className="fas fa-archive" aria-hidden="true"></i>
+                                                        <i className="fas fa-archive me-1" aria-hidden="true"></i>
+                                                        Archive
                                                     </button>
                                                 </td>
                                             </tr>
                                         ))
                                     ) : (
                                         <tr>
-                                            <td colSpan={9} className="text-center text-muted py-4">
-                                                <i className="fas fa-users-slash fa-2x mb-2" aria-hidden="true"></i>
-                                                <p className="mb-0">No students found.</p>
-                                                <small>Students who have already applied will not appear here.</small>
+                                            <td colSpan={9} className="text-center py-5">
+                                                <div className="text-muted">
+                                                    <i className="fas fa-users-slash fa-3x mb-3 opacity-25" aria-hidden="true"></i>
+                                                    <p className="mb-1 fw-semibold fs-5">No students found</p>
+                                                    <small className="text-muted">Students who have already applied will not appear here.</small>
+                                                </div>
                                             </td>
                                         </tr>
                                     )}
@@ -335,6 +344,7 @@ const NotApplied = () => {
                 </div>
             </div>
         </div>
+
     );
 };
 

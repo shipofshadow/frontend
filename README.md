@@ -22,7 +22,7 @@ It helps schools, local governments, and organizations streamline scholarship ap
 
 ## 🛠️ Technologies Used
 
-- **Backend**: Python Flask + MySQL (raw SQL or SQLAlchemy support)  
+- **Backend**: Python Flask + MySQL (raw SQL)  
 - **Frontend**: React + Bootstrap 5  
 - **Authentication**: JWT (Access & Refresh Tokens)  
 - **Visualization**: ApexCharts, Recharts (Admin dashboard)

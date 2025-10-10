@@ -38,6 +38,7 @@ const Home = () => {
 
     const applicant = applications?.applications?.[0] ?? null;
 
+
     useEffect(() => {
         setIsLoading(true);
         hasApplied(token)

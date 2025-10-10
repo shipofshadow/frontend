@@ -37,7 +37,7 @@
     z-index: 2;
     width: 100%;
     max-width: 1200px;
-    margin: 0 auto;
+    margin: 5rem auto;
     display: flex;
     flex-wrap: wrap;
     gap: 2rem;

@@ -1,6 +1,5 @@
     import React, { useState, useEffect } from 'react';
     import {
-      LogIn,
       FileText,
       Users,
       Award,
@@ -9,13 +8,13 @@
       Brain,
       TrendingUp,
       Calendar,
-      GraduationCap,
-      Sparkles,
       ChevronRight,
       Star,
       Quote
     } from 'lucide-react';
     import { useNavigate } from 'react-router-dom';
+    import Hero from "../components/Hero.tsx";
+    import {API_BASE_URL} from "../config.ts";
 
     // Type definitions
     interface Scholarship {
@@ -55,7 +54,8 @@
       });
       const [eligibilityForm, setEligibilityForm] = useState({
         gwa: '',
-        income: ''
+        income: '',
+        total_units: ''
       });
       const [eligibilityResult, setEligibilityResult] = useState<EligibilityResult | null>(null);
       const [openFAQ, setOpenFAQ] = useState<number | null>(null);
@@ -152,46 +152,56 @@
         window.scrollTo({ top: 0, behavior: 'smooth' });
       };
 
-      const handleEligibilityCheck = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!eligibilityForm.gwa || !eligibilityForm.income) return;
 
-        setLoading(true);
+        const handleEligibilityCheck = async (e: React.FormEvent) => {
+            e.preventDefault();
 
-        // Simulate fuzzy logic evaluation
-        setTimeout(() => {
-          const gwa = parseFloat(eligibilityForm.gwa);
-          const income = parseFloat(eligibilityForm.income);
+            if (!eligibilityForm.gwa || !eligibilityForm.income) return;
 
-          let score = 0;
-          let classification = '';
-          let message = '';
+            setLoading(true);
 
-          // Simple fuzzy logic simulation
-          if (gwa >= 1.0 && gwa <= 1.5 && income <= 50000) {
-            score = 95;
-            classification = 'Highly Eligible';
-            message = 'Excellent! You qualify for most scholarships. Register now to see your full recommendations.';
-          } else if (gwa >= 1.5 && gwa <= 2.0 && income <= 100000) {
-            score = 75;
-            classification = 'Eligible';
-            message = 'Good! You qualify for several scholarships. Create your profile to explore options.';
-          } else if (gwa >= 2.0 && gwa <= 3.0 && income <= 200000) {
-            score = 50;
-            classification = 'Moderately Eligible';
-            message = 'You may qualify for some scholarships. Complete your application to see available opportunities.';
-          } else {
-            score = 25;
-            classification = 'Limited Eligibility';
-            message = 'Limited options available, but don\'t give up! Some scholarships have different criteria.';
-          }
+            try {
+                const gwa = parseFloat(eligibilityForm.gwa);
+                const income = parseFloat(eligibilityForm.income);
+                const total_units = parseInt(eligibilityForm.total_units);
 
-          setEligibilityResult({ score, classification, message });
-          setLoading(false);
-        }, 1500);
-      };
+                // Simulate fuzzy logic delay (optional)
+                await new Promise((resolve) => setTimeout(resolve, 1500));
 
-      const toggleFAQ = (index: number) => {
+                const response = await fetch(`${API_BASE_URL}/api/prequalify/calculate`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ gwa, income, total_units }),
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Server error: ${response.status}`);
+                }
+
+                const data = await response.json();
+                const { score, classification } = data;
+
+                let message = '';
+                if (score >= 95) {
+                    message = 'Excellent! You qualify for most scholarships. Register now to see your full recommendations.';
+                } else if (score >= 75) {
+                    message = 'Good! You qualify for several scholarships. Create your profile to explore options.';
+                } else if (score >= 50) {
+                    message = 'You may qualify for some scholarships. Complete your application to see available opportunities.';
+                } else {
+                    message = 'Limited options available, but don’t give up! Some scholarships have different criteria.';
+                }
+
+                setEligibilityResult({ score, classification, message });
+            } catch (error) {
+                console.error('Eligibility check failed:', error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+
+        const toggleFAQ = (index: number) => {
         setOpenFAQ(openFAQ === index ? null : index);
       };
 
@@ -209,68 +219,7 @@
       return (
           <div className="min-vh-100 bg-light">
             {/* Hero Section */}
-            <section className="bg-primary text-white py-5 position-relative overflow-hidden">
-              <div className="position-absolute top-0 start-0 w-100 h-100" style={{
-               background: 'linear-gradient(135deg, #1e40af 10%, #3b82f6 45%)',
-                zIndex: 1
-              }}></div>
-
-              <div className="container position-relative" style={{ zIndex: 2 }}>
-                <div className="row align-items-center min-vh-75">
-                  <div className="col-lg-6">
-                    <div className="d-flex align-items-center mb-4">
-                      <img
-                          src="https://ispsctagudin.info/home/assets/img/ispsc_logo.png"
-                          alt="ISPSC Logo"
-                          className="me-3"
-                          style={{ width: '80px', height: '80px' }}
-                      />
-                      <div>
-                        <h1 className="display-4 fw-bold mb-0">iScholar</h1>
-                        <p className="lead mb-0">Your Gateway to Scholarship Opportunities</p>
-                      </div>
-                    </div>
-
-                    <h2 className="h3 fw-semibold mb-4">
-                      An Intelligent Scholarship Prequalification System
-                    </h2>
-
-                    <p className="lead mb-4">
-                      Streamline your scholarship journey with AI-powered matching, transparent tracking,
-                      and comprehensive support from Ilocos Sur Polytechnic State College.
-                    </p>
-
-                    <div className="d-flex flex-wrap gap-3">
-                      <button
-                          className="btn btn-light btn-lg px-4"
-                          onClick={() => handleNavigation('/login')}
-                      >
-                        <LogIn size={20} className="me-2" />
-                        Login
-                      </button>
-                      <button
-                          className="btn btn-outline-light btn-lg px-4"
-                          onClick={() => handleNavigation('/register')}
-                      >
-                        <FileText size={20} className="me-2" />
-                        Register & Apply
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="col-lg-6 text-center">
-                    <div className="position-relative">
-                      <GraduationCap size={200} className="text-white" style={{ opacity: 0.3 }} />
-                      <Sparkles
-                          size={60}
-                          className="position-absolute top-0 end-0 text-warning"
-                          style={{ animation: 'pulse 2s infinite' }}
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </section>
+                <Hero/>
 
             {/* Statistics Section */}
             <section className="py-4 bg-white shadow-sm">
@@ -549,7 +498,7 @@
 
                         <form onSubmit={handleEligibilityCheck}>
                           <div className="row g-3 mb-4">
-                            <div className="col-md-6">
+                            <div className="col-md-4">
                               <label htmlFor="gwa" className="form-label fw-semibold">
                                 General Weighted Average (GWA)
                               </label>
@@ -566,7 +515,7 @@
                                   required
                               />
                             </div>
-                            <div className="col-md-6">
+                          <div className="col-md-4">
                               <label htmlFor="income" className="form-label fw-semibold">
                                 Annual Family Income (₱)
                               </label>
@@ -580,6 +529,12 @@
                                   required
                               />
                             </div>
+                              <div className="col-md-4">
+                                  <label htmlFor="total_units" className="form-label fw-semibold">Total Units</label>
+                                <input type="number" className="form-control form-control-lg" id="total_units" placeholder="e.g., 20"
+                                value={eligibilityForm.total_units}
+                                onChange={(e) => setEligibilityForm({...eligibilityForm, total_units: e.target.value})} required/>
+                              </div>
                           </div>
 
                           <button

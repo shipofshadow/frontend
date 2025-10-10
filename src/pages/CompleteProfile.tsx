@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { API_BASE_URL } from "../config";
-import {useAuth} from "../context/AuthContext.tsx";
+import { useAuth } from "../context/AuthContext.tsx";
 import type User from "../types/user.ts";
 
 interface PrefillData {
@@ -22,13 +22,13 @@ const getUserFromStorage = (): User => {
     return userData;
 };
 
-
 const CompleteProfile: React.FC = () => {
     const navigate = useNavigate();
     const token: string = localStorage.getItem("access_token") ?? "";
     const refresh_token: string = localStorage.getItem("refresh_token") ?? "";
     const user = getUserFromStorage();
-    const {login} = useAuth()
+    const { login } = useAuth();
+
     const [formData, setFormData] = useState({
         student_id: "",
         first_name: "",
@@ -53,8 +53,6 @@ const CompleteProfile: React.FC = () => {
         window.location.href = "/login";
     }
 
-
-    // Pre-fill form with OAuth data on component mount
     useEffect(() => {
         const prefillData = localStorage.getItem('prefill_profile');
         if (prefillData) {
@@ -112,72 +110,70 @@ const CompleteProfile: React.FC = () => {
                     navigate("/applicant/dashboard");
                 }, 1500);
             }
-        } catch  {
-            setError( "Something went wrong.");
+        } catch {
+            setError("Something went wrong.");
         } finally {
             setLoading(false);
         }
     };
 
     return (
-        <div className="min-vh-100 bg-light d-flex align-items-center py-4">
-            <div className="container">
+        <div className="min-vh-100 bg-light d-flex align-items-center py-5">
+            <div className="container mt-5 ">
                 <div className="row justify-content-center">
-                    <div className="col-xl-10 col-lg-11">
-                        {/* Header Section */}
-                        <div className="text-center mb-4">
-                            <div className="bg-primary rounded-circle d-inline-flex align-items-center justify-content-center mb-3"
-                                 style={{ width: '80px', height: '80px' }}>
-                                <i className="fas fa-user-plus text-white fs-1"></i>
-                            </div>
-                            <h1 className="h2 fw-bold text-dark mb-2">Complete Your Profile</h1>
-                            <p className="text-muted mb-0">Just a few more details to get you started with iScholar</p>
-                        </div>
+                    <div className="col-12 col-xl-8 col-lg-10">
+                        {/* Header */}
 
-                        <div className="card border-0 shadow-sm">
+
+                        <div className="card mt-5 border-0 shadow-sm">
                             <div className="card-body p-4 p-md-5">
-                                {/* Progress Indicator */}
+                                {/* Progress */}
                                 <div className="mb-4">
-                                    <div className="d-flex align-items-center justify-content-between mb-2">
-                                        <small className="text-muted fw-medium">Profile Setup Progress</small>
-                                        <small className="text-primary fw-medium">Final Step</small>
+                                    <div className="d-flex justify-content-between align-items-center mb-2">
+                                        <span className="badge bg-primary-subtle text-primary px-3 py-2">
+                                            Profile Setup
+                                        </span>
+                                        <small className="text-muted fw-medium">Final Step</small>
                                     </div>
-                                    <div className="progress" style={{ height: '4px' }}>
-                                        <div className="progress-bar bg-primary" style={{ width: '100%' }}></div>
+                                    <div className="progress" style={{ height: '6px' }}>
+                                        <div className="progress-bar" style={{ width: '100%' }}></div>
                                     </div>
                                 </div>
 
                                 {/* Alerts */}
                                 {error && (
-                                    <div className="alert alert-danger border-0 rounded-3 d-flex align-items-center mb-4">
-                                        <i className="fas fa-exclamation-circle me-2"></i>
-                                        {error}
+                                    <div className="alert alert-danger d-flex align-items-start mb-4">
+                                        <svg width="20" height="20" fill="currentColor" className="me-2 flex-shrink-0 mt-1">
+                                            <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
+                                        </svg>
+                                        <div>{error}</div>
                                     </div>
                                 )}
 
                                 {success && (
-                                    <div className="alert alert-success border-0 rounded-3 d-flex align-items-center mb-4">
-                                        <i className="fas fa-check-circle me-2"></i>
-                                        Profile completed successfully! Redirecting to dashboard...
+                                    <div className="alert alert-success d-flex align-items-start mb-4">
+                                        <svg width="20" height="20" fill="currentColor" className="me-2 flex-shrink-0 mt-1">
+                                            <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
+                                        </svg>
+                                        <div>Profile completed successfully! Redirecting to dashboard...</div>
                                     </div>
                                 )}
 
                                 <form onSubmit={handleSubmit}>
-                                    {/* Personal Information Section */}
+                                    {/* Personal Information */}
                                     <div className="mb-4">
-                                        <h5 className="text-dark fw-bold mb-3 d-flex align-items-center">
-                                            <i className="fas fa-user text-primary me-2"></i>
+                                        <h6 className="fw-bold text-dark mb-3 pb-2 border-bottom">
                                             Personal Information
-                                        </h5>
+                                        </h6>
                                         <div className="row g-3">
                                             <div className="col-md-6">
-                                                <label className="form-label fw-medium">
+                                                <label className="form-label fw-semibold small">
                                                     Student ID <span className="text-danger">*</span>
                                                 </label>
                                                 <input
                                                     type="text"
                                                     name="student_id"
-                                                    className="form-control form-control-lg border-2"
+                                                    className="form-control"
                                                     value={formData.student_id}
                                                     onChange={handleChange}
                                                     placeholder="Enter your student ID"
@@ -186,18 +182,18 @@ const CompleteProfile: React.FC = () => {
                                             </div>
 
                                             <div className="col-md-6">
-                                                <label className="form-label fw-medium">
+                                                <label className="form-label fw-semibold small">
                                                     Email Address <span className="text-danger">*</span>
                                                     {prefilledFields.includes('email') && (
-                                                        <span className="badge bg-success-subtle text-success ms-2">
-                                                            <i className="fas fa-check-circle me-1"></i>Auto-filled
+                                                        <span className="badge bg-success bg-opacity-10 text-success ms-2">
+                                                            ✓ Auto-filled
                                                         </span>
                                                     )}
                                                 </label>
                                                 <input
                                                     type="email"
                                                     name="email"
-                                                    className={`form-control form-control-lg border-2 ${prefilledFields.includes('email') ? 'bg-light' : ''}`}
+                                                    className={`form-control ${prefilledFields.includes('email') ? 'bg-light' : ''}`}
                                                     value={formData.email}
                                                     onChange={handleChange}
                                                     placeholder="your.email@example.com"
@@ -207,18 +203,18 @@ const CompleteProfile: React.FC = () => {
                                             </div>
 
                                             <div className="col-md-4">
-                                                <label className="form-label fw-medium">
+                                                <label className="form-label fw-semibold small">
                                                     First Name <span className="text-danger">*</span>
                                                     {prefilledFields.includes('first_name') && (
-                                                        <span className="badge bg-success-subtle text-success ms-2">
-                                                            <i className="fas fa-check-circle me-1"></i>Auto-filled
+                                                        <span className="badge bg-success bg-opacity-10 text-success ms-2">
+                                                            ✓ Auto-filled
                                                         </span>
                                                     )}
                                                 </label>
                                                 <input
                                                     type="text"
                                                     name="first_name"
-                                                    className={`form-control form-control-lg border-2 ${prefilledFields.includes('first_name') ? 'bg-light' : ''}`}
+                                                    className={`form-control ${prefilledFields.includes('first_name') ? 'bg-light' : ''}`}
                                                     value={formData.first_name}
                                                     onChange={handleChange}
                                                     placeholder="First name"
@@ -227,18 +223,18 @@ const CompleteProfile: React.FC = () => {
                                             </div>
 
                                             <div className="col-md-4">
-                                                <label className="form-label fw-medium">
+                                                <label className="form-label fw-semibold small">
                                                     Last Name <span className="text-danger">*</span>
                                                     {prefilledFields.includes('last_name') && (
-                                                        <span className="badge bg-success-subtle text-success ms-2">
-                                                            <i className="fas fa-check-circle me-1"></i>Auto-filled
+                                                        <span className="badge bg-success bg-opacity-10 text-success ms-2">
+                                                            ✓ Auto-filled
                                                         </span>
                                                     )}
                                                 </label>
                                                 <input
                                                     type="text"
                                                     name="last_name"
-                                                    className={`form-control form-control-lg border-2 ${prefilledFields.includes('last_name') ? 'bg-light' : ''}`}
+                                                    className={`form-control ${prefilledFields.includes('last_name') ? 'bg-light' : ''}`}
                                                     value={formData.last_name}
                                                     onChange={handleChange}
                                                     placeholder="Last name"
@@ -247,23 +243,23 @@ const CompleteProfile: React.FC = () => {
                                             </div>
 
                                             <div className="col-md-4">
-                                                <label className="form-label fw-medium">Middle Name</label>
+                                                <label className="form-label fw-semibold small">Middle Name</label>
                                                 <input
                                                     type="text"
                                                     name="middle_name"
-                                                    className="form-control form-control-lg border-2"
+                                                    className="form-control"
                                                     value={formData.middle_name}
                                                     onChange={handleChange}
-                                                    placeholder="Middle name (optional)"
+                                                    placeholder="Optional"
                                                 />
                                             </div>
 
                                             <div className="col-md-3">
-                                                <label className="form-label fw-medium">Extension</label>
+                                                <label className="form-label fw-semibold small">Extension</label>
                                                 <input
                                                     type="text"
                                                     name="name_extension"
-                                                    className="form-control form-control-lg border-2"
+                                                    className="form-control"
                                                     value={formData.name_extension}
                                                     onChange={handleChange}
                                                     placeholder="Jr., Sr., III"
@@ -271,12 +267,12 @@ const CompleteProfile: React.FC = () => {
                                             </div>
 
                                             <div className="col-md-3">
-                                                <label className="form-label fw-medium">
+                                                <label className="form-label fw-semibold small">
                                                     Gender <span className="text-danger">*</span>
                                                 </label>
                                                 <select
                                                     name="gender"
-                                                    className="form-select form-select-lg border-2"
+                                                    className="form-select"
                                                     value={formData.gender}
                                                     onChange={handleChange}
                                                     required
@@ -288,13 +284,13 @@ const CompleteProfile: React.FC = () => {
                                             </div>
 
                                             <div className="col-md-3">
-                                                <label className="form-label fw-medium">
+                                                <label className="form-label fw-semibold small">
                                                     Birth Date <span className="text-danger">*</span>
                                                 </label>
                                                 <input
                                                     type="date"
                                                     name="birth_date"
-                                                    className="form-control form-control-lg border-2"
+                                                    className="form-control"
                                                     value={formData.birth_date}
                                                     onChange={handleChange}
                                                     required
@@ -302,10 +298,10 @@ const CompleteProfile: React.FC = () => {
                                             </div>
 
                                             <div className="col-md-3">
-                                                <label className="form-label fw-medium">Civil Status</label>
+                                                <label className="form-label fw-semibold small">Civil Status</label>
                                                 <select
                                                     name="civil_status"
-                                                    className="form-select form-select-lg border-2"
+                                                    className="form-select"
                                                     value={formData.civil_status}
                                                     onChange={handleChange}
                                                 >
@@ -318,21 +314,18 @@ const CompleteProfile: React.FC = () => {
                                         </div>
                                     </div>
 
-                                    <hr className="my-4" />
-
-                                    {/* Contact Information Section */}
+                                    {/* Contact Information */}
                                     <div className="mb-4">
-                                        <h5 className="text-dark fw-bold mb-3 d-flex align-items-center">
-                                            <i className="fas fa-address-book text-primary me-2"></i>
+                                        <h6 className="fw-bold text-dark mb-3 pb-2 border-bottom">
                                             Contact Information
-                                        </h5>
+                                        </h6>
                                         <div className="row g-3">
                                             <div className="col-md-6">
-                                                <label className="form-label fw-medium">Citizenship</label>
+                                                <label className="form-label fw-semibold small">Citizenship</label>
                                                 <input
                                                     type="text"
                                                     name="citizenship"
-                                                    className="form-control form-control-lg border-2"
+                                                    className="form-control"
                                                     value={formData.citizenship}
                                                     onChange={handleChange}
                                                     placeholder="e.g., Filipino"
@@ -340,11 +333,11 @@ const CompleteProfile: React.FC = () => {
                                             </div>
 
                                             <div className="col-md-6">
-                                                <label className="form-label fw-medium">Contact Number</label>
+                                                <label className="form-label fw-semibold small">Contact Number</label>
                                                 <input
                                                     type="tel"
                                                     name="contact_number"
-                                                    className="form-control form-control-lg border-2"
+                                                    className="form-control"
                                                     value={formData.contact_number}
                                                     onChange={handleChange}
                                                     placeholder="+63 912 345 6789"
@@ -353,34 +346,22 @@ const CompleteProfile: React.FC = () => {
                                         </div>
                                     </div>
 
-                                    {/* Submit Button */}
-                                    <div className="d-grid gap-2 mt-4">
+                                    {/* Submit */}
+                                    <div className="d-grid mt-4 pt-3 border-top">
                                         <button
                                             type="submit"
-                                            className="btn btn-primary btn-lg py-3 fw-bold"
+                                            className="btn btn-primary btn-lg"
                                             disabled={loading}
-                                            style={{ fontSize: '1.1rem' }}
                                         >
                                             {loading ? (
                                                 <>
-                                                    <span className="spinner-border spinner-border-sm me-2" role="status"></span>
-                                                    Creating Your Profile...
+                                                    <span className="spinner-border spinner-border-sm me-2"></span>
+                                                    Creating Profile...
                                                 </>
                                             ) : (
-                                                <>
-                                                    <i className="fas fa-rocket me-2"></i>
-                                                    Complete Profile & Get Started
-                                                </>
+                                                'Complete Profile & Get Started'
                                             )}
                                         </button>
-                                    </div>
-
-                                    {/* Help Text */}
-                                    <div className="text-center mt-3">
-                                        <small className="text-muted">
-                                            <i className="fas fa-shield-alt me-1"></i>
-                                            Your information is secure and will only be used for scholarship management
-                                        </small>
                                     </div>
                                 </form>
                             </div>
