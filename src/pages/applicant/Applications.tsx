@@ -290,12 +290,12 @@ const Applications: React.FC = () => {
                                                 )}
                                             </td>
                                             <td>
-                          <span
-                              className={`badge ${getClassificationBadge(evaluation?.classification)} px-3 py-2`}
-                              aria-label={`Classification ${evaluation?.classification || 'Pending'}`}
-                          >
-                            {evaluation?.classification || 'Pending'}
-                          </span>
+                                      <span
+                                          className={`badge ${getClassificationBadge(evaluation?.classification)} px-3 py-2`}
+                                          aria-label={`Classification ${evaluation?.classification || 'Pending'}`}
+                                      >
+                                        {evaluation?.classification || 'Pending'}
+                                      </span>
                                             </td>
                                             <td className="text-center">
                                                 <div className="btn-group btn-group-sm" role="group">
