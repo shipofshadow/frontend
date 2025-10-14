@@ -1,4 +1,3 @@
-
 import { useRef, useState, useEffect } from "react";
 import { useAuth } from "../../../context/AuthContext.tsx";
 import axios from "axios";
@@ -40,13 +39,12 @@ interface Scholarship {
     rules?: ScholarshipRules | null;
 }
 
-// Updated form interface to match the actual usage
 interface ScholarshipForm {
     id: number | null;
     name: string;
     description: string;
     is_active: boolean;
-    grant_amount: string | number; // Keep as string for form input
+    grant_amount: string | number;
     rules: {
         min_gwa?: string | number;
         max_gwa?: string | number;
@@ -67,6 +65,7 @@ const ManageScholarships = () => {
     const tableRef = useRef<HTMLTableElement>(null);
     const [scholarships, setScholarships] = useState<Scholarship[]>([]);
     const [datatable, setDatatable] = useState<DataTable | null>(null);
+    const [viewScholarship, setViewScholarship] = useState<Scholarship | null>(null);
 
     const [newScholarship, setNewScholarship] = useState<ScholarshipForm>({
         id: null,
@@ -114,7 +113,6 @@ const ManageScholarships = () => {
         }
     };
 
-    // Helper function to convert form values to API format
     const convertToApiFormat = (form: ScholarshipForm) => {
         return {
             name: form.name,
@@ -147,7 +145,6 @@ const ManageScholarships = () => {
 
             await fetchScholarships();
 
-            // Reset form
             setNewScholarship({
                 id: null,
                 name: "",
@@ -178,8 +175,7 @@ const ManageScholarships = () => {
             await Swal.fire("Success", "Scholarship created successfully!", "success");
         } catch (error) {
             console.error("Add error:", error);
-            const errorMessage = "Could not add scholarship.";
-            await Swal.fire("Error", errorMessage, "error");
+            await Swal.fire("Error", "Could not add scholarship.", "error");
         }
     };
 
@@ -201,8 +197,7 @@ const ManageScholarships = () => {
             await Swal.fire("Success", "Scholarship updated successfully!", "success");
         } catch (error) {
             console.error("Edit error:", error);
-            const errorMessage = "Could not update scholarship.";
-            await Swal.fire("Error", errorMessage, "error");
+            await Swal.fire("Error", "Could not update scholarship.", "error");
         }
     };
 
@@ -225,8 +220,7 @@ const ManageScholarships = () => {
                 await Swal.fire("Deleted!", "Scholarship has been deleted.", "success");
             } catch (error) {
                 console.error("Delete error:", error);
-                const errorMessage =  "Could not delete scholarship.";
-                await Swal.fire("Error", errorMessage, "error");
+                await Swal.fire("Error", "Could not delete scholarship.", "error");
             }
         }
     };
@@ -259,121 +253,262 @@ const ManageScholarships = () => {
         });
     };
 
+    const handleViewClick = (scholarship: Scholarship) => {
+        setViewScholarship(scholarship);
+    };
+
     useEffect(() => {
         fetchScholarships().catch((err) =>
             console.error("Promise rejection in fetchScholarships:", err)
         );
     }, []);
 
+    useEffect(() => {
+        if (tableRef.current && scholarships.length > 0 && !datatable) {
+            const dt = new DataTable(tableRef.current, {
+                searchable: true,
+                perPageSelect: [5, 10, 25, 50],
+                perPage: 10,
+                labels: {
+                    placeholder: "Search scholarships...",
+                    noRows: "No scholarships found",
+                }
+            });
+            setDatatable(dt);
+        }
+    }, [scholarships, datatable]);
 
     return (
         <>
-            <header className="page-header page-header-compact page-header-light border-bottom bg-white mb-4">
+            <style>{`
+                .stat-card {
+                    transition: transform 0.2s, box-shadow 0.2s;
+                    border: 1px solid #e9ecef;
+                }
+                .stat-card:hover {
+                    transform: translateY(-3px);
+                    box-shadow: 0 6px 12px rgba(0,0,0,0.1);
+                }
+                .badge-priority {
+                    font-size: 0.7rem;
+                    padding: 0.25em 0.5em;
+                }
+                .table-actions .btn {
+                    margin: 0 2px;
+                }
+                .modal-section-title {
+                    color: #0d6efd;
+                    font-weight: 600;
+                    border-bottom: 2px solid #e9ecef;
+                    padding-bottom: 0.5rem;
+                    margin-bottom: 1rem;
+                }
+                .form-check-input:checked {
+                    background-color: #0d6efd;
+                    border-color: #0d6efd;
+                }
+                .table thead th {
+                    background-color: #f8f9fa;
+                    font-weight: 600;
+                    text-transform: uppercase;
+                    font-size: 0.75rem;
+                    letter-spacing: 0.5px;
+                    border-bottom: 2px solid #dee2e6;
+                }
+                .scholarship-card {
+                    border-left: 4px solid #0d6efd;
+                }
+                .info-row {
+                    padding: 0.5rem 0;
+                    border-bottom: 1px solid #f1f3f5;
+                }
+                .info-row:last-child {
+                    border-bottom: none;
+                }
+                .modal-backdrop.show {
+                    opacity: 0.5;
+                }
+            `}</style>
+
+            {/* Header */}
+            <header className="bg-white border-bottom shadow-sm mb-4">
                 <div className="container-fluid px-4">
-                    <div className="page-header-content">
-                        <div className="row align-items-center justify-content-between pt-3">
-                            <div className="col-auto mb-3">
-                                <h1 className="page-header-title">
-                                    <div className="page-header-icon"><i className="fas fa-graduation-cap"></i></div>
-                                    Manage Scholarships
-                                </h1>
+                    <div className="py-4">
+                        <div className="d-flex align-items-center justify-content-between">
+                            <div className="d-flex align-items-center">
+                                <div className="me-3 p-3 bg-primary bg-opacity-10 rounded">
+                                    <i className="fas fa-graduation-cap fa-2x text-primary"></i>
+                                </div>
+                                <div>
+                                    <h1 className="h3 mb-1 fw-bold">Manage Scholarships</h1>
+                                    <p className="text-muted mb-0 small">Create and configure scholarship programs with eligibility rules</p>
+                                </div>
                             </div>
+                            <button
+                                className="btn btn-primary d-flex align-items-center"
+                                data-bs-toggle="modal"
+                                data-bs-target="#addModal"
+                            >
+                                <i className="fas fa-plus me-2"></i>
+                                Add Scholarship
+                            </button>
                         </div>
                     </div>
                 </div>
             </header>
 
             <div className="container-fluid px-4">
-                <div className="card mb-4">
-                    <div className="card-header d-flex justify-content-between align-items-center">
-                        <h5 className="mb-0">Scholarship Programs</h5>
-                        <button className="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#addModal">
-                            <i className="fas fa-plus me-1"></i>
-                            Add New Scholarship
-                        </button>
+                {/* Stats Cards */}
+                <div className="row g-3 mb-4">
+                    <div className="col-md-3">
+                        <div className="card stat-card border-0 shadow-sm h-100">
+                            <div className="card-body">
+                                <div className="d-flex align-items-center justify-content-between">
+                                    <div>
+                                        <p className="text-muted small mb-1">Total Scholarships</p>
+                                        <h3 className="mb-0 fw-bold">{scholarships.length}</h3>
+                                    </div>
+                                    <div className="bg-primary bg-opacity-10 p-3 rounded">
+                                        <i className="fas fa-award fa-2x text-primary"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="col-md-3">
+                        <div className="card stat-card border-0 shadow-sm h-100">
+                            <div className="card-body">
+                                <div className="d-flex align-items-center justify-content-between">
+                                    <div>
+                                        <p className="text-muted small mb-1">Active Programs</p>
+                                        <h3 className="mb-0 fw-bold text-success">
+                                            {scholarships.filter(s => s.is_active).length}
+                                        </h3>
+                                    </div>
+                                    <div className="bg-success bg-opacity-10 p-3 rounded">
+                                        <i className="fas fa-check-circle fa-2x text-success"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="col-md-3">
+                        <div className="card stat-card border-0 shadow-sm h-100">
+                            <div className="card-body">
+                                <div className="d-flex align-items-center justify-content-between">
+                                    <div>
+                                        <p className="text-muted small mb-1">Inactive Programs</p>
+                                        <h3 className="mb-0 fw-bold text-danger">
+                                            {scholarships.filter(s => !s.is_active).length}
+                                        </h3>
+                                    </div>
+                                    <div className="bg-danger bg-opacity-10 p-3 rounded">
+                                        <i className="fas fa-times-circle fa-2x text-danger"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
-                    <div className="card-body">
-                        <div className="table-responsive">
-                            <table ref={tableRef} className="table table-bordered table-striped">
-                                <thead className="table-dark">
-                                <tr>
-                                    <th>Scholarship Name</th>
-                                    <th>Description</th>
-                                    <th>Grant Amount</th>
-                                    <th>GWA Range</th>
-                                    <th>Income Limit</th>
-                                    <th>Must be OFW</th>
-                                    <th>Prefer Farmer's Child</th>
-                                    <th>Require IP</th>
-                                    <th>Prefer PWD</th>
-                                    <th>Status</th>
-                                    <th>Actions</th>
-                                </tr>
-                                </thead>
+                </div>
 
-                                <tbody>
-                                {scholarships.length > 0 ? (
-                                    scholarships.map((scholarship) => (
+                {/* Table Card */}
+                <div className="card border-0 shadow-sm">
+                    <div className="card-header bg-white border-bottom py-3">
+                        <h5 className="mb-0 fw-semibold">
+                            <i className="fas fa-list me-2 text-primary"></i>
+                            Scholarship Programs
+                        </h5>
+                    </div>
+
+                    <div className="card-body p-0">
+                        {scholarships.length > 0 ? (
+                            <div className="table-responsive">
+                                <table ref={tableRef} className="table table-hover mb-0 align-middle">
+                                    <thead>
+                                    <tr>
+                                        <th className="border-0">Name</th>
+                                        <th className="border-0">Description</th>
+                                        <th className="border-0 text-end">Grant Amount</th>
+                                        <th className="border-0 text-center">GWA Range</th>
+                                        <th className="border-0 text-end">Income Limit</th>
+                                        <th className="border-0 text-center">Priorities</th>
+                                        <th className="border-0 text-center">Status</th>
+                                        <th className="border-0 text-center">Actions</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    {scholarships.map((scholarship) => (
                                         <tr key={scholarship.id}>
                                             <td>
-                                                <strong>{scholarship.name}</strong>
+                                                <div className="d-flex align-items-center">
+                                                    <div className="bg-primary bg-opacity-10 p-2 rounded me-2">
+                                                        <i className="fas fa-trophy text-primary"></i>
+                                                    </div>
+                                                    <strong>{scholarship.name}</strong>
+                                                </div>
                                             </td>
-                                            <td>
-                                                <span className="text-muted" title={scholarship.description || "No description"}>
-                                                    {scholarship.description ?
-                                                        (scholarship.description.length > 50 ?
-                                                                scholarship.description.substring(0, 50) + "..."
-                                                                : scholarship.description
-                                                        )
-                                                        : "No description"
-                                                    }
+                                            <td className="small text-muted" style={{ maxWidth: '200px' }}>
+                                                {scholarship.description
+                                                    ? (scholarship.description.length > 60
+                                                        ? scholarship.description.substring(0, 60) + "..."
+                                                        : scholarship.description)
+                                                    : <span className="fst-italic">No description</span>
+                                                }
+                                            </td>
+                                            <td className="text-end fw-semibold text-success">
+                                                ₱{scholarship.grant_amount.toLocaleString()}
+                                            </td>
+                                            <td className="text-center small">
+                                                <span className="badge bg-light text-dark border">
+                                                    {scholarship.rules?.min_gwa ?? "—"} - {scholarship.rules?.max_gwa ?? "—"}
                                                 </span>
                                             </td>
-                                            <td>{scholarship.grant_amount}</td>
-                                            <td>
-                                                {scholarship.rules?.min_gwa ?? "—"} - {scholarship.rules?.max_gwa ?? "—"}
-                                            </td>
-
-                                            <td>
+                                            <td className="text-end small">
                                                 {scholarship.rules?.max_income != null
                                                     ? `₱${scholarship.rules.max_income.toLocaleString()}`
                                                     : "—"}
                                             </td>
-
                                             <td>
-                                                <span className={`badge ${scholarship.rules?.priorities?.must_be_ofw ? 'bg-success' : 'bg-secondary'}`}>
-                                                    {scholarship.rules?.priorities?.must_be_ofw ? 'Yes' : 'No'}
-                                                </span>
+                                                <div className="d-flex flex-wrap gap-1 justify-content-center">
+                                                    {scholarship.rules?.priorities?.must_be_ofw && (
+                                                        <span className="badge badge-priority bg-success" title="Must be OFW">OFW</span>
+                                                    )}
+                                                    {scholarship.rules?.priorities?.prefer_farmers_child && (
+                                                        <span className="badge badge-priority bg-info" title="Prefer Farmer's Child">Farmer</span>
+                                                    )}
+                                                    {scholarship.rules?.priorities?.require_ip && (
+                                                        <span className="badge badge-priority bg-warning text-dark" title="Require IP">IP</span>
+                                                    )}
+                                                    {scholarship.rules?.priorities?.prefer_pwd && (
+                                                        <span className="badge badge-priority bg-primary" title="Prefer PWD">PWD</span>
+                                                    )}
+                                                    {!scholarship.rules?.priorities?.must_be_ofw &&
+                                                        !scholarship.rules?.priorities?.prefer_farmers_child &&
+                                                        !scholarship.rules?.priorities?.require_ip &&
+                                                        !scholarship.rules?.priorities?.prefer_pwd && (
+                                                            <span className="text-muted small fst-italic">None</span>
+                                                        )}
+                                                </div>
                                             </td>
-
-                                            <td>
-                                                <span className={`badge ${scholarship.rules?.priorities?.prefer_farmers_child ? 'bg-info' : 'bg-secondary'}`}>
-                                                    {scholarship.rules?.priorities?.prefer_farmers_child ? 'Yes' : 'No'}
-                                                </span>
-                                            </td>
-
-                                            <td>
-                                                <span className={`badge ${scholarship.rules?.priorities?.require_ip ? 'bg-warning text-dark' : 'bg-secondary'}`}>
-                                                    {scholarship.rules?.priorities?.require_ip ? 'Yes' : 'No'}
-                                                </span>
-                                            </td>
-
-                                            <td>
-                                                <span className={`badge ${scholarship.rules?.priorities?.prefer_pwd ? 'bg-primary' : 'bg-secondary'}`}>
-                                                    {scholarship.rules?.priorities?.prefer_pwd ? 'Yes' : 'No'}
-                                                </span>
-                                            </td>
-
-                                            <td>
-                                                <span className={`badge ${scholarship.is_active ? 'bg-success' : 'bg-danger'}`}>
+                                            <td className="text-center">
+                                                <span className={`badge ${scholarship.is_active ? 'bg-success' : 'bg-secondary'}`}>
                                                     {scholarship.is_active ? 'Active' : 'Inactive'}
                                                 </span>
                                             </td>
                                             <td>
-                                                <div className="btn-group" role="group">
+                                                <div className="d-flex justify-content-center table-actions">
                                                     <button
-                                                        className="btn btn-outline-primary btn-sm"
+                                                        className="btn btn-sm btn-outline-info"
+                                                        title="View Details"
+                                                        data-bs-toggle="modal"
+                                                        data-bs-target="#viewModal"
+                                                        onClick={() => handleViewClick(scholarship)}
+                                                    >
+                                                        <i className="fas fa-eye"></i>
+                                                    </button>
+                                                    <button
+                                                        className="btn btn-sm btn-outline-primary"
                                                         title="Edit"
                                                         data-bs-toggle="modal"
                                                         data-bs-target="#editModal"
@@ -382,7 +517,7 @@ const ManageScholarships = () => {
                                                         <i className="fas fa-edit"></i>
                                                     </button>
                                                     <button
-                                                        className="btn btn-outline-danger btn-sm"
+                                                        className="btn btn-sm btn-outline-danger"
                                                         title="Delete"
                                                         onClick={() => handleDeleteScholarship(scholarship.id)}
                                                     >
@@ -391,31 +526,180 @@ const ManageScholarships = () => {
                                                 </div>
                                             </td>
                                         </tr>
-                                    ))
-                                ) : (
-                                    <tr>
-                                        <td colSpan={11} className="text-center text-muted py-4">
-                                            <i className="fas fa-inbox fa-2x mb-2"></i>
-                                            <p>No scholarships found.</p>
-                                        </td>
-                                    </tr>
-                                )}
-                                </tbody>
-                            </table>
-                        </div>
+                                    ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        ) : (
+                            <div className="text-center py-5">
+                                <i className="fas fa-inbox fa-3x text-muted mb-3 opacity-25"></i>
+                                <h5 className="text-muted">No scholarships found</h5>
+                                <p className="text-muted small mb-3">Create your first scholarship program to get started</p>
+                                <button className="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addModal">
+                                    <i className="fas fa-plus me-1"></i>
+                                    Add Scholarship
+                                </button>
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>
 
+            {/* View Scholarship Modal */}
+            {viewScholarship && (
+                <div className="modal fade" id="viewModal" tabIndex={-1} aria-labelledby="viewModalLabel" aria-hidden="true">
+                    <div className="modal-dialog modal-lg modal-dialog-scrollable">
+                        <div className="modal-content">
+                            <div className="modal-header border-0 bg-light">
+                                <div>
+                                    <h5 className="modal-title fw-bold" id="viewModalLabel">
+                                        <i className="fas fa-trophy text-primary me-2"></i>
+                                        {viewScholarship.name}
+                                    </h5>
+                                    <p className="text-muted small mb-0">Scholarship Details</p>
+                                </div>
+                                <button
+                                    type="button"
+                                    className="btn-close"
+                                    data-bs-dismiss="modal"
+                                    aria-label="Close"
+                                ></button>
+                            </div>
+                            <div className="modal-body">
+                                <div className="scholarship-card card border mb-3">
+                                    <div className="card-body">
+                                        <h6 className="modal-section-title">
+                                            <i className="fas fa-info-circle me-2"></i>
+                                            Basic Information
+                                        </h6>
+                                        <div className="info-row">
+                                            <div className="row">
+                                                <div className="col-4 text-muted small">Scholarship Name:</div>
+                                                <div className="col-8 fw-semibold">{viewScholarship.name}</div>
+                                            </div>
+                                        </div>
+                                        <div className="info-row">
+                                            <div className="row">
+                                                <div className="col-4 text-muted small">Description:</div>
+                                                <div className="col-8">{viewScholarship.description || <span className="fst-italic text-muted">No description</span>}</div>
+                                            </div>
+                                        </div>
+                                        <div className="info-row">
+                                            <div className="row">
+                                                <div className="col-4 text-muted small">Grant Amount:</div>
+                                                <div className="col-8 fw-bold text-success">₱{viewScholarship.grant_amount.toLocaleString()}</div>
+                                            </div>
+                                        </div>
+                                        <div className="info-row">
+                                            <div className="row">
+                                                <div className="col-4 text-muted small">Status:</div>
+                                                <div className="col-8">
+                                                    <span className={`badge ${viewScholarship.is_active ? 'bg-success' : 'bg-secondary'}`}>
+                                                        {viewScholarship.is_active ? 'Active' : 'Inactive'}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="scholarship-card card border mb-3">
+                                    <div className="card-body">
+                                        <h6 className="modal-section-title">
+                                            <i className="fas fa-graduation-cap me-2"></i>
+                                            Academic Requirements
+                                        </h6>
+                                        <div className="info-row">
+                                            <div className="row">
+                                                <div className="col-4 text-muted small">GWA Range:</div>
+                                                <div className="col-8">
+                                                    <span className="badge bg-light text-dark border">
+                                                        {viewScholarship.rules?.min_gwa ?? "—"} to {viewScholarship.rules?.max_gwa ?? "—"}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="info-row">
+                                            <div className="row">
+                                                <div className="col-4 text-muted small">Units Range:</div>
+                                                <div className="col-8">
+                                                    {viewScholarship.rules?.min_units_enrolled ?? "—"} to {viewScholarship.rules?.max_units_enrolled ?? "—"} units
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="scholarship-card card border mb-3">
+                                    <div className="card-body">
+                                        <h6 className="modal-section-title">
+                                            <i className="fas fa-money-bill-wave me-2"></i>
+                                            Financial Requirements
+                                        </h6>
+                                        <div className="info-row">
+                                            <div className="row">
+                                                <div className="col-4 text-muted small">Income Range:</div>
+                                                <div className="col-8">
+                                                    ₱{viewScholarship.rules?.min_income?.toLocaleString() ?? "0"} to ₱{viewScholarship.rules?.max_income?.toLocaleString() ?? "No limit"}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="scholarship-card card border">
+                                    <div className="card-body">
+                                        <h6 className="modal-section-title">
+                                            <i className="fas fa-users me-2"></i>
+                                            Priority Settings
+                                        </h6>
+                                        <div className="d-flex flex-wrap gap-2">
+                                            <span className={`badge ${viewScholarship.rules?.priorities?.must_be_ofw ? 'bg-success' : 'bg-secondary'}`}>
+                                                {viewScholarship.rules?.priorities?.must_be_ofw ? '✓' : '✗'} Must be OFW
+                                            </span>
+                                            <span className={`badge ${viewScholarship.rules?.priorities?.prefer_farmers_child ? 'bg-info' : 'bg-secondary'}`}>
+                                                {viewScholarship.rules?.priorities?.prefer_farmers_child ? '✓' : '✗'} Prefer Farmer's Child
+                                            </span>
+                                            <span className={`badge ${viewScholarship.rules?.priorities?.require_ip ? 'bg-warning text-dark' : 'bg-secondary'}`}>
+                                                {viewScholarship.rules?.priorities?.require_ip ? '✓' : '✗'} Require IP
+                                            </span>
+                                            <span className={`badge ${viewScholarship.rules?.priorities?.prefer_pwd ? 'bg-primary' : 'bg-secondary'}`}>
+                                                {viewScholarship.rules?.priorities?.prefer_pwd ? '✓' : '✗'} Prefer PWD
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="modal-footer border-0 bg-light">
+                                <button type="button" className="btn btn-secondary" data-bs-dismiss="modal">
+                                    Close
+                                </button>
+                                <button
+                                    type="button"
+                                    className="btn btn-primary"
+                                    data-bs-dismiss="modal"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#editModal"
+                                    onClick={() => handleEditClick(viewScholarship)}
+                                >
+                                    <i className="fas fa-edit me-1"></i>
+                                    Edit Scholarship
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Add Scholarship Modal */}
             <div className="modal fade" id="addModal" tabIndex={-1} aria-labelledby="addModalLabel" aria-hidden="true">
-                <div className="modal-dialog modal-xl">
+                <div className="modal-dialog modal-xl modal-dialog-scrollable">
                     <div className="modal-content">
-                        <div className="modal-header bg-success text-white">
-                            <h1 className="modal-title fs-5" id="addModalLabel">
+                        <div className="modal-header border-0 bg-primary text-white">
+                            <h5 className="modal-title" id="addModalLabel">
                                 <i className="fas fa-plus-circle me-2"></i>
-                                Add New Scholarship
-                            </h1>
+                                Create New Scholarship
+                            </h5>
                             <button
                                 type="button"
                                 className="btn-close btn-close-white"
@@ -426,11 +710,10 @@ const ManageScholarships = () => {
                         </div>
                         <div className="modal-body">
                             <form>
-                                <div className="row g-3">
-                                    {/* Basic Information */}
+                                <div className="row g-4">
                                     <div className="col-12">
-                                        <h6 className="text-primary border-bottom pb-2 mb-3">
-                                            <i className="fas fa-info-circle me-1"></i>
+                                        <h6 className="modal-section-title">
+                                            <i className="fas fa-info-circle me-2"></i>
                                             Basic Information
                                         </h6>
                                     </div>
@@ -443,7 +726,7 @@ const ManageScholarships = () => {
                                             id="addScholarshipName"
                                             type="text"
                                             className="form-control"
-                                            placeholder="Enter scholarship name"
+                                            placeholder="e.g., Presidential Scholarship"
                                             value={newScholarship.name}
                                             onChange={(e) => setNewScholarship({ ...newScholarship, name: e.target.value })}
                                             required
@@ -451,10 +734,14 @@ const ManageScholarships = () => {
                                     </div>
 
                                     <div className="col-md-4">
-                                        <label className="form-label fw-semibold">Grant Amount</label>
-                                        <input id="addGrantAmount" type="number" className="form-control"
-                                               placeholder="Enter grant amount" value={newScholarship.grant_amount}
-                                        onChange={(e) => setNewScholarship({...newScholarship, grant_amount: e.target.value })}/>
+                                        <label className="form-label fw-semibold">Grant Amount (₱)</label>
+                                        <input
+                                            type="number"
+                                            className="form-control"
+                                            placeholder="e.g., 5000"
+                                            value={newScholarship.grant_amount}
+                                            onChange={(e) => setNewScholarship({ ...newScholarship, grant_amount: e.target.value })}
+                                        />
                                     </div>
 
                                     <div className="col-md-4">
@@ -480,16 +767,15 @@ const ManageScholarships = () => {
                                             id="addScholarshipDescription"
                                             className="form-control"
                                             rows={3}
-                                            placeholder="Provide a detailed description of the scholarship program..."
+                                            placeholder="Describe the scholarship program, eligibility criteria, and benefits..."
                                             value={newScholarship.description}
                                             onChange={(e) => setNewScholarship({ ...newScholarship, description: e.target.value })}
                                         />
                                     </div>
 
-                                    {/* Academic Requirements */}
                                     <div className="col-12 mt-4">
-                                        <h6 className="text-primary border-bottom pb-2 mb-3">
-                                            <i className="fas fa-graduation-cap me-1"></i>
+                                        <h6 className="modal-section-title">
+                                            <i className="fas fa-graduation-cap me-2"></i>
                                             Academic Requirements
                                         </h6>
                                     </div>
@@ -505,7 +791,7 @@ const ManageScholarships = () => {
                                             min="1.00"
                                             max="5.00"
                                             className="form-control"
-                                            placeholder="1.75"
+                                            placeholder="1.00"
                                             value={newScholarship.rules.min_gwa}
                                             onChange={(e) => setNewScholarship({
                                                 ...newScholarship,
@@ -536,7 +822,7 @@ const ManageScholarships = () => {
 
                                     <div className="col-md-3">
                                         <label htmlFor="addMinUnits" className="form-label fw-semibold">
-                                            Min Units
+                                            Minimum Units
                                         </label>
                                         <input
                                             id="addMinUnits"
@@ -555,7 +841,7 @@ const ManageScholarships = () => {
 
                                     <div className="col-md-3">
                                         <label htmlFor="addMaxUnits" className="form-label fw-semibold">
-                                            Max Units
+                                            Maximum Units
                                         </label>
                                         <input
                                             id="addMaxUnits"
@@ -572,10 +858,9 @@ const ManageScholarships = () => {
                                         />
                                     </div>
 
-                                    {/* Financial Requirements */}
                                     <div className="col-12 mt-4">
-                                        <h6 className="text-primary border-bottom pb-2 mb-3">
-                                            <i className="fas fa-money-bill-wave me-1"></i>
+                                        <h6 className="modal-section-title">
+                                            <i className="fas fa-money-bill-wave me-2"></i>
                                             Financial Requirements
                                         </h6>
                                     </div>
@@ -622,10 +907,9 @@ const ManageScholarships = () => {
                                         </div>
                                     </div>
 
-                                    {/* Priority Settings */}
                                     <div className="col-12 mt-4">
-                                        <h6 className="text-primary border-bottom pb-2 mb-3">
-                                            <i className="fas fa-users me-1"></i>
+                                        <h6 className="modal-section-title">
+                                            <i className="fas fa-users me-2"></i>
                                             Priority Settings
                                         </h6>
                                     </div>
@@ -728,10 +1012,10 @@ const ManageScholarships = () => {
                                 </div>
                             </form>
                         </div>
-                        <div className="modal-footer bg-light">
+                        <div className="modal-footer border-0 bg-light">
                             <button
                                 type="button"
-                                className="btn btn-outline-secondary"
+                                className="btn btn-secondary"
                                 data-bs-dismiss="modal"
                             >
                                 <i className="fas fa-times me-1"></i>
@@ -739,12 +1023,12 @@ const ManageScholarships = () => {
                             </button>
                             <button
                                 type="button"
-                                className="btn btn-success"
+                                className="btn btn-primary"
                                 onClick={handleAddScholarship}
                                 disabled={!newScholarship.name.trim()}
                             >
                                 <i className="fas fa-check me-1"></i>
-                                Save Scholarship
+                                Create Scholarship
                             </button>
                         </div>
                     </div>
@@ -754,13 +1038,13 @@ const ManageScholarships = () => {
             {/* Edit Scholarship Modal */}
             {editScholarship && (
                 <div className="modal fade" id="editModal" tabIndex={-1} aria-labelledby="editModalLabel" aria-hidden="true">
-                    <div className="modal-dialog modal-xl">
+                    <div className="modal-dialog modal-xl modal-dialog-scrollable">
                         <div className="modal-content">
-                            <div className="modal-header bg-warning text-dark">
-                                <h1 className="modal-title fs-5" id="editModalLabel">
+                            <div className="modal-header border-0 bg-warning">
+                                <h5 className="modal-title text-dark" id="editModalLabel">
                                     <i className="fas fa-edit me-2"></i>
-                                    Edit Scholarship: {editScholarship.name}
-                                </h1>
+                                    Edit: {editScholarship.name}
+                                </h5>
                                 <button
                                     type="button"
                                     className="btn-close"
@@ -771,11 +1055,10 @@ const ManageScholarships = () => {
                             </div>
                             <div className="modal-body">
                                 <form>
-                                    <div className="row g-3">
-                                        {/* Basic Information */}
+                                    <div className="row g-4">
                                         <div className="col-12">
-                                            <h6 className="text-primary border-bottom pb-2 mb-3">
-                                                <i className="fas fa-info-circle me-1"></i>
+                                            <h6 className="modal-section-title">
+                                                <i className="fas fa-info-circle me-2"></i>
                                                 Basic Information
                                             </h6>
                                         </div>
@@ -796,10 +1079,14 @@ const ManageScholarships = () => {
                                         </div>
 
                                         <div className="col-md-4">
-                                            <label className="form-label fw-semibold">Grant Amount</label>
-                                            <input id="addGrantAmount" type="number" className="form-control"
-                                                   placeholder="Enter grant amount" value={editScholarship.grant_amount}
-                                                   onChange={(e) => setEditScholarship({...editScholarship, grant_amount: e.target.value })}/>
+                                            <label className="form-label fw-semibold">Grant Amount (₱)</label>
+                                            <input
+                                                type="number"
+                                                className="form-control"
+                                                placeholder="Enter grant amount"
+                                                value={editScholarship.grant_amount}
+                                                onChange={(e) => setEditScholarship({ ...editScholarship, grant_amount: e.target.value })}
+                                            />
                                         </div>
 
                                         <div className="col-md-4">
@@ -825,16 +1112,15 @@ const ManageScholarships = () => {
                                                 id="editScholarshipDescription"
                                                 className="form-control"
                                                 rows={3}
-                                                placeholder="Provide a detailed description of the scholarship program..."
+                                                placeholder="Provide a detailed description..."
                                                 value={editScholarship.description}
                                                 onChange={(e) => setEditScholarship({ ...editScholarship, description: e.target.value })}
                                             />
                                         </div>
 
-                                        {/* Academic Requirements */}
                                         <div className="col-12 mt-4">
-                                            <h6 className="text-primary border-bottom pb-2 mb-3">
-                                                <i className="fas fa-graduation-cap me-1"></i>
+                                            <h6 className="modal-section-title">
+                                                <i className="fas fa-graduation-cap me-2"></i>
                                                 Academic Requirements
                                             </h6>
                                         </div>
@@ -850,7 +1136,7 @@ const ManageScholarships = () => {
                                                 min="1.00"
                                                 max="5.00"
                                                 className="form-control"
-                                                placeholder="1.75"
+                                                placeholder="1.00"
                                                 value={editScholarship.rules?.min_gwa || ""}
                                                 onChange={(e) => setEditScholarship({
                                                     ...editScholarship,
@@ -887,7 +1173,7 @@ const ManageScholarships = () => {
 
                                         <div className="col-md-3">
                                             <label htmlFor="editMinUnits" className="form-label fw-semibold">
-                                                Min Units
+                                                Minimum Units
                                             </label>
                                             <input
                                                 id="editMinUnits"
@@ -909,7 +1195,7 @@ const ManageScholarships = () => {
 
                                         <div className="col-md-3">
                                             <label htmlFor="editMaxUnits" className="form-label fw-semibold">
-                                                Max Units
+                                                Maximum Units
                                             </label>
                                             <input
                                                 id="editMaxUnits"
@@ -929,10 +1215,9 @@ const ManageScholarships = () => {
                                             />
                                         </div>
 
-                                        {/* Financial Requirements */}
                                         <div className="col-12 mt-4">
-                                            <h6 className="text-primary border-bottom pb-2 mb-3">
-                                                <i className="fas fa-money-bill-wave me-1"></i>
+                                            <h6 className="modal-section-title">
+                                                <i className="fas fa-money-bill-wave me-2"></i>
                                                 Financial Requirements
                                             </h6>
                                         </div>
@@ -985,10 +1270,9 @@ const ManageScholarships = () => {
                                             </div>
                                         </div>
 
-                                        {/* Priority Settings */}
                                         <div className="col-12 mt-4">
-                                            <h6 className="text-primary border-bottom pb-2 mb-3">
-                                                <i className="fas fa-users me-1"></i>
+                                            <h6 className="modal-section-title">
+                                                <i className="fas fa-users me-2"></i>
                                                 Priority Settings
                                             </h6>
                                         </div>
@@ -1091,10 +1375,10 @@ const ManageScholarships = () => {
                                     </div>
                                 </form>
                             </div>
-                            <div className="modal-footer bg-light">
+                            <div className="modal-footer border-0 bg-light">
                                 <button
                                     type="button"
-                                    className="btn btn-outline-secondary"
+                                    className="btn btn-secondary"
                                     data-bs-dismiss="modal"
                                 >
                                     <i className="fas fa-times me-1"></i>
@@ -1107,7 +1391,7 @@ const ManageScholarships = () => {
                                     disabled={!editScholarship.name?.trim()}
                                 >
                                     <i className="fas fa-save me-1"></i>
-                                    Update Scholarship
+                                    Save Changes
                                 </button>
                             </div>
                         </div>

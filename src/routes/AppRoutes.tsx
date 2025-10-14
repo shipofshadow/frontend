@@ -38,7 +38,6 @@ import ApplicantsReport from "../pages/admin/reports/ApplicantsReport.tsx";
 import ArchivedDocuments from "../pages/admin/documents/ArchivedDocuments.tsx";
 import SubmittedRequirements from "../pages/admin/documents/SubmittedRequirements.tsx";
 import FuzzyLogic from "../pages/admin/FuzzyLogic.tsx";
-import ImportStudents from "../pages/admin/StudentImportTool.tsx";
 import ManageScholarships from "../pages/admin/scholarships/ManageScholarships.tsx";
 import ScholarshipDashboard from "../pages/admin/scholarships/ScholarshipDashboard.tsx";
 import StudentScholarshipReport from "../pages/admin/reports/StudentScholarshipReport.tsx";
@@ -51,10 +50,10 @@ import PrivacyPolicyPage from "../pages/PrivacyPolicyPage.tsx";
 import Application from "../pages/applicant/Application.tsx";
 import TermsOfServicePage from "../pages/TermsOfServicePage.tsx";
 import ScholarshipSummaryReport from '../pages/admin/reports/ScholarshipSummaryReport.tsx';
-import Contact from '../pages/Contact.tsx'
 import About from "../pages/About.tsx";
 import Scholarships from "../pages/Scholarships.tsx";
 import EditApplication from "../pages/applicant/EditApplication.tsx";
+import BulkAnalysisTool from "../pages/admin/BulkAnalysisTool.tsx";
 export function AuthRedirect() {
     const { isAuthenticated, isAdmin, isStudent } = useAuth();
 
@@ -119,7 +118,7 @@ const AppRoutes: React.FC = () => {
 
                     <Route path="approved" element={<ApprovedApplication />} />
 
-                    <Route path="import-students" element={<ImportStudents />} />
+                    <Route path="bulk-prequalification" element={<BulkAnalysisTool />} />
                     <Route path="fuzzy-logic" element={<FuzzyLogic />} />
 
                     <Route path="notifications" element={<Notifications/>} />
@@ -155,7 +154,7 @@ const AppRoutes: React.FC = () => {
                 <Route path="reset-password" element={<ResetPassword />} />
                 <Route path="privacy-policy" element={<PrivacyPolicyPage/>} />
                 <Route path="terms-of-service" element={<TermsOfServicePage/>} />
-                <Route path="contact" element={<Contact />} />
+                {/*<Route path="contact" element={<Contact />} />*/}
                 <Route path="about" element={<About />} />
                 <Route path="scholarships" element={<Scholarships />} />
                 <Route path="prequalify" element={<Prequalify/>} />

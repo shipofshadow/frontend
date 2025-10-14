@@ -1,7 +1,8 @@
 import React, { useMemo, useState } from 'react';
 import { useAuth } from "../../context/AuthContext.tsx";
-import { Eye, Download, FileText, Calendar, Award, TrendingUp, Pencil, Filter, Plus, Search } from 'lucide-react';
+import { Eye, FileText, Calendar, Award, TrendingUp, Pencil, Filter, Plus, Search } from 'lucide-react';
 import { Link } from "react-router-dom";
+import type {ApplicationData} from "../../interfaces/scholarship_summary.ts";
 
 const Applications: React.FC = () => {
     const { applications: scholarshipData, isLoading } = useAuth();
@@ -100,19 +101,7 @@ const Applications: React.FC = () => {
                             <Plus size={18} className="me-2" />
                             New Application
                         </Link>
-                        <div className="btn-group">
-                            <button type="button" className="btn btn-outline-primary">
-                                <Download size={18} className="me-2" />
-                                Export
-                            </button>
-                            <button type="button" className="btn btn-outline-primary dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
-                                <span className="visually-hidden">Toggle Dropdown</span>
-                            </button>
-                            <ul className="dropdown-menu dropdown-menu-end">
-                                <li><button className="dropdown-item">Export CSV</button></li>
-                                <li><button className="dropdown-item">Export PDF</button></li>
-                            </ul>
-                        </div>
+
                     </div>
                 </div>
             </div>
@@ -242,7 +231,7 @@ const Applications: React.FC = () => {
                                     </td>
                                 </tr>
                             ) : (
-                                filtered.map((appData: any) => {
+                                filtered.map((appData: ApplicationData) => {
                                     const app = appData.application;
                                     const evaluation = appData.evaluation;
                                     const pct = ((evaluation?.score || 0) * 100);

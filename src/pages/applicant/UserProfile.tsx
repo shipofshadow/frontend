@@ -609,49 +609,6 @@ const UserProfile = () => {
                             </div>
                         </div>
 
-                        {/* Profile Actions */}
-                        <div className="card border-0 shadow-sm rounded-4">
-                            <div className="card-header bg-gradient border-0 rounded-top-4">
-                                <div className="d-flex align-items-center">
-                                    <div className="bg-secondary bg-opacity-15 rounded-3 p-2 me-3">
-                                        <i className="fal fa-gears text-white fs-5"></i>
-                                    </div>
-                                    <h5 className="mb-0 fw-bold">Profile Actions</h5>
-                                </div>
-                            </div>
-                            <div className="card-body">
-                                <div className="d-grid gap-3">
-                                    <button className="btn btn-primary d-flex align-items-center justify-content-between rounded-3 py-3">
-                                        <div className="d-flex align-items-center">
-                                            <i className="fal fa-pencil fs-5 me-3"></i>
-                                            <span className="fw-semibold">Edit Profile Information</span>
-                                        </div>
-                                        <i className="fal fa-chevron-right"></i>
-                                    </button>
-                                    <button className="btn btn-outline-success d-flex align-items-center justify-content-between rounded-3 py-3">
-                                        <div className="d-flex align-items-center">
-                                            <i className="fal fa-download fs-5 me-3"></i>
-                                            <span className="fw-semibold">Download Profile PDF</span>
-                                        </div>
-                                        <i className="fal fa-chevron-right"></i>
-                                    </button>
-                                    <button className="btn btn-outline-info d-flex align-items-center justify-content-between rounded-3 py-3">
-                                        <div className="d-flex align-items-center">
-                                            <i className="fal fa-eye fs-5 me-3"></i>
-                                            <span className="fw-semibold">View Application History</span>
-                                        </div>
-                                        <i className="fal fa-chevron-right"></i>
-                                    </button>
-                                    <button className="btn btn-outline-warning d-flex align-items-center justify-content-between rounded-3 py-3">
-                                        <div className="d-flex align-items-center">
-                                            <i className="fal fa-shield fs-5 me-3"></i>
-                                            <span className="fw-semibold">Privacy Settings</span>
-                                        </div>
-                                        <i className="fal fa-chevron-right"></i>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
                     </div>
                 </div>
             </div>

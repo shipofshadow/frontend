@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import {
     Bell,
-    Download,
     Eye,
     GraduationCap,
     Plus,
@@ -327,10 +326,10 @@ const Home = () => {
                             View Full Application
                         </Link>
 
-                        <button className="btn btn-outline-secondary">
-                            <Download size={18} className="me-2" />
-                            Download PDF
-                        </button>
+                        {/*<button className="btn btn-outline-secondary">*/}
+                        {/*    <Download size={18} className="me-2" />*/}
+                        {/*    Download PDF*/}
+                        {/*</button>*/}
                         {applicationInfo?.status === 'pending' && (
                             <button className="btn btn-outline-info">
                                 <MessageCircle size={18} className="me-2" />
@@ -480,11 +479,7 @@ const Home = () => {
                                 </div>
 
                                 <div className="d-grid gap-2">
-                                    <button className="btn btn-success">
-                                        <MessageCircle size={18} className="me-2" />
-                                        Live Chat Support
-                                    </button>
-                                    <button className="btn btn-outline-secondary">
+                                    <button className="btn btn-secondary">
                                         <BookOpen size={18} className="me-2" />
                                         View FAQ
                                     </button>
@@ -526,21 +521,21 @@ const Home = () => {
                                         <ArrowRight size={18} />
                                     </Link>
                                 ) : (
-                                    <button className="btn btn-outline-primary d-flex align-items-center justify-content-between rounded-3 py-3">
+                                    <Link to="/applicant/status" className="btn btn-outline-primary d-flex align-items-center justify-content-between rounded-3 py-3">
                                         <div className="d-flex align-items-center">
                                             <Eye size={20} className="me-3" />
                                             <span className="fw-semibold">View Application</span>
                                         </div>
                                         <ArrowRight size={18} />
-                                    </button>
+                                    </Link>
                                 )}
-                                <button className="btn btn-outline-secondary d-flex align-items-center justify-content-between rounded-3 py-3">
+                                <Link to="/applicant/profile" className="btn btn-outline-secondary d-flex align-items-center justify-content-between rounded-3 py-3">
                                     <div className="d-flex align-items-center">
                                         <User size={20} className="me-3" />
                                         <span className="fw-semibold">Update Profile</span>
                                     </div>
                                     <ArrowRight size={18} />
-                                </button>
+                                </Link>
                             </div>
                         </section>
 

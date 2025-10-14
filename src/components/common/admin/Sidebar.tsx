@@ -20,11 +20,6 @@ const Sidebar: React.FC = () => {
 
               {/* Mobile Header */}
               <div className="sidenav-menu-heading d-sm-none">Account</div>
-              <a className="nav-link d-sm-none" href="#">
-                <div className="nav-link-icon"><i data-feather="bell"></i></div>
-                Alerts <span className="badge bg-warning-soft text-warning ms-auto">4 New!</span>
-              </a>
-
               {/* Home */}
               <div className="sidenav-menu-heading">Home</div>
               <NavLink
@@ -124,9 +119,9 @@ const Sidebar: React.FC = () => {
               {/* Automation */}
               <div className="sidenav-menu-heading">Automation & Rules</div>
 
-              <NavLink to="/admin/import-students" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
-                <div className="nav-link-icon"><i data-feather="upload-cloud"></i></div>
-                Import Student List
+              <NavLink to="/admin/bulk-prequalification" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
+                <div className="nav-link-icon"><i data-feather="arrow-up"></i></div>
+                Bulk Prequalification
               </NavLink>
 
 
@@ -158,7 +153,7 @@ const Sidebar: React.FC = () => {
               </NavLink>
 
               {/* Student Communication */}
-                <div className="sidenav-menu-heading">Student Communication</div>
+                <div className="sidenav-menu-heading">Communication</div>
                 <NavLink to="/admin/notifications" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
                     <div className="nav-link-icon"><i className="far fa-bell"></i></div>
                     Notifications
