@@ -464,7 +464,7 @@ const CompleteProfile: React.FC = () => {
             {/* Confirmation Modal */}
             {showConfirmModal && (
                 <div className="modal show d-block" tabIndex={-1} style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}>
-                    <div className="modal-dialog modal-dialog-centered">
+                    <div className="modal-dialog modal-dialog-centered modal-lg">
                         <div className="modal-content border-0 rounded-4 shadow-lg">
                             <div className="modal-body text-center p-5">
                                 <div className="rounded-circle d-inline-flex align-items-center justify-content-center mb-4"
