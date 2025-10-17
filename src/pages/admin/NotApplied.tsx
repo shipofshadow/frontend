@@ -27,11 +27,9 @@ const NotApplied = () => {
     const [error, setError] = useState<string | null>(null);
     const [selectedStudent, setSelectedStudent] = useState<NotAppliedStudent | null>(null);
     const [showDetailsModal, setShowDetailsModal] = useState(false);
-    const [showNotifyModal, setShowNotifyModal] = useState(false);
-    const [notificationMessage, setNotificationMessage] = useState('');
-    const [sendingNotifications, setSendingNotifications] = useState(false);
     const { token, user } = useAuth();
 
+    // Check admin access
     const hasAdminAccess = useMemo(() => user?.role === 'admin', [user?.role]);
 
     const fetchStudents = useCallback(async () => {
@@ -105,53 +103,12 @@ const NotApplied = () => {
         }
     }, [token]);
 
-    const handleNotifySingle = useCallback((student: NotAppliedStudent) => {
-        setSelectedStudent(student);
-        setNotificationMessage(`Hi ${student.first_name},\n\nWe noticed you haven't applied for any scholarships yet. We encourage you to explore available opportunities that may help support your education.\n\nBest regards,\nScholarship Office`);
-        setShowNotifyModal(true);
-    }, []);
-
-    const handleNotifyAll = useCallback(() => {
-        setSelectedStudent(null);
-        setNotificationMessage(`Dear Student,\n\nWe noticed you haven't applied for any scholarships yet. We encourage you to explore available opportunities that may help support your education.\n\nBest regards,\nScholarship Office`);
-        setShowNotifyModal(true);
-    }, []);
-
-    const sendNotification = useCallback(async () => {
-        setSendingNotifications(true);
-        try {
-            await new Promise(resolve => setTimeout(resolve, 1500));
-
-            const recipientCount = selectedStudent ? 1 : students.length;
-
-            setShowNotifyModal(false);
-            setNotificationMessage('');
-            setSelectedStudent(null);
-
-            await Swal.fire({
-                title: 'Notifications Sent!',
-                text: `Successfully sent notifications to ${recipientCount} ${recipientCount === 1 ? 'student' : 'students'}.`,
-                icon: 'success',
-                timer: 2500,
-                showConfirmButton: false
-            });
-        } catch (error) {
-            console.error('Error sending notifications:', error);
-            await Swal.fire({
-                title: 'Error',
-                text: 'Failed to send notifications. Please try again.',
-                icon: 'error'
-            });
-        } finally {
-            setSendingNotifications(false);
-        }
-    }, [selectedStudent, students.length]);
-
     const handleViewDetails = useCallback((student: NotAppliedStudent) => {
         setSelectedStudent(student);
         setShowDetailsModal(true);
     }, []);
 
+    // Handle access control
     useEffect(() => {
         if (!hasAdminAccess && user) {
             Swal.fire({
@@ -166,6 +123,7 @@ const NotApplied = () => {
         fetchStudents();
     }, [hasAdminAccess, user, fetchStudents]);
 
+    // Initialize DataTable
     useEffect(() => {
         if (tableRef.current && students.length > 0 && !loading) {
             if (dataTableRef.current) {
@@ -293,13 +251,6 @@ const NotApplied = () => {
                     font-size: 0.75rem;
                     padding: 0.35em 0.65em;
                 }
-                .notify-pulse {
-                    animation: pulse 2s infinite;
-                }
-                @keyframes pulse {
-                    0%, 100% { opacity: 1; }
-                    50% { opacity: 0.6; }
-                }
             `}</style>
 
             {/* Header */}
@@ -319,12 +270,13 @@ const NotApplied = () => {
                                 </div>
                             </div>
                             <button
-                                className="btn btn-primary d-flex align-items-center"
-                                onClick={handleNotifyAll}
-                                disabled={loading || students.length === 0}
+                                className="btn btn-success d-flex align-items-center"
+                                data-bs-toggle="modal"
+                                data-bs-target="#addModal"
+                                disabled={loading}
                             >
-                                <i className="fas fa-bell me-2 notify-pulse"></i>
-                                Notify All Students
+                                <i className="fas fa-user-plus me-2"></i>
+                                Add Student
                             </button>
                         </div>
                     </div>
@@ -526,14 +478,6 @@ const NotApplied = () => {
                                                     </button>
                                                     <button
                                                         type="button"
-                                                        className="btn btn-sm btn-outline-primary action-btn"
-                                                        onClick={() => handleNotifySingle(student)}
-                                                        title="Send notification"
-                                                    >
-                                                        <i className="fas fa-bell"></i>
-                                                    </button>
-                                                    <button
-                                                        type="button"
                                                         className="btn btn-sm btn-outline-danger action-btn"
                                                         onClick={() => handleArchiveStudent(
                                                             student.student_id,
@@ -566,95 +510,6 @@ const NotApplied = () => {
                     )}
                 </div>
             </div>
-
-            {/* Notify Modal */}
-            {showNotifyModal && (
-                <>
-                    <div className="modal-backdrop fade show"></div>
-                    <div className="modal fade show d-block" tabIndex={-1}>
-                        <div className="modal-dialog modal-dialog-centered modal-lg">
-                            <div className="modal-content shadow-lg border-0">
-                                <div className="modal-header border-0 bg-light">
-                                    <div>
-                                        <h5 className="modal-title fw-bold">
-                                            <i className="fas fa-bell text-primary me-2"></i>
-                                            Send Notification
-                                        </h5>
-                                        <p className="text-muted small mb-0">
-                                            {selectedStudent
-                                                ? `Sending to: ${selectedStudent.first_name} ${selectedStudent.last_name}`
-                                                : `Sending to all ${students.length} students`
-                                            }
-                                        </p>
-                                    </div>
-                                    <button
-                                        className="btn-close"
-                                        onClick={() => setShowNotifyModal(false)}
-                                        disabled={sendingNotifications}
-                                        aria-label="Close"
-                                    />
-                                </div>
-                                <div className="modal-body px-4 py-4">
-                                    <div className="mb-3">
-                                        <label className="form-label fw-semibold">
-                                            <i className="fas fa-envelope me-2 text-primary"></i>
-                                            Message
-                                        </label>
-                                        <textarea
-                                            className="form-control"
-                                            rows={8}
-                                            value={notificationMessage}
-                                            onChange={(e) => setNotificationMessage(e.target.value)}
-                                            placeholder="Enter your message here..."
-                                            disabled={sendingNotifications}
-                                        />
-                                        <small className="text-muted">
-                                            <i className="fas fa-info-circle me-1"></i>
-                                            This message will be sent via email to the selected student(s)
-                                        </small>
-                                    </div>
-
-                                    <div className="alert alert-info border-0 mb-0">
-                                        <div className="d-flex align-items-start">
-                                            <i className="fas fa-lightbulb me-2 mt-1"></i>
-                                            <div>
-                                                <strong>Tip:</strong> Personalize your message to encourage students to explore scholarship opportunities. Include deadlines and application links if applicable.
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="modal-footer border-0 bg-light">
-                                    <button
-                                        className="btn btn-secondary"
-                                        onClick={() => setShowNotifyModal(false)}
-                                        disabled={sendingNotifications}
-                                    >
-                                        <i className="fas fa-times me-1"></i>
-                                        Cancel
-                                    </button>
-                                    <button
-                                        className="btn btn-primary"
-                                        onClick={sendNotification}
-                                        disabled={!notificationMessage.trim() || sendingNotifications}
-                                    >
-                                        {sendingNotifications ? (
-                                            <>
-                                                <span className="spinner-border spinner-border-sm me-2"></span>
-                                                Sending...
-                                            </>
-                                        ) : (
-                                            <>
-                                                <i className="fas fa-paper-plane me-1"></i>
-                                                Send Notification
-                                            </>
-                                        )}
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </>
-            )}
 
             {/* Student Details Modal */}
             {showDetailsModal && selectedStudent && (
@@ -770,16 +625,6 @@ const NotApplied = () => {
                                         Close
                                     </button>
                                     <button
-                                        className="btn btn-primary"
-                                        onClick={() => {
-                                            setShowDetailsModal(false);
-                                            handleNotifySingle(selectedStudent);
-                                        }}
-                                    >
-                                        <i className="fas fa-bell me-1"></i>
-                                        Send Notification
-                                    </button>
-                                    <button
                                         className="btn btn-danger"
                                         onClick={() => {
                                             setShowDetailsModal(false);
@@ -790,7 +635,7 @@ const NotApplied = () => {
                                         }}
                                     >
                                         <i className="fas fa-archive me-1"></i>
-                                        Archive
+                                        Archive Student
                                     </button>
                                 </div>
                             </div>

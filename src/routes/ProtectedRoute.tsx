@@ -1,6 +1,7 @@
 import React from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import {SyncLoader} from "react-spinners";
 
 interface ProtectedRouteProps {
     allowedRoles?: string[];
@@ -11,15 +12,9 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ allowedRoles }) => {
 
     if (isLoading) {
         return (
-            <div className="vh-100 d-flex flex-column justify-content-center align-items-center bg-light">
-                <div
-                    className="spinner-border text-primary mb-3"
-                    role="status"
-                    style={{ width: '3rem', height: '3rem' }}
-                >
-                    <span className="visually-hidden">Loading...</span>
-                </div>
-                <div className="text-muted">Authenticating user, please wait...</div>
+            <div className="d-flex flex-column align-items-center justify-content-center vh-100 bg-gradient"
+                 style={{background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'}}>
+                <SyncLoader/>
             </div>
         );
     }
@@ -33,7 +28,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ allowedRoles }) => {
         if (user?.role === "admin") return <Navigate to="/admin" replace />;
         return <Navigate to="/" replace />;
     }
-
+    
     return <Outlet />;
 };
 

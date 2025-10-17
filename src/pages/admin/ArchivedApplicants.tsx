@@ -422,16 +422,10 @@ const ArchivedApplicants = () => {
                             <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
                         <div className="modal-body">
-                            {selectedApplicant ? (
+                            {selectedApplicant && (
                                 <ViewApplicantReadOnlyForm applicant={selectedApplicant} />
-                            ) : (
-                                <div className="text-center py-5">
-                                    <div className="spinner-border text-secondary" role="status">
-                                        <span className="visually-hidden">Loading...</span>
-                                    </div>
-                                    <p className="text-muted mt-3">Loading applicant details...</p>
-                                </div>
                             )}
+
                         </div>
                         <div className="modal-footer border-0 bg-light">
                             <button type="button" className="btn btn-secondary" data-bs-dismiss="modal">

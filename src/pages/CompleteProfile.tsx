@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { API_BASE_URL } from "../config";
 import { useAuth } from "../context/AuthContext.tsx";
 import type User from "../types/user.ts";
+import { User as UserIcon, Mail, Phone, Calendar, MapPin, Check, AlertCircle, Sparkles } from 'lucide-react';
 
 interface PrefillData {
     email?: string;
@@ -48,6 +49,7 @@ const CompleteProfile: React.FC = () => {
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState(false);
     const [prefilledFields, setPrefilledFields] = useState<string[]>([]);
+    const [showConfirmModal, setShowConfirmModal] = useState(false);
 
     if (!token || !refresh_token || !user) {
         window.location.href = "/login";
@@ -84,8 +86,13 @@ const CompleteProfile: React.FC = () => {
         });
     };
 
-    const handleSubmit = async (e: React.FormEvent) => {
+    const handleFormSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+        setShowConfirmModal(true);
+    };
+
+    const handleConfirmedSubmit = async () => {
+        setShowConfirmModal(false);
         setLoading(true);
         setError(null);
 
@@ -111,265 +118,449 @@ const CompleteProfile: React.FC = () => {
                 }, 1500);
             }
         } catch {
-            setError("Something went wrong.");
+            setError("Something went wrong. Please try again.");
         } finally {
             setLoading(false);
         }
     };
 
     return (
-        <div className="min-vh-100 bg-light d-flex align-items-center py-5">
-            <div className="container mt-5 ">
-                <div className="row justify-content-center">
-                    <div className="col-12 col-xl-8 col-lg-10">
-                        {/* Header */}
-
-
-                        <div className="card mt-5 border-0 shadow-sm">
-                            <div className="card-body p-4 p-md-5">
-                                {/* Progress */}
-                                <div className="mb-4">
-                                    <div className="d-flex justify-content-between align-items-center mb-2">
-                                        <span className="badge bg-primary-subtle text-primary px-3 py-2">
-                                            Profile Setup
-                                        </span>
-                                        <small className="text-muted fw-medium">Final Step</small>
-                                    </div>
-                                    <div className="progress" style={{ height: '6px' }}>
-                                        <div className="progress-bar" style={{ width: '100%' }}></div>
-                                    </div>
+        <>
+            <div className="min-vh-100 d-flex align-items-center py-5" style={{ backgroundColor: '#f8f9fe' }}>
+                <div className="container">
+                    <div className="row justify-content-center">
+                        <div className="col-12 col-xl-8 col-lg-10">
+                            {/* Header Card */}
+                            <div className="text-center m-4">
+                                <div className="d-inline-flex align-items-center justify-content-center rounded-circle mb-3"
+                                     style={{ width: '80px', height: '80px', backgroundColor: '#e8eaf6' }}>
+                                    <UserIcon style={{ color: '#5e72e4' }} size={40} />
                                 </div>
+                                <h2 className="fw-bold mb-2">Complete Your Profile</h2>
+                                <p className="text-muted" style={{ fontSize: '1.05rem' }}>
+                                    Just a few more details to get you started
+                                </p>
+                            </div>
 
-                                {/* Alerts */}
-                                {error && (
-                                    <div className="alert alert-danger d-flex align-items-start mb-4">
-                                        <svg width="20" height="20" fill="currentColor" className="me-2 flex-shrink-0 mt-1">
-                                            <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
-                                        </svg>
-                                        <div>{error}</div>
-                                    </div>
-                                )}
-
-                                {success && (
-                                    <div className="alert alert-success d-flex align-items-start mb-4">
-                                        <svg width="20" height="20" fill="currentColor" className="me-2 flex-shrink-0 mt-1">
-                                            <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
-                                        </svg>
-                                        <div>Profile completed successfully! Redirecting to dashboard...</div>
-                                    </div>
-                                )}
-
-                                <form onSubmit={handleSubmit}>
-                                    {/* Personal Information */}
-                                    <div className="mb-4">
-                                        <h6 className="fw-bold text-dark mb-3 pb-2 border-bottom">
-                                            Personal Information
-                                        </h6>
-                                        <div className="row g-3">
-                                            <div className="col-md-6">
-                                                <label className="form-label fw-semibold small">
-                                                    Student ID <span className="text-danger">*</span>
-                                                </label>
-                                                <input
-                                                    type="text"
-                                                    name="student_id"
-                                                    className="form-control"
-                                                    value={formData.student_id}
-                                                    onChange={handleChange}
-                                                    placeholder="Enter your student ID"
-                                                    required
-                                                />
-                                            </div>
-
-                                            <div className="col-md-6">
-                                                <label className="form-label fw-semibold small">
-                                                    Email Address <span className="text-danger">*</span>
-                                                    {prefilledFields.includes('email') && (
-                                                        <span className="badge bg-success bg-opacity-10 text-success ms-2">
-                                                            ✓ Auto-filled
-                                                        </span>
-                                                    )}
-                                                </label>
-                                                <input
-                                                    type="email"
-                                                    name="email"
-                                                    className={`form-control ${prefilledFields.includes('email') ? 'bg-light' : ''}`}
-                                                    value={formData.email}
-                                                    onChange={handleChange}
-                                                    placeholder="your.email@example.com"
-                                                    required
-                                                    readOnly={prefilledFields.includes('email')}
-                                                />
-                                            </div>
-
-                                            <div className="col-md-4">
-                                                <label className="form-label fw-semibold small">
-                                                    First Name <span className="text-danger">*</span>
-                                                    {prefilledFields.includes('first_name') && (
-                                                        <span className="badge bg-success bg-opacity-10 text-success ms-2">
-                                                            ✓ Auto-filled
-                                                        </span>
-                                                    )}
-                                                </label>
-                                                <input
-                                                    type="text"
-                                                    name="first_name"
-                                                    className={`form-control ${prefilledFields.includes('first_name') ? 'bg-light' : ''}`}
-                                                    value={formData.first_name}
-                                                    onChange={handleChange}
-                                                    placeholder="First name"
-                                                    required
-                                                />
-                                            </div>
-
-                                            <div className="col-md-4">
-                                                <label className="form-label fw-semibold small">
-                                                    Last Name <span className="text-danger">*</span>
-                                                    {prefilledFields.includes('last_name') && (
-                                                        <span className="badge bg-success bg-opacity-10 text-success ms-2">
-                                                            ✓ Auto-filled
-                                                        </span>
-                                                    )}
-                                                </label>
-                                                <input
-                                                    type="text"
-                                                    name="last_name"
-                                                    className={`form-control ${prefilledFields.includes('last_name') ? 'bg-light' : ''}`}
-                                                    value={formData.last_name}
-                                                    onChange={handleChange}
-                                                    placeholder="Last name"
-                                                    required
-                                                />
-                                            </div>
-
-                                            <div className="col-md-4">
-                                                <label className="form-label fw-semibold small">Middle Name</label>
-                                                <input
-                                                    type="text"
-                                                    name="middle_name"
-                                                    className="form-control"
-                                                    value={formData.middle_name}
-                                                    onChange={handleChange}
-                                                    placeholder="Optional"
-                                                />
-                                            </div>
-
-                                            <div className="col-md-3">
-                                                <label className="form-label fw-semibold small">Extension</label>
-                                                <input
-                                                    type="text"
-                                                    name="name_extension"
-                                                    className="form-control"
-                                                    value={formData.name_extension}
-                                                    onChange={handleChange}
-                                                    placeholder="Jr., Sr., III"
-                                                />
-                                            </div>
-
-                                            <div className="col-md-3">
-                                                <label className="form-label fw-semibold small">
-                                                    Gender <span className="text-danger">*</span>
-                                                </label>
-                                                <select
-                                                    name="gender"
-                                                    className="form-select"
-                                                    value={formData.gender}
-                                                    onChange={handleChange}
-                                                    required
-                                                >
-                                                    <option value="Male">Male</option>
-                                                    <option value="Female">Female</option>
-                                                    <option value="Other">Prefer not to say</option>
-                                                </select>
-                                            </div>
-
-                                            <div className="col-md-3">
-                                                <label className="form-label fw-semibold small">
-                                                    Birth Date <span className="text-danger">*</span>
-                                                </label>
-                                                <input
-                                                    type="date"
-                                                    name="birth_date"
-                                                    className="form-control"
-                                                    value={formData.birth_date}
-                                                    onChange={handleChange}
-                                                    required
-                                                />
-                                            </div>
-
-                                            <div className="col-md-3">
-                                                <label className="form-label fw-semibold small">Civil Status</label>
-                                                <select
-                                                    name="civil_status"
-                                                    className="form-select"
-                                                    value={formData.civil_status}
-                                                    onChange={handleChange}
-                                                >
-                                                    <option value="Single">Single</option>
-                                                    <option value="Married">Married</option>
-                                                    <option value="Divorced">Divorced</option>
-                                                    <option value="Widowed">Widowed</option>
-                                                </select>
-                                            </div>
+                            {/* Main Form Card */}
+                            <div className="card border-0 rounded-4 shadow-sm">
+                                <div className="card-body p-4 p-md-5">
+                                    {/* Progress Indicator */}
+                                    <div className="mb-5">
+                                        <div className="d-flex justify-content-between align-items-center mb-3">
+                                            <span className="badge rounded-pill px-4 py-2" style={{ backgroundColor: '#e8eaf6', color: '#5e72e4', fontSize: '0.875rem', fontWeight: 600 }}>
+                                                <Sparkles size={14} className="me-2" style={{ marginTop: '-2px' }} />
+                                                Profile Setup
+                                            </span>
+                                            <small className="text-muted fw-semibold">Final Step • 100%</small>
+                                        </div>
+                                        <div className="progress rounded-pill" style={{ height: '8px', backgroundColor: '#e8eaf6' }}>
+                                            <div className="progress-bar rounded-pill"
+                                                 style={{ width: '100%', backgroundColor: '#5e72e4' }}></div>
                                         </div>
                                     </div>
 
-                                    {/* Contact Information */}
-                                    <div className="mb-4">
-                                        <h6 className="fw-bold text-dark mb-3 pb-2 border-bottom">
-                                            Contact Information
-                                        </h6>
-                                        <div className="row g-3">
-                                            <div className="col-md-6">
-                                                <label className="form-label fw-semibold small">Citizenship</label>
-                                                <input
-                                                    type="text"
-                                                    name="citizenship"
-                                                    className="form-control"
-                                                    value={formData.citizenship}
-                                                    onChange={handleChange}
-                                                    placeholder="e.g., Filipino"
-                                                />
+                                    {/* Alerts */}
+                                    {error && (
+                                        <div className="alert border-0 rounded-4 d-flex align-items-start mb-4"
+                                             style={{ backgroundColor: '#f8d7da', color: '#721c24' }}>
+                                            <AlertCircle size={20} className="me-2 flex-shrink-0" style={{ marginTop: '2px' }} />
+                                            <div>{error}</div>
+                                        </div>
+                                    )}
+
+                                    {success && (
+                                        <div className="alert border-0 rounded-4 d-flex align-items-start mb-4"
+                                             style={{ backgroundColor: '#d4edda', color: '#155724' }}>
+                                            <Check size={20} className="me-2 flex-shrink-0" style={{ marginTop: '2px' }} />
+                                            <div>Profile completed successfully! Redirecting to dashboard...</div>
+                                        </div>
+                                    )}
+
+                                    <form onSubmit={handleFormSubmit}>
+                                        {/* Personal Information Section */}
+                                        <div className="mb-5">
+                                            <div className="d-flex align-items-center mb-4">
+                                                <div className="rounded-3 d-inline-flex align-items-center justify-content-center me-3"
+                                                     style={{ width: '44px', height: '44px', backgroundColor: '#e8eaf6' }}>
+                                                    <UserIcon style={{ color: '#5e72e4' }} size={22} />
+                                                </div>
+                                                <div>
+                                                    <h5 className="fw-bold mb-0">Personal Information</h5>
+                                                    <small className="text-muted">Basic details about yourself</small>
+                                                </div>
                                             </div>
 
-                                            <div className="col-md-6">
-                                                <label className="form-label fw-semibold small">Contact Number</label>
-                                                <input
-                                                    type="tel"
-                                                    name="contact_number"
-                                                    className="form-control"
-                                                    value={formData.contact_number}
-                                                    onChange={handleChange}
-                                                    placeholder="+63 912 345 6789"
-                                                />
+                                            <div className="row g-3">
+                                                <div className="col-md-6">
+                                                    <label className="form-label fw-semibold mb-2" style={{ fontSize: '0.9rem' }}>
+                                                        Student ID <span className="text-danger">*</span>
+                                                    </label>
+                                                    <input
+                                                        type="text"
+                                                        name="student_id"
+                                                        className="form-control form-control-lg rounded-3"
+                                                        value={formData.student_id}
+                                                        onChange={handleChange}
+                                                        placeholder="Enter your student ID"
+                                                        required
+                                                        style={{ border: '2px solid #e9ecef', fontSize: '1rem' }}
+                                                    />
+                                                </div>
+
+                                                <div className="col-md-6">
+                                                    <label className="form-label fw-semibold mb-2 d-flex align-items-center" style={{ fontSize: '0.9rem' }}>
+                                                        <Mail size={16} className="me-2" style={{ marginTop: '-2px' }} />
+                                                        Email Address <span className="text-danger ms-1">*</span>
+                                                        {prefilledFields.includes('email') && (
+                                                            <span className="badge rounded-pill ms-2"
+                                                                  style={{ backgroundColor: '#d4edda', color: '#155724', fontSize: '0.7rem', fontWeight: 600 }}>
+                                                                <Check size={12} className="me-1" />
+                                                                Auto-filled
+                                                            </span>
+                                                        )}
+                                                    </label>
+                                                    <input
+                                                        type="email"
+                                                        name="email"
+                                                        className={`form-control form-control-lg rounded-3 ${prefilledFields.includes('email') ? 'bg-light' : ''}`}
+                                                        value={formData.email}
+                                                        onChange={handleChange}
+                                                        placeholder="your.email@example.com"
+                                                        required
+                                                        readOnly={prefilledFields.includes('email')}
+                                                        style={{ border: '2px solid #e9ecef', fontSize: '1rem' }}
+                                                    />
+                                                </div>
+
+                                                <div className="col-md-4">
+                                                    <label className="form-label fw-semibold mb-2" style={{ fontSize: '0.9rem' }}>
+                                                        First Name <span className="text-danger">*</span>
+                                                        {prefilledFields.includes('first_name') && (
+                                                            <span className="badge rounded-pill ms-2"
+                                                                  style={{ backgroundColor: '#d4edda', color: '#155724', fontSize: '0.7rem', fontWeight: 600 }}>
+                                                                <Check size={12} className="me-1" />
+                                                                Auto-filled
+                                                            </span>
+                                                        )}
+                                                    </label>
+                                                    <input
+                                                        type="text"
+                                                        name="first_name"
+                                                        className={`form-control form-control-lg rounded-3 ${prefilledFields.includes('first_name') ? 'bg-light' : ''}`}
+                                                        value={formData.first_name}
+                                                        onChange={handleChange}
+                                                        placeholder="First name"
+                                                        required
+                                                        style={{ border: '2px solid #e9ecef', fontSize: '1rem' }}
+                                                    />
+                                                </div>
+
+                                                <div className="col-md-4">
+                                                    <label className="form-label fw-semibold mb-2" style={{ fontSize: '0.9rem' }}>
+                                                        Last Name <span className="text-danger">*</span>
+                                                        {prefilledFields.includes('last_name') && (
+                                                            <span className="badge rounded-pill ms-2"
+                                                                  style={{ backgroundColor: '#d4edda', color: '#155724', fontSize: '0.7rem', fontWeight: 600 }}>
+                                                                <Check size={12} className="me-1" />
+                                                                Auto-filled
+                                                            </span>
+                                                        )}
+                                                    </label>
+                                                    <input
+                                                        type="text"
+                                                        name="last_name"
+                                                        className={`form-control form-control-lg rounded-3 ${prefilledFields.includes('last_name') ? 'bg-light' : ''}`}
+                                                        value={formData.last_name}
+                                                        onChange={handleChange}
+                                                        placeholder="Last name"
+                                                        required
+                                                        style={{ border: '2px solid #e9ecef', fontSize: '1rem' }}
+                                                    />
+                                                </div>
+
+                                                <div className="col-md-4">
+                                                    <label className="form-label fw-semibold mb-2" style={{ fontSize: '0.9rem' }}>
+                                                        Middle Name
+                                                    </label>
+                                                    <input
+                                                        type="text"
+                                                        name="middle_name"
+                                                        className="form-control form-control-lg rounded-3"
+                                                        value={formData.middle_name}
+                                                        onChange={handleChange}
+                                                        placeholder="Optional"
+                                                        style={{ border: '2px solid #e9ecef', fontSize: '1rem' }}
+                                                    />
+                                                </div>
+
+                                                <div className="col-md-3">
+                                                    <label className="form-label fw-semibold mb-2" style={{ fontSize: '0.9rem' }}>
+                                                        Extension
+                                                    </label>
+                                                    <input
+                                                        type="text"
+                                                        name="name_extension"
+                                                        className="form-control form-control-lg rounded-3"
+                                                        value={formData.name_extension}
+                                                        onChange={handleChange}
+                                                        placeholder="Jr., Sr., III"
+                                                        style={{ border: '2px solid #e9ecef', fontSize: '1rem' }}
+                                                    />
+                                                </div>
+
+                                                <div className="col-md-3">
+                                                    <label className="form-label fw-semibold mb-2" style={{ fontSize: '0.9rem' }}>
+                                                        Gender <span className="text-danger">*</span>
+                                                    </label>
+                                                    <select
+                                                        name="gender"
+                                                        className="form-select form-select-lg rounded-3"
+                                                        value={formData.gender}
+                                                        onChange={handleChange}
+                                                        required
+                                                        style={{ border: '2px solid #e9ecef', fontSize: '1rem' }}
+                                                    >
+                                                        <option value="Male">Male</option>
+                                                        <option value="Female">Female</option>
+                                                        <option value="Other">Prefer not to say</option>
+                                                    </select>
+                                                </div>
+
+                                                <div className="col-md-3">
+                                                    <label className="form-label fw-semibold mb-2 d-flex align-items-center" style={{ fontSize: '0.9rem' }}>
+                                                        <Calendar size={16} className="me-2" style={{ marginTop: '-2px' }} />
+                                                        Birth Date <span className="text-danger ms-1">*</span>
+                                                    </label>
+                                                    <input
+                                                        type="date"
+                                                        name="birth_date"
+                                                        className="form-control form-control-lg rounded-3"
+                                                        value={formData.birth_date}
+                                                        onChange={handleChange}
+                                                        required
+                                                        style={{ border: '2px solid #e9ecef', fontSize: '1rem' }}
+                                                    />
+                                                </div>
+
+                                                <div className="col-md-3">
+                                                    <label className="form-label fw-semibold mb-2" style={{ fontSize: '0.9rem' }}>
+                                                        Civil Status
+                                                    </label>
+                                                    <select
+                                                        name="civil_status"
+                                                        className="form-select form-select-lg rounded-3"
+                                                        value={formData.civil_status}
+                                                        onChange={handleChange}
+                                                        style={{ border: '2px solid #e9ecef', fontSize: '1rem' }}
+                                                    >
+                                                        <option value="Single">Single</option>
+                                                        <option value="Married">Married</option>
+                                                        <option value="Divorced">Divorced</option>
+                                                        <option value="Widowed">Widowed</option>
+                                                    </select>
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
 
-                                    {/* Submit */}
-                                    <div className="d-grid mt-4 pt-3 border-top">
-                                        <button
-                                            type="submit"
-                                            className="btn btn-primary btn-lg"
-                                            disabled={loading}
-                                        >
-                                            {loading ? (
-                                                <>
-                                                    <span className="spinner-border spinner-border-sm me-2"></span>
-                                                    Creating Profile...
-                                                </>
-                                            ) : (
-                                                'Complete Profile & Get Started'
-                                            )}
-                                        </button>
-                                    </div>
-                                </form>
+                                        {/* Contact Information Section */}
+                                        <div className="mb-4">
+                                            <div className="d-flex align-items-center mb-4">
+                                                <div className="rounded-3 d-inline-flex align-items-center justify-content-center me-3"
+                                                     style={{ width: '44px', height: '44px', backgroundColor: '#d1ecf1' }}>
+                                                    <Phone style={{ color: '#11cdef' }} size={22} />
+                                                </div>
+                                                <div>
+                                                    <h5 className="fw-bold mb-0">Contact Information</h5>
+                                                    <small className="text-muted">How we can reach you</small>
+                                                </div>
+                                            </div>
+
+                                            <div className="row g-3">
+                                                <div className="col-md-6">
+                                                    <label className="form-label fw-semibold mb-2 d-flex align-items-center" style={{ fontSize: '0.9rem' }}>
+                                                        <MapPin size={16} className="me-2" style={{ marginTop: '-2px' }} />
+                                                        Citizenship
+                                                    </label>
+                                                    <input
+                                                        type="text"
+                                                        name="citizenship"
+                                                        className="form-control form-control-lg rounded-3"
+                                                        value={formData.citizenship}
+                                                        onChange={handleChange}
+                                                        placeholder="e.g., Filipino"
+                                                        style={{ border: '2px solid #e9ecef', fontSize: '1rem' }}
+                                                    />
+                                                </div>
+
+                                                <div className="col-md-6">
+                                                    <label className="form-label fw-semibold mb-2 d-flex align-items-center" style={{ fontSize: '0.9rem' }}>
+                                                        <Phone size={16} className="me-2" style={{ marginTop: '-2px' }} />
+                                                        Contact Number
+                                                    </label>
+                                                    <input
+                                                        type="tel"
+                                                        name="contact_number"
+                                                        className="form-control form-control-lg rounded-3"
+                                                        value={formData.contact_number}
+                                                        onChange={handleChange}
+                                                        placeholder="+63 912 345 6789"
+                                                        style={{ border: '2px solid #e9ecef', fontSize: '1rem' }}
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Info Box */}
+                                        <div className="alert border-0 rounded-4 mb-4"
+                                             style={{ backgroundColor: '#e8eaf6', color: '#5e72e4' }}>
+                                            <div className="d-flex align-items-start">
+                                                <Sparkles size={20} className="me-2 flex-shrink-0" style={{ marginTop: '2px' }} />
+                                                <div>
+                                                    <strong className="d-block mb-1">Almost there!</strong>
+                                                    <small style={{ opacity: 0.9 }}>
+                                                        Once you complete your profile, you'll have access to all scholarship opportunities and can start applying right away.
+                                                    </small>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Submit Button */}
+                                        <div className="d-grid mt-4">
+                                            <button
+                                                type="submit"
+                                                className="btn btn-lg py-3 rounded-pill shadow-sm"
+                                                disabled={loading}
+                                                style={{ backgroundColor: '#5e72e4', color: 'white', fontWeight: 600, fontSize: '1.05rem', border: 'none' }}
+                                            >
+                                                {loading ? (
+                                                    <>
+                                                        <span className="spinner-border spinner-border-sm me-2"></span>
+                                                        Creating Your Profile...
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <Check size={20} className="me-2" style={{ marginTop: '-2px' }} />
+                                                        Complete Profile & Get Started
+                                                    </>
+                                                )}
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+
+                            {/* Footer Note */}
+                            <div className="text-center mt-4">
+                                <small className="text-muted">
+                                    Your information is secure and will only be used for scholarship applications
+                                </small>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
+
+            {/* Confirmation Modal */}
+            {showConfirmModal && (
+                <div className="modal show d-block" tabIndex={-1} style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}>
+                    <div className="modal-dialog modal-dialog-centered">
+                        <div className="modal-content border-0 rounded-4 shadow-lg">
+                            <div className="modal-body text-center p-5">
+                                <div className="rounded-circle d-inline-flex align-items-center justify-content-center mb-4"
+                                     style={{ width: '80px', height: '80px', backgroundColor: '#e8eaf6' }}>
+                                    <Check style={{ color: '#5e72e4' }} size={40} />
+                                </div>
+                                <h4 className="fw-bold mb-3">Confirm Profile Information</h4>
+                                <p className="text-muted mb-4" style={{ fontSize: '1rem', lineHeight: '1.6' }}>
+                                    Please review your information carefully. Once submitted, some details may require administrator approval to change.
+                                </p>
+
+                                {/* Summary */}
+                                <div className="text-start mb-4 p-4 rounded-3" style={{ backgroundColor: '#f8f9fe' }}>
+                                    <div className="row g-2">
+                                        <div className="col-6">
+                                            <small className="text-muted d-block mb-1">Name</small>
+                                            <strong style={{ fontSize: '0.9rem' }}>
+                                                {formData.first_name} {formData.middle_name} {formData.last_name} {formData.name_extension}
+                                            </strong>
+                                        </div>
+                                        <div className="col-6">
+                                            <small className="text-muted d-block mb-1">Student ID</small>
+                                            <strong style={{ fontSize: '0.9rem' }}>{formData.student_id}</strong>
+                                        </div>
+                                        <div className="col-6">
+                                            <small className="text-muted d-block mb-1">Email</small>
+                                            <strong style={{ fontSize: '0.9rem' }}>{formData.email}</strong>
+                                        </div>
+                                        <div className="col-6">
+                                            <small className="text-muted d-block mb-1">Contact</small>
+                                            <strong style={{ fontSize: '0.9rem' }}>{formData.contact_number || 'Not provided'}</strong>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="d-flex gap-3">
+                                    <button
+                                        type="button"
+                                        className="btn btn-lg flex-grow-1 rounded-pill"
+                                        onClick={() => setShowConfirmModal(false)}
+                                        style={{ backgroundColor: '#f8f9fe', color: '#6c757d', fontWeight: 600, border: 'none' }}
+                                    >
+                                        Review Again
+                                    </button>
+                                    <button
+                                        type="button"
+                                        className="btn btn-lg flex-grow-1 rounded-pill"
+                                        onClick={handleConfirmedSubmit}
+                                        style={{ backgroundColor: '#5e72e4', color: 'white', fontWeight: 600, border: 'none' }}
+                                    >
+                                        <Check size={20} className="me-2" style={{ marginTop: '-2px' }} />
+                                        Confirm & Submit
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            <style>{`
+                .form-control:focus,
+                .form-select:focus {
+                    border-color: #5e72e4 !important;
+                    box-shadow: 0 0 0 0.2rem rgba(94, 114, 228, 0.25) !important;
+                }
+
+                .modal.show {
+                    animation: fadeIn 0.2s ease-in-out;
+                }
+
+                @keyframes fadeIn {
+                    from {
+                        opacity: 0;
+                    }
+                    to {
+                        opacity: 1;
+                    }
+                }
+
+                .modal-content {
+                    animation: slideUp 0.3s ease-out;
+                }
+
+                @keyframes slideUp {
+                    from {
+                        transform: translateY(20px);
+                        opacity: 0;
+                    }
+                    to {
+                        transform: translateY(0);
+                        opacity: 1;
+                    }
+                }
+            `}</style>
+        </>
     );
 };
 

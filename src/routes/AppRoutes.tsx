@@ -40,7 +40,6 @@ import SubmittedRequirements from "../pages/admin/documents/SubmittedRequirement
 import FuzzyLogic from "../pages/admin/FuzzyLogic.tsx";
 import ManageScholarships from "../pages/admin/scholarships/ManageScholarships.tsx";
 import ScholarshipDashboard from "../pages/admin/scholarships/ScholarshipDashboard.tsx";
-import StudentScholarshipReport from "../pages/admin/reports/StudentScholarshipReport.tsx";
 import Prequalify from "../pages/Prequalify.tsx";
 import ResetPassword from "../pages/ResetPassword.tsx";
 import {IndexLayout} from "../layouts/IndexLayout.tsx";
@@ -97,7 +96,7 @@ const AppRoutes: React.FC = () => {
                     <Route path="scholarships">
                         <Route path="manage" element={<ManageScholarships />} />
                         <Route path="dashboard" element={<ScholarshipDashboard/>} />
-                        <Route path="scholarship-report" element={<StudentScholarshipReport/>}/>
+                        <Route path="scholarship-report" element={<ScholarshipSummaryReport/>}/>
 
                     </Route>
 
@@ -112,7 +111,6 @@ const AppRoutes: React.FC = () => {
                     <Route path="reports">
                         <Route path="applicants" element={<ApplicantsReport/>}/>
                         <Route path="department" element={<CampusReport/>}/>
-                        <Route path="scholarship-summary" element={<ScholarshipSummaryReport />} />
 
                     </Route>
 
@@ -149,7 +147,6 @@ const AppRoutes: React.FC = () => {
                 <Route path="/" element={isAuthenticated ? <Navigate to="/applicant" replace /> : <App />} />
                 <Route path="login" element={<Login />} />
                 <Route path="register" element={<Register />} />
-                <Route path="complete-profile" element={<CompleteProfile />} />
                 <Route path="forgot-password" element={<ForgotPassword />} />
                 <Route path="reset-password" element={<ResetPassword />} />
                 <Route path="privacy-policy" element={<PrivacyPolicyPage/>} />
@@ -160,6 +157,7 @@ const AppRoutes: React.FC = () => {
                 <Route path="prequalify" element={<Prequalify/>} />
             </Route>
 
+            <Route path="complete-profile" element={<CompleteProfile />} />
 
             <Route path="*" element={<NotFound />} />
             <Route path="/auth/callback" element={<AuthCallback />} />
