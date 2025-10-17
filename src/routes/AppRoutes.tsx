@@ -158,9 +158,8 @@ const AppRoutes: React.FC = () => {
             </Route>
 
             <Route path="complete-profile" element={<CompleteProfile />} />
-
             <Route path="*" element={<NotFound />} />
-            <Route path="/auth/callback" element={<AuthCallback />} />
+            <Route path="auth/callback" element={<AuthCallback />} />
 
         </Routes>
     );
