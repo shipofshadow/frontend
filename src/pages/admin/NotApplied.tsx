@@ -269,15 +269,7 @@ const NotApplied = () => {
                                     </p>
                                 </div>
                             </div>
-                            <button
-                                className="btn btn-success d-flex align-items-center"
-                                data-bs-toggle="modal"
-                                data-bs-target="#addModal"
-                                disabled={loading}
-                            >
-                                <i className="fas fa-user-plus me-2"></i>
-                                Add Student
-                            </button>
+
                         </div>
                     </div>
                 </div>
@@ -478,7 +470,7 @@ const NotApplied = () => {
                                                     </button>
                                                     <button
                                                         type="button"
-                                                        className="btn btn-sm btn-outline-danger action-btn"
+                                                        className="btn btn-sm btn-outline-danger action-btn d-none"
                                                         onClick={() => handleArchiveStudent(
                                                             student.student_id,
                                                             `${student.first_name} ${student.last_name}`

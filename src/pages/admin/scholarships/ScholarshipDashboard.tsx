@@ -489,6 +489,7 @@ const ScholarshipDashboard = () => {
         total: applications.length,
         pending: applications.filter(app => app.status === 'pending').length,
         approved: applications.filter(app => app.status === 'approved').length,
+        evaluated: applications.filter(app => app.status === 'evaluated').length,
         scholarships: scholarships.length
     };
 
@@ -598,7 +599,7 @@ const ScholarshipDashboard = () => {
                                     <div className="d-flex align-items-center justify-content-between">
                                         <div>
                                             <div className="text-muted small fw-medium mb-1">Pending Review</div>
-                                            <div className="h4 fw-bold text-warning mb-0">{stats.pending}</div>
+                                            <div className="h4 fw-bold text-warning mb-0">{stats.pending + stats.evaluated}</div>
                                             <div className="small text-muted mt-1">Awaiting evaluation</div>
                                         </div>
                                         <div className="bg-warning bg-opacity-15 p-2 rounded-3">
