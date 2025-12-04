@@ -1,53 +1,75 @@
 import React, { useState, useEffect } from 'react';
+import { Settings } from "lucide-react";
 
-// --- Types ---
+// Interface
 interface SystemConfig {
+    // General & Support
     systemName: string;
     organizationName: string;
     supportEmail: string;
     supportPhone: string;
+
+    // Application Control
     isApplicationOpen: boolean;
     allowNewRegistrations: boolean;
     applicationStartDate: string;
     applicationEndDate: string;
+
+    // Notifications
     enableEmailAlerts: boolean;
     enableInAppNotifications: boolean;
     emailSenderName: string;
+
+    email_activation_enabled: boolean;
+
+    // Authentication & Security
     maintenanceMode: boolean;
     sessionTimeout: number;
     maxLoginAttempts: number;
     enableNativeLogin: boolean;
     enableGoogleLogin: boolean;
     minPasswordLength: number;
+
+    // Data Management
     logRetentionDays: number;
     cleanupIntervalHours: number;
+
+    // Storage
     storageProvider: 'local' | 's3';
 }
 
 const SystemSetting = () => {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
-    const [showModal, setShowModal] = useState(false);
-    const [showSuccessToast, setShowSuccessToast] = useState(false);
+    const [successMsg, setSuccessMsg] = useState('');
+    const [showConfirmModal, setShowConfirmModal] = useState(false);
+    const [pendingConfig, setPendingConfig] = useState<SystemConfig | null>(null);
 
+    // Mock Data
     const [config, setConfig] = useState<SystemConfig>({
         systemName: 'iScholarship Portal',
         organizationName: 'ISPSC - Scholarship Unit',
         supportEmail: 'scholarship@ispsc.edu.ph',
         supportPhone: '(077) 123-4567',
+
         isApplicationOpen: true,
         allowNewRegistrations: true,
         applicationStartDate: '2024-08-01',
         applicationEndDate: '2024-09-30',
+
         enableEmailAlerts: true,
         enableInAppNotifications: true,
         emailSenderName: 'ISPSC Scholarship Admin',
+
+        email_activation_enabled: false,
+
         maintenanceMode: false,
         sessionTimeout: 30,
         maxLoginAttempts: 5,
         enableNativeLogin: true,
         enableGoogleLogin: false,
         minPasswordLength: 8,
+
         logRetentionDays: 90,
         cleanupIntervalHours: 24,
         storageProvider: 'local'
@@ -67,916 +89,616 @@ const SystemSetting = () => {
         }
     };
 
-    const updateConfig = (key: keyof SystemConfig, value: any) => {
-        setConfig(prev => ({ ...prev, [key]: value }));
+    const handleStorageChange = (provider: 'local' | 's3') => {
+        setConfig(prev => ({ ...prev, storageProvider: provider }));
     };
 
-    const confirmSave = (e: React.FormEvent) => {
+    const handleSave = (e: React.FormEvent) => {
         e.preventDefault();
-        setShowModal(true);
+        setPendingConfig(config);
+        setShowConfirmModal(true);
     };
 
-    const handleFinalSave = () => {
-        setShowModal(false);
+    const confirmSave = () => {
+        setShowConfirmModal(false);
         setSaving(true);
         setTimeout(() => {
             setSaving(false);
-            setShowSuccessToast(true);
-            setTimeout(() => setShowSuccessToast(false), 3000);
+            setSuccessMsg("System configuration saved successfully.");
+            setTimeout(() => setSuccessMsg(''), 3000);
         }, 1500);
     };
 
-    if (loading) {
-        return (
-            <div className="d-flex justify-content-center align-items-center" style={{ height: '60vh' }}>
-                <div className="spinner-border text-primary" role="status" style={{ width: '3rem', height: '3rem' }}>
-                    <span className="sr-only">Loading settings...</span>
-                </div>
+    if (loading) return (
+        <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '60vh' }}>
+            <div className="spinner-border text-primary" role="status">
             </div>
-        );
-    }
+        </div>
+    );
 
     return (
-        <>
-            <style>{`
-                /* Modern Card Shadows */
-                .card-modern {
-                    border-radius: 12px;
-                    border: 1px solid #e8eaed;
-                    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-                    transition: all 0.3s ease;
-                }
-
-                .card-modern:hover {
-                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-                    transform: translateY(-2px);
-                }
-
-                /* Status Card Special */
-                .status-card {
-                    border-radius: 12px;
-                    border: 2px solid;
-                    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-                }
-
-                /* Input Focus States */
-                .form-control:focus {
-                    border-color: #4a90e2;
-                    box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
-                }
-
-                /* Custom Switch Improvements */
-                .custom-switch .custom-control-label::before {
-                    height: 24px;
-                    width: 44px;
-                    border-radius: 12px;
-                    background-color: #dee2e6;
-                    transition: all 0.3s ease;
-                }
-
-                .custom-switch .custom-control-label::after {
-                    width: 18px;
-                    height: 18px;
-                    border-radius: 50%;
-                    transition: all 0.3s ease;
-                }
-
-                .custom-switch .custom-control-input:checked ~ .custom-control-label::before {
-                    background-color: #28a745;
-                }
-
-                /* Storage Option Cards */
-                .storage-option {
-                    border-radius: 10px;
-                    border: 2px solid #e8eaed;
-                    transition: all 0.25s ease;
-                    cursor: pointer;
-                }
-
-                .storage-option:hover {
-                    border-color: #c4c8cc;
-                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-                }
-
-                .storage-option.active {
-                    border-color: #4a90e2;
-                    background-color: #f0f7ff !important;
-                    box-shadow: 0 4px 16px rgba(74, 144, 226, 0.15);
-                }
-
-                .storage-option.active-s3 {
-                    border-color: #ff9900;
-                    background-color: #fff8f0 !important;
-                    box-shadow: 0 4px 16px rgba(255, 153, 0, 0.15);
-                }
-
-                /* Badge Improvements */
-                .badge-modern {
-                    padding: 8px 16px;
-                    border-radius: 20px;
-                    font-weight: 600;
-                    font-size: 0.75rem;
-                    letter-spacing: 0.5px;
-                    text-transform: uppercase;
-                }
-
-                .badge-success-modern {
-                    background-color: #d4edda;
-                    color: #155724;
-                    border: 1px solid #c3e6cb;
-                }
-
-                .badge-danger-modern {
-                    background-color: #f8d7da;
-                    color: #721c24;
-                    border: 1px solid #f5c6cb;
-                }
-
-                /* Button Hover Effects */
-                .btn {
-                    transition: all 0.2s ease;
-                    font-weight: 600;
-                }
-
-                .btn-primary {
-                    border-radius: 8px;
-                }
-
-                .btn-primary:hover:not(:disabled) {
-                    transform: translateY(-1px);
-                    box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
-                }
-
-                /* Section Headers */
-                .section-header {
-                    padding: 20px 24px;
-                    border-bottom: 2px solid #f8f9fa;
-                }
-
-                .section-header h6 {
-                    margin: 0;
-                    font-size: 0.95rem;
-                    font-weight: 700;
-                    color: #2c3e50;
-                }
-
-                /* Form Labels */
-                .form-label-modern {
-                    font-size: 0.8rem;
-                    font-weight: 600;
-                    color: #6c757d;
-                    text-transform: uppercase;
-                    letter-spacing: 0.5px;
-                    margin-bottom: 8px;
-                }
-
-                /* Alert Boxes */
-                .alert-modern {
-                    border-radius: 8px;
-                    border-left: 4px solid;
-                    padding: 12px 16px;
-                }
-
-                /* Toast Notification */
-                .toast-success {
-                    position: fixed;
-                    top: 24px;
-                    right: 24px;
-                    z-index: 9999;
-                    min-width: 300px;
-                    background: white;
-                    border-radius: 10px;
-                    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-                    border-left: 4px solid #28a745;
-                    animation: slideIn 0.3s ease-out;
-                }
-
-                @keyframes slideIn {
-                    from {
-                        transform: translateX(400px);
-                        opacity: 0;
-                    }
-                    to {
-                        transform: translateX(0);
-                        opacity: 1;
-                    }
-                }
-
-                /* Modal Improvements */
-                .modal-content {
-                    border-radius: 12px;
-                    border: none;
-                }
-
-                .modal-header {
-                    padding: 24px;
-                    border-bottom: 1px solid #e8eaed;
-                }
-
-                .modal-body {
-                    padding: 24px;
-                }
-
-                .modal-footer {
-                    padding: 16px 24px;
-                    border-top: 1px solid #e8eaed;
-                }
-
-                /* Input Group Styling */
-                .input-group-text {
-                    font-size: 0.85rem;
-                    font-weight: 600;
-                    color: #6c757d;
-                }
-
-                /* Card Body Padding */
-                .card-body-modern {
-                    padding: 24px;
-                }
-            `}</style>
-
-            <div id="content-wrapper" className="d-flex flex-column" style={{ backgroundColor: '#f8f9fa', minHeight: '100vh' }}>
-                <div id="content">
-                    <div className="container-fluid pb-5">
-
-                        {/* Header Section */}
-                        <div className="d-flex justify-content-between align-items-start mt-4 mb-4">
-                            <div>
-
-                                <h1 className="h2 text-dark font-weight-bold mt-3 mb-2">System Configuration</h1>
-                                <p className="text-muted mb-0" style={{ fontSize: '0.95rem' }}>
-                                    Manage system parameters, security protocols, and operational preferences
-                                </p>
+        <div className="min-vh-100 bg-gray-50 text-dark">
+            {/* Header */}
+            <header className="bg-white border-bottom sticky-top shadow-sm" style={{ zIndex: 20 }}>
+                <div className="container-fluid px-4">
+                    <div className="d-flex justify-content-between align-items-center py-3">
+                        <div className="d-flex align-items-center" style={{ gap: '1rem' }}>
+                            <div className="bg-primary text-white p-2 rounded shadow-sm d-flex align-items-center justify-content-center" style={{ width: '48px', height: '48px' }}>
+                                <Settings size={24} />
                             </div>
                             <div>
-                                <button
-                                    onClick={confirmSave}
-                                    className="btn btn-primary px-4 py-2"
-                                    style={{ minWidth: '160px', borderRadius: '8px' }}
-                                    disabled={saving}
-                                >
-                                    {saving ? (
-                                        <>
-                                            <span className="spinner-border spinner-border-sm mr-2" role="status" aria-hidden="true"></span>
-                                            Saving...
-                                        </>
-                                    ) : (
-                                        <>
-                                            <i className="fas fa-save mr-2"></i>
-                                            Save Changes
-                                        </>
-                                    )}
+                                <h1 className="h5 font-weight-bold text-dark mb-0">System Configuration</h1>
+                                <p className="text-muted small mb-0">Manage global settings, security policies, and storage preferences</p>
+                            </div>
+                        </div>
+                        <div className={`px-3 py-2 rounded border ${config.maintenanceMode ? 'border-danger bg-danger text-white' : 'border-success bg-success text-white'}`} style={{ fontSize: '0.875rem', fontWeight: 600 }}>
+                            <i className={`fas fa-${config.maintenanceMode ? 'exclamation-triangle' : 'check-circle'} mr-2`}></i>
+                            {config.maintenanceMode ? 'MAINTENANCE' : 'OPERATIONAL'}
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            {successMsg && (
+                <div className="container-fluid px-4 pt-3">
+                    <div className="alert alert-success alert-dismissible fade show border-0 shadow-sm" role="alert">
+                        <div className="d-flex align-items-center">
+                            <i className="fas fa-check-circle fa-lg mr-3"></i>
+                            <span>{successMsg}</span>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            <div className="container-fluid px-4 py-4">
+                <form onSubmit={handleSave}>
+                    <div className="row">
+                        {/* Column 1 */}
+                        <div className="col-lg-6 mb-4">
+                            {/* Storage Configuration */}
+                            <div className="card shadow-sm mb-4 border-0 rounded">
+                                <div className="card-header bg-white border-bottom py-3">
+                                    <h6 className="m-0 font-weight-bold text-primary d-flex align-items-center">
+                                        <i className="fas fa-hdd mr-2"></i> Storage Provider
+                                    </h6>
+                                </div>
+                                <div className="card-body p-4">
+                                    <div className="row">
+                                        <div className="col-md-6 mb-3 mb-md-0">
+                                            <div
+                                                className={`p-4 border rounded-lg text-center position-relative ${config.storageProvider === 'local' ? 'border-primary shadow-sm' : 'border-light'}`}
+                                                onClick={() => handleStorageChange('local')}
+                                                style={{
+                                                    cursor: 'pointer',
+                                                    borderWidth: '2px',
+                                                    backgroundColor: config.storageProvider === 'local' ? '#f0f4ff' : 'white',
+                                                    transition: 'all 0.2s ease'
+                                                }}
+                                            >
+                                                {config.storageProvider === 'local' && (
+                                                    <div className="position-absolute" style={{ top: '12px', right: '12px' }}>
+                                                        <div className="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style={{ width: '24px', height: '24px' }}>
+                                                            <i className="fas fa-check" style={{ fontSize: '12px' }}></i>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                                <i className="fas fa-server fa-3x text-primary mb-3"></i>
+                                                <h6 className="font-weight-bold text-dark mb-2">Local Server</h6>
+                                                <small className="text-muted">Fast access, uses disk space</small>
+                                            </div>
+                                        </div>
+                                        <div className="col-md-6">
+                                            <div
+                                                className={`p-4 border rounded-lg text-center position-relative ${config.storageProvider === 's3' ? 'border-warning shadow-sm' : 'border-light'}`}
+                                                onClick={() => handleStorageChange('s3')}
+                                                style={{
+                                                    cursor: 'pointer',
+                                                    borderWidth: '2px',
+                                                    backgroundColor: config.storageProvider === 's3' ? '#fffbf0' : 'white',
+                                                    transition: 'all 0.2s ease'
+                                                }}
+                                            >
+                                                {config.storageProvider === 's3' && (
+                                                    <div className="position-absolute" style={{ top: '12px', right: '12px' }}>
+                                                        <div className="bg-warning text-white rounded-circle d-flex align-items-center justify-content-center" style={{ width: '24px', height: '24px' }}>
+                                                            <i className="fas fa-check" style={{ fontSize: '12px' }}></i>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                                <i className="fab fa-aws fa-3x text-warning mb-3"></i>
+                                                <h6 className="font-weight-bold text-dark mb-2">AWS S3 Bucket</h6>
+                                                <small className="text-muted">Scalable cloud storage</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Authentication & Security */}
+                            <div className="card shadow-sm mb-4 border-0 rounded">
+                                <div className="card-header bg-white border-bottom py-3">
+                                    <h6 className="m-0 font-weight-bold text-dark d-flex align-items-center">
+                                        <i className="fas fa-shield-alt mr-2"></i> Authentication & Security
+                                    </h6>
+                                </div>
+                                <div className="card-body p-4">
+                                    {/* Standard Login */}
+                                    <div className="mb-4 pb-4 border-bottom">
+                                        <div className="d-flex justify-content-between align-items-start">
+                                            <div className="flex-grow-1 pr-3">
+                                                <label className="font-weight-bold mb-1 d-block text-dark">Standard Login</label>
+                                                <small className="text-muted">Allow users to login with Email & Password</small>
+                                            </div>
+                                            <label className="switch mb-0">
+                                                <input type="checkbox" name="enableNativeLogin" checked={config.enableNativeLogin} onChange={handleChange} />
+                                                <span className="slider round"></span>
+                                            </label>
+                                        </div>
+                                    </div>
+
+                                    {/* Google OAuth */}
+                                    <div className="mb-4 pb-4 border-bottom">
+                                        <div className="d-flex justify-content-between align-items-start">
+                                            <div className="flex-grow-1 pr-3">
+                                                <label className="font-weight-bold mb-1 d-block text-dark">
+                                                    <i className="fab fa-google text-danger mr-2"></i>Google OAuth
+                                                </label>
+                                                <small className="text-muted">Enable single sign-on via Google accounts</small>
+                                            </div>
+                                            <label className="switch mb-0">
+                                                <input type="checkbox" name="enableGoogleLogin" checked={config.enableGoogleLogin} onChange={handleChange} />
+                                                <span className="slider round"></span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                     <div className="mb-4 pb-4 border-bottom">
+                                        <div className="d-flex justify-content-between align-items-start">
+                                            <div className="flex-grow-1 pr-3">
+                                                <label className="font-weight-bold mb-1 d-block text-dark">
+                                                    <i className="fal fa-envelope  mr-2"></i>Send Activation Email
+                                                </label>
+                                                <small className="text-muted">Automatically send an email verification link to new users upon registration.</small>
+                                            </div>
+                                            <label className="switch mb-0">
+                                                <input type="checkbox" name="email_activation_enabled" checked={config.email_activation_enabled} onChange={handleChange} />
+                                                <span className="slider round"></span>
+                                            </label>
+                                        </div>
+                                    </div>
+
+                                    {/* Security Policies */}
+                                    <div className="bg-light p-4 rounded">
+                                        <h6 className="font-weight-bold text-dark mb-3">Security Policies</h6>
+                                        <div className="row">
+                                            <div className="col-md-6 mb-3">
+                                                <label className="small font-weight-bold text-dark mb-2 d-block">Minimum Password Length</label>
+                                                <div className="input-group input-group-modern">
+                                                    <div className="input-group-prepend">
+                                                        <span className="input-group-text border-0 bg-white">
+                                                            <i className="fas fa-key text-primary"></i>
+                                                        </span>
+                                                    </div>
+                                                    <input type="number" className="form-control form-control-modern border-0" name="minPasswordLength" value={config.minPasswordLength} onChange={handleChange} min="6" />
+                                                </div>
+                                            </div>
+                                            <div className="col-md-6 mb-3">
+                                                <label className="small font-weight-bold text-dark mb-2 d-block">Session Timeout (min)</label>
+                                                <div className="input-group input-group-modern">
+                                                    <div className="input-group-prepend">
+                                                        <span className="input-group-text border-0 bg-white">
+                                                            <i className="fas fa-clock text-primary"></i>
+                                                        </span>
+                                                    </div>
+                                                    <input type="number" className="form-control form-control-modern border-0" name="sessionTimeout" value={config.sessionTimeout} onChange={handleChange} />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Contact Information */}
+                            <div className="card shadow-sm mb-4 border-0 rounded">
+                                <div className="card-header bg-white border-bottom py-3">
+                                    <h6 className="m-0 font-weight-bold text-dark d-flex align-items-center">
+                                        <i className="fas fa-info-circle mr-2"></i> Contact Information
+                                    </h6>
+                                </div>
+                                <div className="card-body p-4">
+                                    <div className="form-group mb-3">
+                                        <label className="font-weight-bold text-dark mb-2">Support Email</label>
+                                        <div className="input-group input-group-modern">
+                                            <div className="input-group-prepend">
+                                                <span className="input-group-text border-0 bg-white">
+                                                    <i className="fas fa-envelope text-primary"></i>
+                                                </span>
+                                            </div>
+                                            <input type="email" className="form-control form-control-modern border-0" name="supportEmail" value={config.supportEmail} onChange={handleChange} placeholder="email@domain.com" />
+                                        </div>
+                                    </div>
+                                    <div className="form-group mb-0">
+                                        <label className="font-weight-bold text-dark mb-2">Support Phone</label>
+                                        <div className="input-group input-group-modern">
+                                            <div className="input-group-prepend">
+                                                <span className="input-group-text border-0 bg-white">
+                                                    <i className="fas fa-phone text-primary"></i>
+                                                </span>
+                                            </div>
+                                            <input type="text" className="form-control form-control-modern border-0" name="supportPhone" value={config.supportPhone} onChange={handleChange} placeholder="(000) 000-0000" />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Column 2 */}
+                        <div className="col-lg-6 mb-4">
+                            {/* Application Period */}
+                            <div className="card shadow-sm mb-4 border-0 rounded border-left border-info" style={{ borderLeftWidth: '4px !important' }}>
+                                <div className="card-header bg-white border-bottom py-3">
+                                    <div className="d-flex justify-content-between align-items-center">
+                                        <h6 className="m-0 font-weight-bold text-info d-flex align-items-center">
+                                            <i className="fas fa-calendar-alt mr-2"></i> Application Period
+                                        </h6>
+                                        <span className={`badge px-3 py-2 ${config.isApplicationOpen ? 'badge-success' : 'badge-secondary'}`} style={{ fontSize: '0.75rem', fontWeight: 600 }}>
+                                            {config.isApplicationOpen ? 'ACCEPTING' : 'CLOSED'}
+                                        </span>
+                                    </div>
+                                </div>
+                                <div className="card-body p-4">
+                                    <div className="mb-4">
+                                        <div className="d-flex justify-content-between align-items-start">
+                                            <div className="flex-grow-1 pr-3">
+                                                <label className="font-weight-bold mb-1 d-block text-dark">Open Application Portal</label>
+                                                <small className="text-muted">Students can create and submit applications</small>
+                                            </div>
+                                            <label className="switch mb-0">
+                                                <input type="checkbox" name="isApplicationOpen" checked={config.isApplicationOpen} onChange={handleChange} />
+                                                <span className="slider round"></span>
+                                            </label>
+                                        </div>
+                                    </div>
+
+                                    <div className="bg-light p-4 rounded">
+                                        <h6 className="font-weight-bold text-dark mb-3">Application Window</h6>
+                                        <div className="row">
+                                            <div className="col-md-6 mb-3 mb-md-0">
+                                                <label className="small font-weight-bold text-dark mb-2">Start Date</label>
+                                                <input type="date" className="form-control form-control-modern" name="applicationStartDate" value={config.applicationStartDate} onChange={handleChange} />
+                                            </div>
+                                            <div className="col-md-6">
+                                                <label className="small font-weight-bold text-dark mb-2">End Date</label>
+                                                <input type="date" className="form-control form-control-modern" name="applicationEndDate" value={config.applicationEndDate} onChange={handleChange} />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Notifications */}
+                            <div className="card shadow-sm mb-4 border-0 rounded">
+                                <div className="card-header bg-white border-bottom py-3">
+                                    <h6 className="m-0 font-weight-bold text-dark d-flex align-items-center">
+                                        <i className="fas fa-bell mr-2"></i> Notifications
+                                    </h6>
+                                </div>
+                                <div className="card-body p-4">
+                                    <div className="form-group mb-4">
+                                        <label className="font-weight-bold text-dark mb-2">Email Sender Name</label>
+                                        <input type="text" className="form-control form-control-modern" name="emailSenderName" value={config.emailSenderName} onChange={handleChange} placeholder="Organization Name" />
+                                    </div>
+
+                                    <div className="border-top pt-4">
+                                        <h6 className="font-weight-bold text-dark mb-3">Notification Channels</h6>
+                                        <div className="custom-checkbox-wrapper mb-3">
+                                            <label className="custom-checkbox-container">
+                                                <input type="checkbox" name="enableEmailAlerts" checked={config.enableEmailAlerts} onChange={handleChange} />
+                                                <span className="checkmark"></span>
+                                                <div className="checkbox-content">
+                                                    <span className="font-weight-bold text-dark d-block">Email Alerts</span>
+                                                    <small className="text-muted">Send notifications via SMTP</small>
+                                                </div>
+                                            </label>
+                                        </div>
+                                        <div className="custom-checkbox-wrapper">
+                                            <label className="custom-checkbox-container">
+                                                <input type="checkbox" name="enableInAppNotifications" checked={config.enableInAppNotifications} onChange={handleChange} />
+                                                <span className="checkmark"></span>
+                                                <div className="checkbox-content">
+                                                    <span className="font-weight-bold text-dark d-block">In-App Notifications</span>
+                                                    <small className="text-muted">Display popup messages</small>
+                                                </div>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Data Management */}
+                            <div className="card shadow-sm mb-4 border-0 rounded">
+                                <div className="card-header bg-white border-bottom py-3">
+                                    <h6 className="m-0 font-weight-bold text-dark d-flex align-items-center">
+                                        <i className="fas fa-database mr-2"></i> Data Management
+                                    </h6>
+                                </div>
+                                <div className="card-body p-4">
+                                    <div className="row">
+                                        <div className="col-md-6 mb-3">
+                                            <label className="font-weight-bold text-dark mb-2">Log Retention (Days)</label>
+                                            <input type="number" className="form-control form-control-modern" name="logRetentionDays" value={config.logRetentionDays} onChange={handleChange} />
+                                            <small className="text-muted">How long to keep system logs</small>
+                                        </div>
+                                        <div className="col-md-6 mb-3">
+                                            <label className="font-weight-bold text-dark mb-2">Cleanup Interval (Hours)</label>
+                                            <input type="number" className="form-control form-control-modern" name="cleanupIntervalHours" value={config.cleanupIntervalHours} onChange={handleChange} />
+                                            <small className="text-muted">Automatic cleanup frequency</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Danger Zone */}
+                            <div className="card shadow-sm border-danger rounded" style={{ borderWidth: '2px' }}>
+                                <div className="card-header bg-danger text-white py-3">
+                                    <h6 className="m-0 font-weight-bold d-flex align-items-center">
+                                        <i className="fas fa-exclamation-triangle mr-2"></i> Danger Zone
+                                    </h6>
+                                </div>
+                                <div className="card-body p-4 bg-light">
+                                    <div className="d-flex justify-content-between align-items-start">
+                                        <div className="flex-grow-1 pr-3">
+                                            <h6 className="font-weight-bold text-danger mb-2">Maintenance Mode</h6>
+                                            <p className="small text-muted mb-0">
+                                                <i className="fas fa-info-circle mr-1"></i>
+                                                Blocks all non-admin access during updates
+                                            </p>
+                                        </div>
+                                        <label className="switch mb-0">
+                                            <input type="checkbox" name="maintenanceMode" checked={config.maintenanceMode} onChange={handleChange} />
+                                            <span className="slider round"></span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Sticky Bottom Bar */}
+                    <div className="card shadow-lg position-sticky border-0 rounded" style={{ bottom: '20px', zIndex: 100 }}>
+                        <div className="card-body py-3 px-4">
+                            <div className="d-flex align-items-center justify-content-between">
+                                <div className="d-flex align-items-center">
+                                    <i className="fas fa-info-circle text-primary mr-2"></i>
+                                    <span className="text-dark">Changes take effect immediately upon saving</span>
+                                </div>
+                                <button type="submit" className="btn btn-primary px-4 py-2 shadow-sm" disabled={saving} style={{ fontWeight: 600 }}>
+                                    <i className={`fas ${saving ? 'fa-spinner fa-spin' : 'fa-save'} mr-2`}></i>
+                                    {saving ? 'Saving Changes...' : 'Save Configuration'}
                                 </button>
                             </div>
                         </div>
+                    </div>
+                </form>
+            </div>
 
-                        <form onSubmit={confirmSave}>
-                            {/* Top Row: Organization Info + Status */}
-                            <div className="row mb-4">
-                                {/* Organization Information */}
-                                <div className="col-lg-8 mb-4 mb-lg-0">
-                                    <div className="card card-modern h-100">
-                                        <div className="section-header">
-                                            <h6>
-                                                <i className="fas fa-building mr-2" style={{ color: '#4a90e2' }}></i>
-                                                Organization & Support Information
-                                            </h6>
+            {/* Confirmation Modal */}
+            {showConfirmModal && (
+                <div className="modal fade show d-block" tabIndex={-1} role="dialog" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+                    <div className="modal-dialog modal-dialog-centered" role="document">
+                        <div className="modal-content border-0 shadow-lg rounded">
+                            <div className="modal-header bg-primary text-white border-0">
+                                <h5 className="modal-title font-weight-bold">
+                                    <i className="fas fa-check-circle mr-2"></i>Confirm Configuration Changes
+                                </h5>
+                                <button type="button" className="close text-white" onClick={() => setShowConfirmModal(false)}>
+                                    <span>&times;</span>
+                                </button>
+                            </div>
+                            <div className="modal-body p-4">
+                                <p className="mb-3">You are about to save changes to the system configuration. Please review:</p>
+                                <div className="bg-light p-3 rounded mb-3">
+                                    <div className="row">
+                                        <div className="col-6 mb-2">
+                                            <small className="text-muted d-block">Storage Provider</small>
+                                            <strong className="text-uppercase">{pendingConfig?.storageProvider}</strong>
                                         </div>
-                                        <div className="card-body-modern">
-                                            <div className="row">
-                                                <div className="col-md-6 mb-3">
-                                                    <label className="form-label-modern">System Name</label>
-                                                    <input
-                                                        type="text"
-                                                        className="form-control"
-                                                        name="systemName"
-                                                        value={config.systemName}
-                                                        onChange={handleChange}
-                                                        style={{ borderRadius: '8px' }}
-                                                    />
-                                                </div>
-                                                <div className="col-md-6 mb-3">
-                                                    <label className="form-label-modern">Organization Name</label>
-                                                    <input
-                                                        type="text"
-                                                        className="form-control"
-                                                        name="organizationName"
-                                                        value={config.organizationName}
-                                                        onChange={handleChange}
-                                                        style={{ borderRadius: '8px' }}
-                                                    />
-                                                </div>
-                                            </div>
-                                            <div className="row">
-                                                <div className="col-md-6 mb-3 mb-md-0">
-                                                    <label className="form-label-modern">Support Email</label>
-                                                    <input
-                                                        type="email"
-                                                        className="form-control"
-                                                        name="supportEmail"
-                                                        value={config.supportEmail}
-                                                        onChange={handleChange}
-                                                        style={{ borderRadius: '8px' }}
-                                                    />
-                                                </div>
-                                                <div className="col-md-6">
-                                                    <label className="form-label-modern">Support Phone</label>
-                                                    <input
-                                                        type="text"
-                                                        className="form-control"
-                                                        name="supportPhone"
-                                                        value={config.supportPhone}
-                                                        onChange={handleChange}
-                                                        style={{ borderRadius: '8px' }}
-                                                    />
-                                                </div>
-                                            </div>
+                                        <div className="col-6 mb-2">
+                                            <small className="text-muted d-block">Application Status</small>
+                                            <strong className={pendingConfig?.isApplicationOpen ? 'text-success' : 'text-secondary'}>
+                                                {pendingConfig?.isApplicationOpen ? 'OPEN' : 'CLOSED'}
+                                            </strong>
+                                        </div>
+                                        <div className="col-6 mb-2">
+                                            <small className="text-muted d-block">Maintenance Mode</small>
+                                            <strong className={pendingConfig?.maintenanceMode ? 'text-danger' : 'text-success'}>
+                                                {pendingConfig?.maintenanceMode ? 'ENABLED' : 'DISABLED'}
+                                            </strong>
+                                        </div>
+                                        <div className="col-6 mb-2">
+                                            <small className="text-muted d-block">Google OAuth</small>
+                                            <strong className={pendingConfig?.enableGoogleLogin ? 'text-success' : 'text-secondary'}>
+                                                {pendingConfig?.enableGoogleLogin ? 'ENABLED' : 'DISABLED'}
+                                            </strong>
                                         </div>
                                     </div>
                                 </div>
-
-                                {/* System Status Card */}
-                                <div className="col-lg-4">
-                                    <div
-                                        className={`card status-card h-100`}
-                                        style={{
-                                            borderColor: config.maintenanceMode ? '#dc3545' : '#28a745',
-                                            backgroundColor: config.maintenanceMode ? '#fff5f5' : '#f0fff4'
-                                        }}
-                                    >
-                                        <div className="card-body-modern">
-                                            <div className="d-flex align-items-center justify-content-between mb-3">
-                                                <h6 className="font-weight-bold text-dark mb-0">
-                                                    <i className={`fas fa-circle mr-2`} style={{
-                                                        fontSize: '0.6rem',
-                                                        color: config.maintenanceMode ? '#dc3545' : '#28a745'
-                                                    }}></i>
-                                                    System Status
-                                                </h6>
-                                                <span className={`badge badge-modern ${config.maintenanceMode ? 'badge-danger-modern' : 'badge-success-modern'}`}>
-                                                    {config.maintenanceMode ? 'OFFLINE' : 'ONLINE'}
-                                                </span>
-                                            </div>
-
-                                            <div
-                                                className="d-flex align-items-center justify-content-between p-3 mb-3"
-                                                style={{
-                                                    backgroundColor: 'white',
-                                                    borderRadius: '10px',
-                                                    border: '1px solid #e8eaed'
-                                                }}
-                                            >
-                                                <div>
-                                                    <div className="font-weight-bold text-dark">Maintenance Mode</div>
-                                                    <small className="text-muted">Restrict user access</small>
-                                                </div>
-                                                <div className="custom-control custom-switch" style={{ marginRight: '0' }}>
-                                                    <input
-                                                        type="checkbox"
-                                                        className="custom-control-input"
-                                                        id="maintenanceMode"
-                                                        name="maintenanceMode"
-                                                        checked={config.maintenanceMode}
-                                                        onChange={handleChange}
-                                                    />
-                                                    <label className="custom-control-label" htmlFor="maintenanceMode"></label>
-                                                </div>
-                                            </div>
-
-                                            <div
-                                                className="p-3"
-                                                style={{
-                                                    backgroundColor: 'rgba(255, 255, 255, 0.6)',
-                                                    borderRadius: '8px',
-                                                    border: '1px solid rgba(0, 0, 0, 0.05)'
-                                                }}
-                                            >
-                                                <small className="text-secondary d-block" style={{ lineHeight: '1.6' }}>
-                                                    <i className={`fas ${config.maintenanceMode ? 'fa-lock' : 'fa-check-circle'} mr-1`}></i>
-                                                    {config.maintenanceMode
-                                                        ? "System is currently offline. Only administrators can access the platform."
-                                                        : "System is operational. All users can access the platform normally."}
-                                                </small>
-                                            </div>
-                                        </div>
-                                    </div>
+                                <div className="alert alert-info mb-0 border-0" role="alert">
+                                    <i className="fas fa-exclamation-circle mr-2"></i>
+                                    <small>These changes will take effect immediately and may impact active users.</small>
                                 </div>
                             </div>
-
-                            {/* Main Content Grid */}
-                            <div className="row">
-                                {/* LEFT COLUMN */}
-                                <div className="col-lg-6">
-
-                                    {/* Application Period */}
-                                    <div className="card card-modern mb-4">
-                                        <div className="section-header d-flex justify-content-between align-items-center">
-                                            <h6>
-                                                <i className="fas fa-calendar-check mr-2" style={{ color: '#17a2b8' }}></i>
-                                                Application Window
-                                            </h6>
-                                            <span className={`badge badge-modern ${config.isApplicationOpen ? 'badge-success-modern' : 'badge-danger-modern'}`}>
-                                                {config.isApplicationOpen ? 'ACCEPTING' : 'CLOSED'}
-                                            </span>
-                                        </div>
-                                        <div className="card-body-modern">
-                                            <div className="row mb-3">
-                                                <div className="col-md-6">
-                                                    <div
-                                                        className="p-3 text-center"
-                                                        style={{
-                                                            backgroundColor: '#f8f9fa',
-                                                            borderRadius: '10px',
-                                                            border: config.isApplicationOpen ? '2px solid #28a745' : '2px solid #dee2e6'
-                                                        }}
-                                                    >
-                                                        <div className="custom-control custom-switch d-inline-block">
-                                                            <input
-                                                                type="checkbox"
-                                                                className="custom-control-input"
-                                                                id="isApplicationOpen"
-                                                                name="isApplicationOpen"
-                                                                checked={config.isApplicationOpen}
-                                                                onChange={handleChange}
-                                                            />
-                                                            <label className="custom-control-label font-weight-bold" htmlFor="isApplicationOpen">
-                                                                Accept Applications
-                                                            </label>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div className="col-md-6">
-                                                    <div
-                                                        className="p-3 text-center"
-                                                        style={{
-                                                            backgroundColor: '#f8f9fa',
-                                                            borderRadius: '10px',
-                                                            border: config.allowNewRegistrations ? '2px solid #28a745' : '2px solid #dee2e6'
-                                                        }}
-                                                    >
-                                                        <div className="custom-control custom-switch d-inline-block">
-                                                            <input
-                                                                type="checkbox"
-                                                                className="custom-control-input"
-                                                                id="allowNewRegistrations"
-                                                                name="allowNewRegistrations"
-                                                                checked={config.allowNewRegistrations}
-                                                                onChange={handleChange}
-                                                            />
-                                                            <label className="custom-control-label font-weight-bold" htmlFor="allowNewRegistrations">
-                                                                Allow Signups
-                                                            </label>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <div className="row">
-                                                <div className="col-md-6 mb-3 mb-md-0">
-                                                    <label className="form-label-modern">Start Date</label>
-                                                    <input
-                                                        type="date"
-                                                        className="form-control"
-                                                        name="applicationStartDate"
-                                                        value={config.applicationStartDate}
-                                                        onChange={handleChange}
-                                                        style={{ borderRadius: '8px' }}
-                                                    />
-                                                </div>
-                                                <div className="col-md-6">
-                                                    <label className="form-label-modern">End Date</label>
-                                                    <input
-                                                        type="date"
-                                                        className="form-control"
-                                                        name="applicationEndDate"
-                                                        value={config.applicationEndDate}
-                                                        onChange={handleChange}
-                                                        style={{ borderRadius: '8px' }}
-                                                    />
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    {/* Storage Provider */}
-                                    <div className="card card-modern mb-4">
-                                        <div className="section-header">
-                                            <h6>
-                                                <i className="fas fa-database mr-2" style={{ color: '#6c757d' }}></i>
-                                                File Storage Provider
-                                            </h6>
-                                        </div>
-                                        <div className="card-body-modern">
-                                            <div className="row">
-                                                {/* Local Storage */}
-                                                <div className="col-md-6 mb-3 mb-md-0">
-                                                    <div
-                                                        className={`storage-option p-4 text-center ${config.storageProvider === 'local' ? 'active' : ''}`}
-                                                        onClick={() => updateConfig('storageProvider', 'local')}
-                                                    >
-                                                        <i
-                                                            className="fas fa-server fa-3x mb-3"
-                                                            style={{ color: config.storageProvider === 'local' ? '#4a90e2' : '#adb5bd' }}
-                                                        ></i>
-                                                        <h6 className={`font-weight-bold mb-1 ${config.storageProvider === 'local' ? 'text-primary' : 'text-secondary'}`}>
-                                                            Local Server
-                                                        </h6>
-                                                        <small className="text-muted d-block">public/uploads</small>
-                                                        {config.storageProvider === 'local' && (
-                                                            <div className="mt-2">
-                                                                <i className="fas fa-check-circle text-primary"></i>
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                </div>
-
-                                                {/* AWS S3 */}
-                                                <div className="col-md-6">
-                                                    <div
-                                                        className={`storage-option p-4 text-center ${config.storageProvider === 's3' ? 'active-s3' : ''}`}
-                                                        onClick={() => updateConfig('storageProvider', 's3')}
-                                                    >
-                                                        <i
-                                                            className="fab fa-aws fa-3x mb-3"
-                                                            style={{ color: config.storageProvider === 's3' ? '#ff9900' : '#adb5bd' }}
-                                                        ></i>
-                                                        <h6 className={`font-weight-bold mb-1`} style={{ color: config.storageProvider === 's3' ? '#ff9900' : '#6c757d' }}>
-                                                            AWS S3 Cloud
-                                                        </h6>
-                                                        <small className="text-muted d-block">Cloud Bucket</small>
-                                                        {config.storageProvider === 's3' && (
-                                                            <div className="mt-2">
-                                                                <i className="fas fa-check-circle" style={{ color: '#ff9900' }}></i>
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    {/* Data Retention */}
-                                    <div className="card card-modern mb-4">
-                                        <div className="section-header">
-                                            <h6>
-                                                <i className="fas fa-clock mr-2" style={{ color: '#6f42c1' }}></i>
-                                                Data Retention Policy
-                                            </h6>
-                                        </div>
-                                        <div className="card-body-modern">
-                                            <div className="row">
-                                                <div className="col-md-6 mb-3 mb-md-0">
-                                                    <label className="form-label-modern">Log Retention (Days)</label>
-                                                    <div className="input-group">
-                                                        <input
-                                                            type="number"
-                                                            className="form-control"
-                                                            name="logRetentionDays"
-                                                            value={config.logRetentionDays}
-                                                            onChange={handleChange}
-                                                            style={{ borderRadius: '8px 0 0 8px' }}
-                                                        />
-                                                        <div className="input-group-append">
-                                                            <span className="input-group-text" style={{ borderRadius: '0 8px 8px 0' }}>days</span>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div className="col-md-6">
-                                                    <label className="form-label-modern">Cleanup Interval (Hours)</label>
-                                                    <div className="input-group">
-                                                        <input
-                                                            type="number"
-                                                            className="form-control"
-                                                            name="cleanupIntervalHours"
-                                                            value={config.cleanupIntervalHours}
-                                                            onChange={handleChange}
-                                                            style={{ borderRadius: '8px 0 0 8px' }}
-                                                        />
-                                                        <div className="input-group-append">
-                                                            <span className="input-group-text" style={{ borderRadius: '0 8px 8px 0' }}>hrs</span>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                </div>
-
-                                {/* RIGHT COLUMN */}
-                                <div className="col-lg-6">
-
-                                    {/* Security & Authentication */}
-                                    <div className="card card-modern mb-4">
-                                        <div className="section-header">
-                                            <h6>
-                                                <i className="fas fa-shield-alt mr-2" style={{ color: '#dc3545' }}></i>
-                                                Security & Authentication
-                                            </h6>
-                                        </div>
-                                        <div className="card-body-modern">
-                                            {/* Auth Methods */}
-                                            <div
-                                                className="p-3 mb-4"
-                                                style={{
-                                                    backgroundColor: '#f8f9fa',
-                                                    borderRadius: '10px'
-                                                }}
-                                            >
-                                                <label className="form-label-modern mb-3">Authentication Methods</label>
-                                                <div className="row">
-                                                    <div className="col-md-6 mb-3 mb-md-0">
-                                                        <div className="custom-control custom-checkbox">
-                                                            <input
-                                                                type="checkbox"
-                                                                className="custom-control-input"
-                                                                id="enableNativeLogin"
-                                                                name="enableNativeLogin"
-                                                                checked={config.enableNativeLogin}
-                                                                onChange={handleChange}
-                                                            />
-                                                            <label className="custom-control-label font-weight-bold" htmlFor="enableNativeLogin">
-                                                                <i className="fas fa-envelope mr-2 text-primary"></i>
-                                                                Email/Password
-                                                            </label>
-                                                        </div>
-                                                    </div>
-                                                    <div className="col-md-6">
-                                                        <div className="custom-control custom-checkbox">
-                                                            <input
-                                                                type="checkbox"
-                                                                className="custom-control-input"
-                                                                id="enableGoogleLogin"
-                                                                name="enableGoogleLogin"
-                                                                checked={config.enableGoogleLogin}
-                                                                onChange={handleChange}
-                                                            />
-                                                            <label className="custom-control-label font-weight-bold" htmlFor="enableGoogleLogin">
-                                                                <i className="fab fa-google mr-2" style={{ color: '#ea4335' }}></i>
-                                                                Google OAuth
-                                                            </label>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            {/* Security Parameters */}
-                                            <div className="row">
-                                                <div className="col-md-4 mb-3">
-                                                    <label className="form-label-modern">Min Password</label>
-                                                    <div className="input-group">
-                                                        <input
-                                                            type="number"
-                                                            className="form-control"
-                                                            name="minPasswordLength"
-                                                            value={config.minPasswordLength}
-                                                            onChange={handleChange}
-                                                            min="6"
-                                                            max="32"
-                                                            style={{ borderRadius: '8px 0 0 8px' }}
-                                                        />
-                                                        <div className="input-group-append">
-                                                            <span className="input-group-text" style={{ borderRadius: '0 8px 8px 0' }}>chars</span>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div className="col-md-4 mb-3">
-                                                    <label className="form-label-modern">Max Attempts</label>
-                                                    <input
-                                                        type="number"
-                                                        className="form-control"
-                                                        name="maxLoginAttempts"
-                                                        value={config.maxLoginAttempts}
-                                                        onChange={handleChange}
-                                                        style={{ borderRadius: '8px' }}
-                                                    />
-                                                </div>
-                                                <div className="col-md-4 mb-3">
-                                                    <label className="form-label-modern">Session Timeout</label>
-                                                    <div className="input-group">
-                                                        <input
-                                                            type="number"
-                                                            className="form-control"
-                                                            name="sessionTimeout"
-                                                            value={config.sessionTimeout}
-                                                            onChange={handleChange}
-                                                            style={{ borderRadius: '8px 0 0 8px' }}
-                                                        />
-                                                        <div className="input-group-append">
-                                                            <span className="input-group-text" style={{ borderRadius: '0 8px 8px 0' }}>min</span>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    {/* Notifications */}
-                                    <div className="card card-modern mb-4">
-                                        <div className="section-header">
-                                            <h6>
-                                                <i className="fas fa-bell mr-2" style={{ color: '#ffc107' }}></i>
-                                                Notification Settings
-                                            </h6>
-                                        </div>
-                                        <div className="card-body-modern">
-                                            <div className="form-group">
-                                                <label className="form-label-modern">Email Sender Name</label>
-                                                <input
-                                                    type="text"
-                                                    className="form-control"
-                                                    name="emailSenderName"
-                                                    value={config.emailSenderName}
-                                                    onChange={handleChange}
-                                                    style={{ borderRadius: '8px' }}
-                                                />
-                                            </div>
-
-                                            <div
-                                                className="p-3 mt-3"
-                                                style={{
-                                                    backgroundColor: '#f8f9fa',
-                                                    borderRadius: '10px'
-                                                }}
-                                            >
-                                                <label className="form-label-modern mb-3">Notification Channels</label>
-                                                <div className="row">
-                                                    <div className="col-md-6 mb-2">
-                                                        <div className="d-flex align-items-center justify-content-between">
-                                                            <span className="font-weight-bold">
-                                                                <i className="fas fa-envelope mr-2 text-info"></i>
-                                                                Email Alerts
-                                                            </span>
-                                                            <div className="custom-control custom-switch">
-                                                                <input
-                                                                    type="checkbox"
-                                                                    className="custom-control-input"
-                                                                    id="enableEmailAlerts"
-                                                                    name="enableEmailAlerts"
-                                                                    checked={config.enableEmailAlerts}
-                                                                    onChange={handleChange}
-                                                                />
-                                                                <label className="custom-control-label" htmlFor="enableEmailAlerts"></label>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    <div className="col-md-6 mb-2">
-                                                        <div className="d-flex align-items-center justify-content-between">
-                                                            <span className="font-weight-bold">
-                                                                <i className="fas fa-bell mr-2 text-warning"></i>
-                                                                In-App Alerts
-                                                            </span>
-                                                            <div className="custom-control custom-switch">
-                                                                <input
-                                                                    type="checkbox"
-                                                                    className="custom-control-input"
-                                                                    id="enableInAppNotifications"
-                                                                    name="enableInAppNotifications"
-                                                                    checked={config.enableInAppNotifications}
-                                                                    onChange={handleChange}
-                                                                />
-                                                                <label className="custom-control-label" htmlFor="enableInAppNotifications"></label>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                </div>
+                            <div className="modal-footer border-0 bg-light">
+                                <button type="button" className="btn btn-secondary px-4" onClick={() => setShowConfirmModal(false)}>
+                                    <i className="fas fa-times mr-2"></i>Cancel
+                                </button>
+                                <button type="button" className="btn btn-primary px-4" onClick={confirmSave}>
+                                    <i className="fas fa-check mr-2"></i>Confirm & Save
+                                </button>
                             </div>
-                        </form>
+                        </div>
                     </div>
                 </div>
+            )}
 
-                {/* Success Toast */}
-                {showSuccessToast && (
-                    <div className="toast-success">
-                        <div className="d-flex align-items-center p-3">
-                            <div className="mr-3">
-                                <i className="fas fa-check-circle fa-2x text-success"></i>
-                            </div>
-                            <div className="flex-grow-1">
-                                <h6 className="font-weight-bold mb-1">Changes Saved Successfully</h6>
-                                <p className="text-muted mb-0 small">System configuration has been updated.</p>
-                            </div>
-                            <button
-                                type="button"
-                                className="close ml-3"
-                                onClick={() => setShowSuccessToast(false)}
-                                style={{ fontSize: '1.5rem' }}
-                            >
-                                <span aria-hidden="true">&times;</span>
-                            </button>
-                        </div>
-                    </div>
-                )}
+            <style>{`
+                /* Modern Toggle Switch */
+                .switch {
+                    position: relative;
+                    display: inline-block;
+                    width: 48px;
+                    height: 26px;
+                    flex-shrink: 0;
+                }
 
-                {/* Enhanced Confirmation Modal */}
-                {showModal && (
-                    <>
-                        <div className="modal-backdrop fade show"></div>
-                        <div className="modal fade show d-block" tabIndex={-1} role="dialog">
-                            <div className="modal-dialog modal-dialog-centered" role="document" style={{ maxWidth: '500px' }}>
-                                <div className="modal-content">
-                                    <div className="modal-header">
-                                        <div className="d-flex align-items-center">
-                                            <div
-                                                className="mr-3 d-flex align-items-center justify-content-center"
-                                                style={{
-                                                    width: '48px',
-                                                    height: '48px',
-                                                    backgroundColor: '#e3f2fd',
-                                                    borderRadius: '12px'
-                                                }}
-                                            >
-                                                <i className="fas fa-exclamation-circle fa-lg" style={{ color: '#4a90e2' }}></i>
-                                            </div>
-                                            <div>
-                                                <h5 className="modal-title font-weight-bold mb-0">Confirm Configuration Changes</h5>
-                                                <small className="text-muted">Review your changes before saving</small>
-                                            </div>
-                                        </div>
-                                        <button type="button" className="close ml-2" onClick={() => setShowModal(false)} style={{ fontSize: '1.5rem' }}>
-                                            <span aria-hidden="true">&times;</span>
-                                        </button>
-                                    </div>
-                                    <div className="modal-body">
-                                        <p className="text-secondary mb-3">
-                                            You are about to update the system configuration. This will affect all users and operations.
-                                        </p>
+                .switch input {
+                    opacity: 0;
+                    width: 0;
+                    height: 0;
+                }
 
-                                        {/* Conditional Warnings */}
-                                        {config.maintenanceMode && (
-                                            <div className="alert alert-modern alert-warning mb-3" style={{ borderLeftColor: '#ffc107' }}>
-                                                <div className="d-flex">
-                                                    <i className="fas fa-exclamation-triangle mt-1 mr-2" style={{ color: '#ffc107' }}></i>
-                                                    <div>
-                                                        <strong>Maintenance Mode Enabled</strong>
-                                                        <p className="mb-0 small mt-1">All users except administrators will be locked out of the system.</p>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        )}
+                .slider {
+                    position: absolute;
+                    cursor: pointer;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    bottom: 0;
+                    background-color: #e0e0e0;
+                    transition: .3s;
+                }
 
-                                        {config.storageProvider === 's3' && (
-                                            <div className="alert alert-modern alert-info mb-3" style={{ borderLeftColor: '#17a2b8' }}>
-                                                <div className="d-flex">
-                                                    <i className="fas fa-info-circle mt-1 mr-2" style={{ color: '#17a2b8' }}></i>
-                                                    <div>
-                                                        <strong>AWS S3 Storage Selected</strong>
-                                                        <p className="mb-0 small mt-1">Ensure your AWS credentials are properly configured in environment variables.</p>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        )}
+                .slider:before {
+                    position: absolute;
+                    content: "";
+                    height: 20px;
+                    width: 20px;
+                    left: 3px;
+                    bottom: 3px;
+                    background-color: white;
+                    transition: .3s;
+                    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                }
 
-                                        {!config.enableNativeLogin && !config.enableGoogleLogin && (
-                                            <div className="alert alert-modern alert-danger mb-3" style={{ borderLeftColor: '#dc3545' }}>
-                                                <div className="d-flex">
-                                                    <i className="fas fa-times-circle mt-1 mr-2" style={{ color: '#dc3545' }}></i>
-                                                    <div>
-                                                        <strong>No Authentication Method Enabled</strong>
-                                                        <p className="mb-0 small mt-1">Users will not be able to log in. Enable at least one authentication method.</p>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        )}
+                input:checked + .slider {
+                    background-color: #4e73df;
+                }
 
-                                        {(!config.maintenanceMode && !config.storageProvider) && (
-                                            <p className="text-muted small mb-0">
-                                                <i className="fas fa-check-circle text-success mr-1"></i>
-                                                No critical warnings detected.
-                                            </p>
-                                        )}
-                                    </div>
-                                    <div className="modal-footer">
-                                        <button
-                                            type="button"
-                                            className="btn btn-light px-4"
-                                            onClick={() => setShowModal(false)}
-                                            style={{ borderRadius: '8px' }}
-                                        >
-                                            Cancel
-                                        </button>
-                                        <button
-                                            type="button"
-                                            className="btn btn-primary px-4"
-                                            onClick={handleFinalSave}
-                                            style={{ borderRadius: '8px' }}
-                                        >
-                                            <i className="fas fa-check mr-2"></i>
-                                            Save Changes
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </>
-                )}
-            </div>
-        </>
+                input:checked + .slider:before {
+                    transform: translateX(22px);
+                }
+
+                .slider.round {
+                    border-radius: 26px;
+                }
+
+                .slider.round:before {
+                    border-radius: 50%;
+                }
+
+                /* Modern Checkbox */
+                .custom-checkbox-container {
+                    display: flex;
+                    align-items: flex-start;
+                    position: relative;
+                    padding-left: 35px;
+                    cursor: pointer;
+                    user-select: none;
+                    width: 100%;
+                }
+
+                .custom-checkbox-container input {
+                    position: absolute;
+                    opacity: 0;
+                    cursor: pointer;
+                    height: 0;
+                    width: 0;
+                }
+
+                .checkmark {
+                    position: absolute;
+                    top: 2px;
+                    left: 0;
+                    height: 22px;
+                    width: 22px;
+                    background-color: #fff;
+                    border: 2px solid #e0e0e0;
+                    border-radius: 5px;
+                    transition: all 0.2s ease;
+                }
+
+                .custom-checkbox-container:hover input ~ .checkmark {
+                    border-color: #4e73df;
+                }
+
+                .custom-checkbox-container input:checked ~ .checkmark {
+                    background-color: #4e73df;
+                    border-color: #4e73df;
+                }
+
+                .checkmark:after {
+                    content: "";
+                    position: absolute;
+                    display: none;
+                }
+
+                .custom-checkbox-container input:checked ~ .checkmark:after {
+                    display: block;
+                }
+
+                .custom-checkbox-container .checkmark:after {
+                    left: 6px;
+                    top: 2px;
+                    width: 5px;
+                    height: 10px;
+                    border: solid white;
+                    border-width: 0 2px 2px 0;
+                    transform: rotate(45deg);
+                }
+
+                .checkbox-content {
+                    flex: 1;
+                }
+
+                /* Modern Input */
+                .input-group-modern {
+                    background: #f8f9fa;
+                    border-radius: 8px;
+                    overflow: hidden;
+                    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+                }
+
+                .form-control-modern {
+                    background: transparent;
+                    border: 1px solid #e0e0e0;
+                    border-radius: 8px;
+                    padding: 0.625rem 0.875rem;
+                    transition: all 0.2s ease;
+                }
+
+                .form-control-modern:focus {
+                    background: #fff;
+                    border-color: #4e73df;
+                    box-shadow: 0 0 0 3px rgba(78, 115, 223, 0.1);
+                }
+
+                .input-group-modern .form-control-modern {
+                    border: none;
+                }
+
+                .input-group-modern:focus-within {
+                    box-shadow: 0 0 0 3px rgba(78, 115, 223, 0.1);
+                }
+
+                /* Card Improvements */
+                .card {
+                    transition: transform 0.2s ease, box-shadow 0.2s ease;
+                }
+
+                .rounded-lg {
+                    border-radius: 12px !important;
+                }
+            `}</style>
+        </div>
     );
 };
 

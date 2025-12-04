@@ -9,7 +9,6 @@ import {
     AlertTriangle,
     CheckCircle,
     RefreshCw,
-    Info,
     FileText,
     Calendar,
     Package,
