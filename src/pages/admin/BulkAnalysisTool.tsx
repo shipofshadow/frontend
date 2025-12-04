@@ -493,7 +493,14 @@ const BulkAnalysisTool = () => {
             const result = await response.json();
 
             if (result.success) {
-                setEmailResults(result);
+                setEmailResults({
+                    success: true,
+                    total_sent: result.total_sent || 0,
+                    total_failed: result.total_failed || 0,
+                    sent_students: result.sent_students || [],
+                    failed_students: result.failed_students || [],
+                    error: undefined
+                });
                 setEmailModal(false);
                 setEmailResultsModal(true);
             } else {
@@ -526,7 +533,7 @@ const BulkAnalysisTool = () => {
     };
 
     const handleRetryFailedEmails = async () => {
-        if (!emailResults || emailResults.failed_students.length === 0) return;
+        if (!emailResults || !emailResults.failed_students || emailResults.failed_students.length === 0) return;
 
         const failedIds = emailResults.failed_students.map(s => s.student_id);
         setSelectedStudentsForEmail(failedIds);
@@ -1483,7 +1490,7 @@ const BulkAnalysisTool = () => {
                                     </div>
 
                                     {/* Sent Students */}
-                                    {emailResults.sent_students.length > 0 && (
+                                    {emailResults.sent_students && emailResults.sent_students.length > 0 && (
                                         <div className="mb-4">
                                             <h6 className="fw-bold mb-3 text-success">
                                                 <CheckCircle size={16} className="me-2" />
@@ -1506,7 +1513,7 @@ const BulkAnalysisTool = () => {
                                     )}
 
                                     {/* Failed Students */}
-                                    {emailResults.failed_students.length > 0 && (
+                                    {emailResults.failed_students && emailResults.failed_students.length > 0 && (
                                         <div>
                                             <h6 className="fw-bold mb-3 text-danger">
                                                 <AlertCircle size={16} className="me-2" />
@@ -1540,7 +1547,7 @@ const BulkAnalysisTool = () => {
                                 <div className="modal-footer border-0 pt-0">
                                     <div className="d-flex justify-content-between align-items-center w-100">
                                         <div>
-                                            {emailResults.failed_students.length > 0 && (
+                                            {emailResults.failed_students && emailResults.failed_students.length > 0 && (
                                                 <button
                                                     type="button"
                                                     className="btn btn-outline-warning d-flex align-items-center"
