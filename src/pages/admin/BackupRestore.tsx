@@ -13,12 +13,17 @@ import {
     FileText,
     Calendar,
     Package,
+    Plus,
+    Search,
+    Server,
+    ShieldAlert
 } from 'lucide-react';
 import Swal from 'sweetalert2';
 import { useAuth } from '../../context/AuthContext.tsx';
 import { API_BASE_URL } from '../../config.ts';
 
 const BackupRestore = () => {
+    // --- State & Logic (Unchanged) ---
     const [backups, setBackups] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
     const [creating, setCreating] = useState(false);
@@ -320,325 +325,313 @@ const BackupRestore = () => {
     const stats = getBackupStats();
 
     return (
-        <div className="container-fluid p-4">
+        <div className="min-vh-100 bg-gray-50 text-dark">
+            <style>{`
+                :root {
+                    --primary-color: #2563eb;
+                    --primary-hover: #1d4ed8;
+                    --bg-page: #f8fafc;
+                    --border-color: #e2e8f0;
+                    --text-secondary: #64748b;
+                    --card-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+                    --card-hover-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+                }
+
+                body {
+                    background-color: var(--bg-page);
+                    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+                }
+                
+                /* Utils */
+                .bg-gray-50 { background-color: var(--bg-page) !important; }
+                .text-secondary-custom { color: var(--text-secondary) !important; }
+                .border-subtle { border-color: var(--border-color) !important; }
+                .cursor-pointer { cursor: pointer; }
+
+                /* Cards */
+                .custom-card {
+                    background: white;
+                    border: 1px solid var(--border-color);
+                    border-radius: 12px;
+                    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
+                    transition: all 0.3s ease;
+                }
+                .custom-card-hover:hover {
+                    transform: translateY(-2px);
+                    box-shadow: var(--card-hover-shadow);
+                }
+
+                /* Table */
+                .custom-table thead th {
+                    background-color: #f8fafc;
+                    border-bottom: 2px solid var(--border-color);
+                    color: var(--text-secondary);
+                    font-weight: 600;
+                    text-transform: uppercase;
+                    font-size: 0.75rem;
+                    letter-spacing: 0.05em;
+                    padding: 1rem;
+                    position: sticky;
+                    top: 0;
+                    z-index: 10;
+                }
+                .custom-table tbody td {
+                    padding: 1rem;
+                    border-bottom: 1px solid var(--border-color);
+                    vertical-align: middle;
+                }
+                .custom-table tbody tr:hover {
+                    background-color: #f8fafc;
+                }
+
+                /* Scrollbar */
+                .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+                .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+                .custom-scrollbar::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 3px; }
+                .custom-scrollbar::-webkit-scrollbar-thumb:hover { background-color: #94a3b8; }
+
+                /* Animations */
+                .spin { animation: spin 1s linear infinite; }
+                @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+                .fade-in-up { animation: fadeInUp 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
+                @keyframes fadeInUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+                /* Modal */
+                .modal-backdrop.show { opacity: 0.6; background-color: #0f172a; }
+                .modal-content { border: none; border-radius: 16px; box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25); }
+                .modal-header { border-bottom: 1px solid var(--border-color); padding: 1.5rem; }
+                .modal-body { padding: 1.5rem; }
+                .modal-footer { border-top: 1px solid var(--border-color); padding: 1.25rem 1.5rem; }
+            `}</style>
+
+            {/* Notification Toast */}
             {notification && (
                 <div className="position-fixed top-0 end-0 p-3" style={{ zIndex: 9999 }}>
-                    <div
-                        className={`alert alert-${notification.type} alert-dismissible fade show shadow-lg`}
-                        role="alert"
-                    >
-                        <strong>{notification.message}</strong>
-                        <button
-                            type="button"
-                            className="btn-close"
-                            onClick={() => setNotification(null)}
-                        ></button>
+                    <div className={`toast show align-items-center text-white bg-${notification.type} border-0 shadow-lg`} role="alert">
+                        <div className="d-flex">
+                            <div className="toast-body d-flex align-items-center">
+                                {notification.type === 'success' && <CheckCircle size={18} className="me-2" />}
+                                {notification.type === 'danger' && <AlertTriangle size={18} className="me-2" />}
+                                {notification.message}
+                            </div>
+                            <button type="button" className="btn-close btn-close-white me-2 m-auto" onClick={() => setNotification(null)}></button>
+                        </div>
                     </div>
                 </div>
             )}
 
-            <div className="row mb-4">
-                <div className="col">
-                    <div className="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h2 className="mb-2 d-flex align-items-center">
-                                <Database className="me-2 text-primary" size={36} />
-                                Backup &amp; Restore
-                            </h2>
-                            <p className="text-muted mb-0">
-                                Create, manage, and restore system backups with complete database and
-                                file protection.
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div className="row mb-4">
-                <div className="col-md-3">
-                    <div className="card border-0 shadow-sm h-100">
-                        <div className="card-body">
-                            <div className="d-flex justify-content-between align-items-center">
-                                <div>
-                                    <p className="text-muted mb-1 small">Total Backups</p>
-                                    <h3 className="mb-0">{backups.length}</h3>
-                                </div>
-                                <div className="bg-primary bg-opacity-10 p-3 rounded">
-                                    <Package className="text-primary" size={24} />
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div className="col-md-3">
-                    <div className="card border-0 shadow-sm h-100">
-                        <div className="card-body">
-                            <div className="d-flex justify-content-between align-items-center">
-                                <div>
-                                    <p className="text-muted mb-1 small">Total Size</p>
-                                    <h3 className="mb-0">{formatBytes(stats.totalSize)}</h3>
-                                </div>
-                                <div className="bg-success bg-opacity-10 p-3 rounded">
-                                    <HardDrive className="text-success" size={24} />
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div className="col-md-3">
-                    <div className="card border-0 shadow-sm h-100">
-                        <div className="card-body">
-                            <div className="d-flex justify-content-between align-items-center">
-                                <div>
-                                    <p className="text-muted mb-1 small">With Files</p>
-                                    <h3 className="mb-0">{stats.withFiles}</h3>
-                                </div>
-                                <div className="bg-info bg-opacity-10 p-3 rounded">
-                                    <FileText className="text-info" size={24} />
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div className="col-md-3">
-                    <div className="card border-0 shadow-sm h-100">
-                        <div className="card-body">
-                            <div className="d-flex justify-content-between align-items-center">
-                                <div>
-                                    <p className="text-muted mb-1 small">Latest Backup</p>
-                                    <h6 className="mb-0 small">
-                                        {stats.latest ? formatDate(stats.latest.created_at) : 'None'}
-                                    </h6>
-                                </div>
-                                <div className="bg-warning bg-opacity-10 p-3 rounded">
-                                    <Calendar className="text-warning" size={24} />
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div className="row mb-4">
-                <div className="col">
-                    <div className="card border-0 shadow-sm">
-                        <div className="card-body d-flex justify-content-between align-items-center">
-                            <div>
-                                <h5 className="mb-1">Quick Actions</h5>
-                                <p className="text-muted mb-0 small">
-                                    Create a new backup or refresh the list
-                                </p>
+            {/* Sticky Header */}
+            <header className="bg-white border-bottom sticky-top shadow-sm z-20">
+                <div className="container-fluid px-4">
+                    <div className="d-flex justify-content-between align-items-center py-3">
+                        <div className="d-flex align-items-center gap-3">
+                            <div className="bg-primary text-white p-2 rounded-3 d-flex align-items-center justify-content-center shadow-sm">
+                                <Server size={24} />
                             </div>
                             <div>
-                                <button
-                                    className="btn btn-primary me-2 shadow-sm"
-                                    onClick={() => setShowCreateModal(true)}
-                                    disabled={creating}
-                                >
-                                    {creating ? (
-                                        <>
-                                            <span className="spinner-border spinner-border-sm me-2"></span>
-                                            Creating...
-                                        </>
-                                    ) : (
-                                        <>
-                                            <Database className="me-2" size={18} />
-                                            Create New Backup
-                                        </>
-                                    )}
-                                </button>
-                                <button
-                                    className="btn btn-outline-secondary shadow-sm"
-                                    onClick={fetchBackups}
-                                    disabled={loading}
-                                >
-                                    <RefreshCw
-                                        className={`me-2 ${loading ? 'spin' : ''}`}
-                                        size={18}
-                                    />
-                                    Refresh
-                                </button>
+                                <h1 className="h5 fw-bold text-dark mb-0">System Backup & Restore</h1>
+                                <p className="text-secondary-custom small mb-0">Database and file management</p>
+                            </div>
+                        </div>
+                        <div className="d-flex gap-2">
+                            <button
+                                className="btn btn-outline-secondary d-flex align-items-center gap-2 btn-sm px-3"
+                                onClick={fetchBackups}
+                                disabled={loading}
+                            >
+                                <RefreshCw size={16} className={loading ? 'spin' : ''} />
+                                <span className="d-none d-sm-inline">Refresh</span>
+                            </button>
+                            <button
+                                className="btn btn-primary d-flex align-items-center gap-2 btn-sm px-3 shadow-sm"
+                                onClick={() => setShowCreateModal(true)}
+                                disabled={creating}
+                            >
+                                <Plus size={16} />
+                                <span>Create Backup</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <main className="container-fluid px-4 py-4">
+                {/* Stats Dashboard */}
+                <div className="row g-4 mb-4">
+                    <div className="col-md-3">
+                        <div className="custom-card p-3 h-100 fade-in-up" style={{ animationDelay: '0ms' }}>
+                            <div className="d-flex align-items-center gap-3">
+                                <div className="bg-blue-50 p-3 rounded-3 text-primary">
+                                    <Package size={24} />
+                                </div>
+                                <div>
+                                    <h3 className="fw-bold mb-0 text-dark">{backups.length}</h3>
+                                    <div className="text-secondary-custom small">Total Snapshots</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="col-md-3">
+                        <div className="custom-card p-3 h-100 fade-in-up" style={{ animationDelay: '50ms' }}>
+                            <div className="d-flex align-items-center gap-3">
+                                <div className="bg-green-50 p-3 rounded-3 text-success">
+                                    <HardDrive size={24} />
+                                </div>
+                                <div>
+                                    <h3 className="fw-bold mb-0 text-dark">{formatBytes(stats.totalSize)}</h3>
+                                    <div className="text-secondary-custom small">Storage Used</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="col-md-3">
+                        <div className="custom-card p-3 h-100 fade-in-up" style={{ animationDelay: '100ms' }}>
+                            <div className="d-flex align-items-center gap-3">
+                                <div className="bg-purple-50 p-3 rounded-3 text-info">
+                                    <FileText size={24} />
+                                </div>
+                                <div>
+                                    <h3 className="fw-bold mb-0 text-dark">{stats.withFiles}</h3>
+                                    <div className="text-secondary-custom small">Include Files</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="col-md-3">
+                        <div className="custom-card p-3 h-100 fade-in-up" style={{ animationDelay: '150ms' }}>
+                            <div className="d-flex align-items-center gap-3">
+                                <div className="bg-orange-50 p-3 rounded-3 text-warning">
+                                    <Clock size={24} />
+                                </div>
+                                <div>
+                                    <h3 className="fw-bold mb-0 text-dark" style={{fontSize: '1.1rem'}}>
+                                        {stats.latest ? formatDate(stats.latest.created_at) : 'N/A'}
+                                    </h3>
+                                    <div className="text-secondary-custom small">Last Backup</div>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <div className="row mb-4">
-                <div className="col">
-                    <div className="alert alert-info border-0 shadow-sm d-flex align-items-start">
-                        <Info className="me-2 mt-1 flex-shrink-0" size={20} />
-                        <div>
-                            <strong>Backup Best Practices:</strong>
-                            <ul className="mb-0 mt-1 small ps-3">
-                                <li>Create backups regularly before major changes</li>
-                                <li>Download important backups to external storage</li>
-                                <li>Test restore functionality periodically</li>
-                                <li>Keep at least 3 recent backups for safety</li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-            </div>
+                {/* Main Content Area */}
+                <div className="row g-4">
+                    <div className="col-lg-12">
 
-            <div className="row">
-                <div className="col">
-                    <div className="card border-0 shadow-sm">
-                        <div className="card-header bg-white border-0 py-3">
-                            <h5 className="mb-0 d-flex align-items-center">
-                                <Package className="me-2 text-primary" size={20} />
-                                Available Backups ({backups.length})
-                            </h5>
-                        </div>
-                        <div className="card-body p-0">
-                            {loading ? (
-                                <div className="text-center py-5">
-                                    <div
-                                        className="spinner-border text-primary mb-3"
-                                        role="status"
-                                    >
-                                        <span className="visually-hidden">Loading...</span>
-                                    </div>
-                                    <p className="text-muted">Loading backups...</p>
+                        {/* Backups Table */}
+                        <div className="custom-card overflow-hidden fade-in-up" style={{ animationDelay: '200ms' }}>
+                            <div className="card-header bg-white py-3 border-bottom d-flex align-items-center justify-content-between p-2">
+                                <h5 className="card-title mb-0 fw-bold d-flex align-items-center gap-2">
+                                    <Database size={18} className="text-primary" />
+                                    Available Backups
+                                </h5>
+                                <div className="text-secondary-custom small">
+                                    {backups.length} items
                                 </div>
-                            ) : backups.length === 0 ? (
-                                <div className="text-center py-5 px-4">
-                                    <div className="bg-light rounded-circle p-4 d-inline-block mb-3">
-                                        <Database
-                                            size={48}
-                                            className="text-muted opacity-50"
-                                        />
-                                    </div>
-                                    <h5>No Backups Found</h5>
-                                    <p className="text-muted">
-                                        Create your first backup to get started with data
-                                        protection.
-                                    </p>
-                                    <button
-                                        className="btn btn-primary mt-2"
-                                        onClick={() => setShowCreateModal(true)}
-                                    >
-                                        <Database className="me-2" size={18} />
-                                        Create First Backup
-                                    </button>
-                                </div>
-                            ) : (
-                                <div className="table-responsive">
-                                    <table className="table table-hover mb-0">
-                                        <thead className="bg-light">
+                            </div>
+
+                            <div className="table-responsive custom-scrollbar" style={{ maxHeight: '600px' }}>
+                                <table className="table mb-0 custom-table w-100">
+                                    <thead>
+                                    <tr>
+                                        <th>Backup Name</th>
+                                        <th>Description</th>
+                                        <th>Created</th>
+                                        <th>Size</th>
+                                        <th className="text-center">Contents</th>
+                                        <th className="text-center">Actions</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    {loading ? (
                                         <tr>
-                                            <th className="border-0">Name</th>
-                                            <th className="border-0">Description</th>
-                                            <th className="border-0">Created</th>
-                                            <th className="border-0">Size</th>
-                                            <th className="border-0 text-center">Files</th>
-                                            <th className="border-0 text-center">Actions</th>
+                                            <td colSpan={6} className="text-center py-5">
+                                                <div className="spinner-border text-primary mb-3" role="status"></div>
+                                                <p className="text-muted small">Retrieving backups...</p>
+                                            </td>
                                         </tr>
-                                        </thead>
-                                        <tbody>
-                                        {backups.map((backup: any, index: number) => (
-                                            <tr
-                                                key={backup.filename}
-                                                className={index === 0 ? 'table-active' : ''}
-                                            >
+                                    ) : backups.length === 0 ? (
+                                        <tr>
+                                            <td colSpan={6} className="text-center py-5">
+                                                <div className="bg-light p-4 rounded-circle d-inline-block mb-3">
+                                                    <Search size={32} className="text-secondary-custom opacity-50" />
+                                                </div>
+                                                <h6 className="fw-bold">No Backups Found</h6>
+                                                <p className="text-secondary-custom small mb-3">System is at risk without backups.</p>
+                                                <button className="btn btn-sm btn-primary" onClick={() => setShowCreateModal(true)}>
+                                                    Create First Backup
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    ) : (
+                                        backups.map((backup: any, index: number) => (
+                                            <tr key={backup.filename}>
                                                 <td>
-                                                    <div className="d-flex align-items-center">
-                                                        <Database
-                                                            size={16}
-                                                            className="me-2 text-primary"
-                                                        />
-                                                        <div>
-                                                            <strong>{backup.name}</strong>
-                                                            {index === 0 && (
-                                                                <span className="badge bg-success ms-2 small">
-                                                                        Latest
-                                                                    </span>
-                                                            )}
-                                                        </div>
+                                                    <div className="d-flex flex-column">
+                                                            <span className="fw-semibold text-dark d-flex align-items-center gap-2">
+                                                                {backup.name}
+                                                                {index === 0 && (
+                                                                    <span className="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 rounded-pill" style={{fontSize: '0.65rem'}}>Latest</span>
+                                                                )}
+                                                            </span>
+                                                        <span className="small text-secondary-custom font-monospace">{backup.filename}</span>
                                                     </div>
                                                 </td>
-                                                <td className="text-muted small">
-                                                    {backup.description || (
-                                                        <em className="text-muted">
-                                                            No description
-                                                        </em>
-                                                    )}
+                                                <td>
+                                                        <span className="text-secondary-custom small">
+                                                            {backup.description || <em className="text-muted opacity-50">No description</em>}
+                                                        </span>
                                                 </td>
                                                 <td>
-                                                    <div className="small">
-                                                        <Clock
-                                                            size={14}
-                                                            className="me-1"
-                                                        />
+                                                    <div className="d-flex align-items-center text-dark small fw-medium">
+                                                        <Calendar size={14} className="me-2 text-secondary-custom" />
                                                         {formatDate(backup.created_at)}
                                                     </div>
                                                 </td>
                                                 <td>
-                                                        <span className="badge bg-secondary">
+                                                        <span className="badge bg-light text-dark border fw-normal">
                                                             {formatBytes(backup.size)}
                                                         </span>
                                                 </td>
                                                 <td className="text-center">
                                                     {backup.include_files ? (
-                                                        <span className="badge bg-success">
-                                                                <CheckCircle
-                                                                    size={12}
-                                                                    className="me-1"
-                                                                />
-                                                                Yes
+                                                        <span className="badge bg-blue-50 text-primary border border-primary border-opacity-10 rounded-pill">
+                                                                DB + Files
                                                             </span>
                                                     ) : (
-                                                        <span className="badge bg-secondary">
-                                                                Database Only
+                                                        <span className="badge bg-gray-100 text-secondary-custom border rounded-pill">
+                                                                DB Only
                                                             </span>
                                                     )}
                                                 </td>
                                                 <td className="text-center">
-                                                    <div className="btn-group btn-group-sm shadow-sm">
+                                                    <div className="d-flex justify-content-center gap-2">
                                                         <button
-                                                            className="btn btn-outline-primary"
-                                                            onClick={() =>
-                                                                handleDownload(
-                                                                    backup.filename
-                                                                )
-                                                            }
-                                                            title="Download Backup"
+                                                            className="btn btn-sm btn-white border shadow-sm text-secondary-custom hover-text-primary"
+                                                            onClick={() => handleDownload(backup.filename)}
+                                                            title="Download"
                                                         >
                                                             <Download size={16} />
                                                         </button>
                                                         <button
-                                                            className="btn btn-outline-warning"
+                                                            className="btn btn-sm btn-white border shadow-sm text-secondary-custom hover-text-warning"
                                                             onClick={() => {
                                                                 setSelectedBackup(backup);
-                                                                setRestoreForm({
-                                                                    restoreFiles:
-                                                                    backup.include_files,
-                                                                });
+                                                                setRestoreForm({ restoreFiles: backup.include_files });
                                                                 setShowRestoreModal(true);
                                                             }}
-                                                            title="Restore Backup"
+                                                            title="Restore"
                                                         >
                                                             <Upload size={16} />
                                                         </button>
                                                         <button
-                                                            className="btn btn-outline-danger"
-                                                            onClick={() =>
-                                                                handleDelete(
-                                                                    backup.filename,
-                                                                    backup.name
-                                                                )
-                                                            }
-                                                            title="Delete Backup"
-                                                            disabled={
-                                                                deleting === backup.filename
-                                                            }
+                                                            className="btn btn-sm btn-white border shadow-sm text-secondary-custom hover-text-danger"
+                                                            onClick={() => handleDelete(backup.filename, backup.name)}
+                                                            disabled={deleting === backup.filename}
+                                                            title="Delete"
                                                         >
-                                                            {deleting ===
-                                                            backup.filename ? (
-                                                                <span className="spinner-border spinner-border-sm"></span>
+                                                            {deleting === backup.filename ? (
+                                                                <span className="spinner-border spinner-border-sm" style={{width: '1rem', height: '1rem'}}></span>
                                                             ) : (
                                                                 <Trash2 size={16} />
                                                             )}
@@ -646,389 +639,168 @@ const BackupRestore = () => {
                                                     </div>
                                                 </td>
                                             </tr>
-                                        ))}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            )}
+                                        ))
+                                    )}
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
+            </main>
 
+            {/* --- MODALS --- */}
+
+            {/* Create Backup Modal */}
             {showCreateModal && (
-                <div
-                    className="modal show d-block"
-                    style={{ backgroundColor: 'rgba(0,0,0,0.6)' }}
-                >
-                    <div className="modal-dialog modal-dialog-centered">
-                        <div className="modal-content border-0 shadow-lg">
-                            <div className="modal-header bg-primary text-white">
-                                <h5 className="modal-title d-flex align-items-center">
-                                    <Database className="me-2" size={24} />
-                                    Create New Backup
-                                </h5>
-                                <button
-                                    type="button"
-                                    className="btn-close btn-close-white"
-                                    onClick={() => setShowCreateModal(false)}
-                                    disabled={creating}
-                                ></button>
-                            </div>
-                            <div className="modal-body">
-                                <div className="mb-3">
-                                    <label className="form-label fw-bold">
-                                        Backup Name{' '}
-                                        <span className="text-muted fw-normal">(Optional)</span>
-                                    </label>
-                                    <input
-                                        type="text"
-                                        className="form-control"
-                                        value={createForm.name}
-                                        onChange={(e) =>
-                                            setCreateForm({
-                                                ...createForm,
-                                                name: e.target.value,
-                                            })
-                                        }
-                                        placeholder="e.g., before_major_update"
-                                        disabled={creating}
-                                    />
-                                    <small className="text-muted">
-                                        Leave empty for auto-generated timestamp name
-                                    </small>
+                <>
+                    <div className="modal-backdrop fade show"></div>
+                    <div className="modal fade show d-block" tabIndex={-1}>
+                        <div className="modal-dialog modal-dialog-centered">
+                            <div className="modal-content">
+                                <div className="modal-header bg-white">
+                                    <h5 className="modal-title fw-bold d-flex align-items-center gap-2">
+                                        <div className="bg-primary bg-opacity-10 text-primary p-2 rounded-circle">
+                                            <Database size={20} />
+                                        </div>
+                                        Create New Backup
+                                    </h5>
+                                    <button type="button" className="btn-close" onClick={() => setShowCreateModal(false)} disabled={creating}></button>
                                 </div>
-
-                                <div className="mb-3">
-                                    <label className="form-label fw-bold">
-                                        Description{' '}
-                                        <span className="text-muted fw-normal">(Optional)</span>
-                                    </label>
-                                    <textarea
-                                        className="form-control"
-                                        rows={3}
-                                        value={createForm.description}
-                                        onChange={(e) =>
-                                            setCreateForm({
-                                                ...createForm,
-                                                description: e.target.value,
-                                            })
-                                        }
-                                        placeholder="Brief description of this backup (e.g., Before semester rollover, Pre-migration backup)"
-                                        disabled={creating}
-                                    />
-                                </div>
-
-                                <div className="card bg-light border-0">
-                                    <div className="card-body">
-                                        <div className="form-check">
+                                <div className="modal-body bg-gray-50">
+                                    <div className="custom-card p-4">
+                                        <div className="mb-3">
+                                            <label className="form-label fw-bold small text-secondary-custom text-uppercase">Backup Name</label>
                                             <input
-                                                type="checkbox"
-                                                className="form-check-input"
-                                                id="includeFiles"
-                                                checked={createForm.includeFiles}
-                                                onChange={(e) =>
-                                                    setCreateForm({
-                                                        ...createForm,
-                                                        includeFiles: e.target.checked,
-                                                    })
-                                                }
+                                                type="text"
+                                                className="form-control"
+                                                value={createForm.name}
+                                                onChange={(e) => setCreateForm({ ...createForm, name: e.target.value })}
+                                                placeholder="Auto-generated if empty..."
                                                 disabled={creating}
                                             />
-                                            <label
-                                                className="form-check-label"
-                                                htmlFor="includeFiles"
-                                            >
-                                                <div className="d-flex align-items-center">
-                                                    <HardDrive
-                                                        size={18}
-                                                        className="me-2 text-primary"
-                                                    />
-                                                    <div>
-                                                        <strong>Include Uploaded Files</strong>
-                                                        <div className="small text-muted">
-                                                            Backup ITR documents, grade files, and
-                                                            other uploads
-                                                        </div>
-                                                    </div>
-                                                </div>
+                                        </div>
+
+                                        <div className="mb-3">
+                                            <label className="form-label fw-bold small text-secondary-custom text-uppercase">Description</label>
+                                            <textarea
+                                                className="form-control"
+                                                rows={2}
+                                                value={createForm.description}
+                                                onChange={(e) => setCreateForm({ ...createForm, description: e.target.value })}
+                                                placeholder="Optional notes..."
+                                                disabled={creating}
+                                            />
+                                        </div>
+
+                                        <div className="form-check custom-card p-3 d-flex align-items-start gap-2 m-0 cursor-pointer">
+                                            <input
+                                                type="checkbox"
+                                                className="form-check-input mt-1"
+                                                id="includeFiles"
+                                                checked={createForm.includeFiles}
+                                                onChange={(e) => setCreateForm({ ...createForm, includeFiles: e.target.checked })}
+                                                disabled={creating}
+                                            />
+                                            <label className="form-check-label w-100 cursor-pointer" htmlFor="includeFiles">
+                                                <span className="d-block fw-bold text-dark">Include Uploaded Files</span>
+                                                <span className="d-block small text-secondary-custom">Backs up ITRs, grades, and documents.</span>
                                             </label>
                                         </div>
+
+                                        {!createForm.includeFiles && (
+                                            <div className="mt-3 text-warning small d-flex align-items-center gap-2">
+                                                <AlertTriangle size={14} />
+                                                <span>Database only. Files will be excluded.</span>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
-
-                                {!createForm.includeFiles && (
-                                    <div className="alert alert-warning mt-3 mb-0 small">
-                                        <AlertTriangle size={16} className="me-2" />
-                                        Only database will be backed up. Uploaded files will not be
-                                        included.
-                                    </div>
-                                )}
-                            </div>
-                            <div className="modal-footer">
-                                <button
-                                    type="button"
-                                    className="btn btn-secondary"
-                                    onClick={() => setShowCreateModal(false)}
-                                    disabled={creating}
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    type="button"
-                                    className="btn btn-primary"
-                                    onClick={handleCreateBackup}
-                                    disabled={creating}
-                                >
-                                    {creating ? (
-                                        <>
-                                            <span className="spinner-border spinner-border-sm me-2"></span>
-                                            Creating Backup...
-                                        </>
-                                    ) : (
-                                        <>
-                                            <Database className="me-2" size={18} />
-                                            Create Backup
-                                        </>
-                                    )}
-                                </button>
+                                <div className="modal-footer bg-white">
+                                    <button type="button" className="btn btn-light" onClick={() => setShowCreateModal(false)} disabled={creating}>Cancel</button>
+                                    <button type="button" className="btn btn-primary d-flex align-items-center gap-2" onClick={handleCreateBackup} disabled={creating}>
+                                        {creating && <span className="spinner-border spinner-border-sm"></span>}
+                                        Start Backup
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
+                </>
             )}
 
+            {/* Restore Modal */}
             {showRestoreModal && selectedBackup && (
-                <div
-                    className="modal show d-block"
-                    style={{ backgroundColor: 'rgba(0,0,0,0.6)' }}
-                >
-                    <div className="modal-dialog modal-dialog-centered">
-                        <div className="modal-content border-0 shadow-lg">
-                            <div className="modal-header bg-danger text-white">
-                                <h5 className="modal-title d-flex align-items-center">
-                                    <AlertTriangle className="me-2" size={24} />
-                                    Restore Backup - Critical Action
-                                </h5>
-                                <button
-                                    type="button"
-                                    className="btn-close btn-close-white"
-                                    onClick={() => setShowRestoreModal(false)}
-                                    disabled={restoring}
-                                ></button>
-                            </div>
-                            <div className="modal-body">
-                                <div className="alert alert-danger border-0 d-flex align-items-start mb-4">
-                                    <AlertTriangle className="me-2 mt-1 flex-shrink-0" size={24} />
-                                    <div>
-                                        <strong className="d-block mb-2">
-                                            Critical Warning
-                                        </strong>
-                                        <p className="mb-2">This action will:</p>
-                                        <ul className="mb-2 ps-3">
-                                            <li>Replace ALL current database data</li>
-                                            {restoreForm.restoreFiles && (
-                                                <li>Replace ALL uploaded files</li>
-                                            )}
-                                            <li>
-                                                <strong>Cannot be undone</strong>
-                                            </li>
-                                        </ul>
-                                        <small>
-                                            Current data will be lost unless you have another
-                                            backup.
-                                        </small>
-                                    </div>
+                <>
+                    <div className="modal-backdrop fade show"></div>
+                    <div className="modal fade show d-block" tabIndex={-1}>
+                        <div className="modal-dialog modal-dialog-centered">
+                            <div className="modal-content">
+                                <div className="modal-header bg-white border-bottom-0 pb-0">
+                                    <h5 className="modal-title fw-bold text-danger d-flex align-items-center gap-2">
+                                        <ShieldAlert size={24} />
+                                        System Restore
+                                    </h5>
+                                    <button type="button" className="btn-close" onClick={() => setShowRestoreModal(false)} disabled={restoring}></button>
                                 </div>
-
-                                <div className="card bg-light border-0 mb-3">
-                                    <div className="card-body">
-                                        <h6 className="mb-3">Backup Details</h6>
-                                        <table className="table table-sm table-borderless mb-0">
-                                            <tbody>
-                                            <tr>
-                                                <td className="text-muted">Name:</td>
-                                                <td>
-                                                    <strong>{selectedBackup.name}</strong>
-                                                </td>
-                                            </tr>
-                                            <tr>
-                                                <td className="text-muted">Created:</td>
-                                                <td>{formatDate(selectedBackup.created_at)}</td>
-                                            </tr>
-                                            <tr>
-                                                <td className="text-muted">Size:</td>
-                                                <td>
-                                                        <span className="badge bg-secondary">
-                                                            {formatBytes(selectedBackup.size)}
-                                                        </span>
-                                                </td>
-                                            </tr>
-                                            <tr>
-                                                <td className="text-muted">Database:</td>
-                                                <td>
-                                                    <code>{selectedBackup.database}</code>
-                                                </td>
-                                            </tr>
-                                            </tbody>
-                                        </table>
+                                <div className="modal-body">
+                                    <div className="alert alert-danger border-0 bg-danger bg-opacity-10 text-danger mb-4">
+                                        <h6 className="fw-bold d-flex align-items-center gap-2 mb-2">
+                                            <AlertTriangle size={18} />
+                                            Critical Action
+                                        </h6>
+                                        <p className="small mb-0">
+                                            Restoring <strong>{selectedBackup.name}</strong> will overwrite the current database. All data created after this backup will be lost permanently.
+                                        </p>
                                     </div>
-                                </div>
 
-                                {selectedBackup.include_files && (
-                                    <div className="card border-0">
-                                        <div className="card-body">
-                                            <div className="form-check">
-                                                <input
-                                                    type="checkbox"
-                                                    className="form-check-input"
-                                                    id="restoreFiles"
-                                                    checked={restoreForm.restoreFiles}
-                                                    onChange={(e) =>
-                                                        setRestoreForm({
-                                                            restoreFiles: e.target.checked,
-                                                        })
-                                                    }
-                                                    disabled={restoring}
-                                                />
-                                                <label
-                                                    className="form-check-label"
-                                                    htmlFor="restoreFiles"
-                                                >
-                                                    <HardDrive size={16} className="me-2" />
-                                                    <strong>Also restore uploaded files</strong>
-                                                    <div className="small text-muted mt-1">
-                                                        Restore ITR documents, grade files, and other
-                                                        uploads
-                                                    </div>
-                                                </label>
-                                            </div>
+                                    <div className="bg-gray-50 rounded-3 p-3 mb-3 border border-subtle">
+                                        <div className="row g-2 text-sm">
+                                            <div className="col-4 text-secondary-custom">Backup Date:</div>
+                                            <div className="col-8 fw-medium text-dark">{formatDate(selectedBackup.created_at)}</div>
+                                            <div className="col-4 text-secondary-custom">Data Size:</div>
+                                            <div className="col-8 fw-medium text-dark">{formatBytes(selectedBackup.size)}</div>
                                         </div>
                                     </div>
-                                )}
-                            </div>
-                            <div className="modal-footer">
-                                <button
-                                    type="button"
-                                    className="btn btn-secondary"
-                                    onClick={() => setShowRestoreModal(false)}
-                                    disabled={restoring}
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    type="button"
-                                    className="btn btn-danger"
-                                    onClick={handleRestore}
-                                    disabled={restoring}
-                                >
-                                    {restoring ? (
-                                        <>
-                                            <span className="spinner-border spinner-border-sm me-2"></span>
-                                            Restoring...
-                                        </>
-                                    ) : (
-                                        <>
-                                            <Upload className="me-2" size={18} />
-                                            Restore Backup
-                                        </>
+
+                                    {selectedBackup.include_files && (
+                                        <div className="form-check custom-card p-3 d-flex align-items-center gap-2 m-0 cursor-pointer">
+                                            <input
+                                                type="checkbox"
+                                                className="form-check-input m-0"
+                                                id="restoreFiles"
+                                                checked={restoreForm.restoreFiles}
+                                                onChange={(e) => setRestoreForm({ restoreFiles: e.target.checked })}
+                                                disabled={restoring}
+                                            />
+                                            <label className="form-check-label cursor-pointer ms-2" htmlFor="restoreFiles">
+                                                <span className="d-block fw-bold text-dark">Restore File Uploads</span>
+                                                <span className="d-block small text-secondary-custom">Overwrite current files with backup versions</span>
+                                            </label>
+                                        </div>
                                     )}
-                                </button>
+                                </div>
+                                <div className="modal-footer bg-light">
+                                    <button type="button" className="btn btn-white border" onClick={() => setShowRestoreModal(false)} disabled={restoring}>Cancel</button>
+                                    <button type="button" className="btn btn-danger d-flex align-items-center gap-2 shadow-sm" onClick={handleRestore} disabled={restoring}>
+                                        {restoring ? (
+                                            <>
+                                                <span className="spinner-border spinner-border-sm"></span>
+                                                Restoring...
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Upload size={16} />
+                                                Confirm Restore
+                                            </>
+                                        )}
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
+                </>
             )}
-
-            <style>{`
-                .spin {
-                    animation: spin 1s linear infinite;
-                }
-                
-                @keyframes spin {
-                    from { transform: rotate(0deg); }
-                    to { transform: rotate(360deg); }
-                }
-                
-                .table-hover tbody tr:hover {
-                    background-color: rgba(0, 0, 0, 0.02);
-                }
-                
-                .btn-group-sm .btn {
-                    padding: 0.25rem 0.5rem;
-                }
-                
-                .card {
-                    transition: transform 0.2s, box-shadow 0.2s;
-                }
-                
-                .card:hover {
-                    transform: translateY(-1px);
-                    box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.05);
-                }
-                
-                .modal {
-                    backdrop-filter: blur(4px);
-                }
-                
-                .alert {
-                    animation: slideDown 0.3s ease-out;
-                }
-                
-                @keyframes slideDown {
-                    from {
-                        opacity: 0;
-                        transform: translateY(-20px);
-                    }
-                    to {
-                        opacity: 1;
-                        transform: translateY(0);
-                    }
-                }
-                
-                .badge {
-                    font-weight: 500;
-                    padding: 0.35em 0.65em;
-                }
-                
-                .form-check-input:checked {
-                    background-color: #0d6efd;
-                    border-color: #0d6efd;
-                }
-                
-                .btn:disabled {
-                    cursor: not-allowed;
-                }
-                
-                .table thead th {
-                    font-weight: 600;
-                    text-transform: uppercase;
-                    font-size: 0.75rem;
-                    letter-spacing: 0.5px;
-                    color: #6c757d;
-                }
-                
-                .modal-content {
-                    border-radius: 0.5rem;
-                    overflow: hidden;
-                }
-                
-                .modal-header {
-                    border-bottom: none;
-                }
-                
-                .modal-footer {
-                    border-top: 1px solid rgba(0,0,0,0.1);
-                }
-                
-                code {
-                    background-color: #f8f9fa;
-                    padding: 0.2rem 0.4rem;
-                    border-radius: 0.25rem;
-                    font-size: 0.875em;
-                    color: #d63384;
-                }
-            `}</style>
         </div>
     );
 };

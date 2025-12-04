@@ -2,8 +2,6 @@ import React, { useRef, useState } from 'react';
 import * as XLSX from 'xlsx';
 import {
     Upload,
-    Download,
-    FileText,
     Users,
     CheckCircle,
     AlertCircle,
@@ -11,9 +9,11 @@ import {
     Info,
     TrendingUp,
     FileSpreadsheet,
-    Eye
+    Eye,
+    ChevronRight,
+    Search, Download
 } from 'lucide-react';
-import {API_BASE_URL} from "../../config.ts";
+import { API_BASE_URL } from "../../config.ts";
 
 interface Student {
     student_id: string;
@@ -220,7 +220,6 @@ const BulkAnalysisTool = () => {
             setProgress({ current: 0, total: studentData.length });
 
             const results: StudentResult[] = [];
-
             const batchSize = 5;
             for (let i = 0; i < studentData.length; i += batchSize) {
                 const batch = studentData.slice(i, i + batchSize);
@@ -245,37 +244,15 @@ const BulkAnalysisTool = () => {
     const handleDownloadTemplate = () => {
         const ws = XLSX.utils.aoa_to_sheet([
             [
-                'Student ID',
-                'Name',
-                'Course',
-                'Year Level',
-                'GWA',
-                'Family Income',
-                '4Ps Member',
-                'IP Affiliation',
-                'PWD',
-                'Siblings in College',
-                "Father's Occupation",
-                "Mother's Occupation",
-                'Total Units'
+                'Student ID', 'Name', 'Course', 'Year Level', 'GWA', 'Family Income',
+                '4Ps Member', 'IP Affiliation', 'PWD', 'Siblings in College',
+                "Father's Occupation", "Mother's Occupation", 'Total Units'
             ],
             [
-                'E21-00193',
-                'Juan Dela Cruz',
-                'BS Information Technology',
-                '3',
-                '1.25',
-                '8000',
-                'yes',
-                'no',
-                'no',
-                '2',
-                'Farmer',
-                'Teacher',
-                '25'
+                'E21-00193', 'Juan Dela Cruz', 'BS Information Technology', '3', '1.25',
+                '8000', 'yes', 'no', 'no', '2', 'Farmer', 'Teacher', '25'
             ]
         ]);
-
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, 'Template');
         XLSX.writeFile(wb, 'ischolar_bulk_template.xlsx');
@@ -311,10 +288,9 @@ const BulkAnalysisTool = () => {
         setExportModal(false);
     };
 
+    // --- Calculations ---
     const scholarshipsList = Array.from(
-        new Set(
-            students.flatMap(s => s.recommended_scholarships.map(sch => sch.name))
-        )
+        new Set(students.flatMap(s => s.recommended_scholarships.map(sch => sch.name)))
     );
 
     const summary = {
@@ -339,518 +315,479 @@ const BulkAnalysisTool = () => {
         if (selectedScholarship !== 'all') {
             if (!s.recommended_scholarships.some(sch => sch.name === selectedScholarship)) return false;
         }
-
         if (filterStatus === 'high-score' && s.eligibility_score < 80) return false;
         if (filterStatus === 'needs-data' && !s.has_missing_data) return false;
-
         return true;
     });
 
-    const qualificationRate = summary.total_students > 0
-        ? Math.round((summary.students_with_qualifications / summary.total_students) * 100)
-        : 0;
-
+    // --- Design Implementation ---
     return (
-        <>
+        <div className="min-vh-100 bg-gray-50 text-dark">
             <style>{`
-                .drag-active { 
-                    border-color: #0d6efd !important; 
-                    background-color: rgba(13, 110, 253, 0.05) !important; 
+                :root {
+                    --primary-color: #2563eb; /* Blue 600 */
+                    --primary-hover: #1d4ed8; /* Blue 700 */
+                    --bg-page: #f8fafc; /* Slate 50 */
+                    --border-color: #e2e8f0; /* Slate 200 */
+                    --text-secondary: #64748b; /* Slate 500 */
+                    --card-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+                    --card-hover-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
                 }
-                .upload-area { 
-                    transition: all 0.2s ease; 
-                    cursor: pointer; 
+
+                body {
+                    background-color: var(--bg-page);
+                    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
                 }
-                .upload-area:hover { 
-                    background-color: #f8f9fa; 
-                    border-color: #ced4da; 
+                
+                /* Custom Utils */
+                .bg-gray-50 { background-color: var(--bg-page) !important; }
+                .text-secondary-custom { color: var(--text-secondary) !important; }
+                .border-subtle { border-color: var(--border-color) !important; }
+                
+                /* Card Styling */
+                .custom-card {
+                    background: white;
+                    border: 1px solid var(--border-color);
+                    border-radius: 12px;
+                    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
+                    transition: all 0.3s ease;
                 }
-                .fade-in { 
-                    animation: fadeIn 0.25s ease-in; 
+                .custom-card-hover:hover {
+                    transform: translateY(-2px);
+                    box-shadow: var(--card-hover-shadow);
+                    border-color: #cbd5e1;
                 }
-                @keyframes fadeIn { 
-                    from { opacity: 0; transform: translateY(8px); } 
-                    to { opacity: 1; transform: translateY(0); } 
+
+                /* Upload Area */
+                .upload-zone {
+                    background-color: #f8fafc;
+                    border: 2px dashed #cbd5e1;
+                    border-radius: 12px;
+                    transition: all 0.2s ease;
                 }
-                .stat-card { 
-                    transition: transform 0.15s, box-shadow 0.15s; 
-                    border: 1px solid #e9ecef;
+                .upload-zone:hover, .upload-zone.drag-active {
+                    background-color: #eff6ff;
+                    border-color: var(--primary-color);
                 }
-                .stat-card:hover { 
-                    transform: translateY(-2px); 
-                    box-shadow: 0 4px 8px rgba(0,0,0,0.08);
-                }
-                .progress-bar { 
-                    transition: width 0.3s ease; 
-                }
-                .table thead th {
+
+                /* Table Styling */
+                .custom-table thead th {
+                    background-color: #f8fafc;
+                    border-bottom: 2px solid var(--border-color);
+                    color: var(--text-secondary);
+                    font-weight: 600;
+                    text-transform: uppercase;
+                    font-size: 0.75rem;
+                    letter-spacing: 0.05em;
+                    padding: 1rem;
                     position: sticky;
                     top: 0;
-                    background: #fff;
                     z-index: 10;
-                    box-shadow: 0 2px 2px -1px rgba(0,0,0,0.05);
                 }
-                .table tbody tr:nth-child(odd) {
-                    background-color: #fcfcfd;
+                .custom-table tbody td {
+                    padding: 1rem;
+                    border-bottom: 1px solid var(--border-color);
+                    vertical-align: middle;
                 }
-                .modal-backdrop.show {
-                    opacity: 0.5;
+                .custom-table tbody tr:hover {
+                    background-color: #f8fafc;
                 }
-                .modal.show {
-                    display: block;
+                
+                /* Badges */
+                .badge-pill {
+                    border-radius: 9999px;
+                    padding: 0.35em 0.8em;
+                    font-weight: 500;
                 }
-                .modal-dialog {
-                    margin-top: 100px;
+
+                /* Scrollbar */
+                .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+                .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+                .custom-scrollbar::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 3px; }
+                .custom-scrollbar::-webkit-scrollbar-thumb:hover { background-color: #94a3b8; }
+
+                /* Animations */
+                .fade-in-up { animation: fadeInUp 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
+                @keyframes fadeInUp {
+                    from { opacity: 0; transform: translateY(10px); }
+                    to { opacity: 1; transform: translateY(0); }
                 }
+
+                /* Modal Backdrop */
+                .modal-backdrop.show { opacity: 0.6; background-color: #0f172a; }
+                .modal-content { border: none; border-radius: 16px; box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25); }
+                .modal-header { border-bottom: 1px solid var(--border-color); padding: 1.5rem; }
+                .modal-body { padding: 1.5rem; }
+                .modal-footer { border-top: 1px solid var(--border-color); padding: 1.25rem 1.5rem; }
             `}</style>
 
-            <div className="min-vh-100 bg-light">
-                {/* Header */}
-                <div className="bg-white shadow-sm border-bottom">
-                    <div className="container-fluid px-4">
-                        <div className="d-flex justify-content-between align-items-center py-4">
-                            <div className="d-flex align-items-center">
-                                <div className="me-3 p-3 bg-success bg-opacity-10 rounded-3">
-                                    <TrendingUp className="text-success" size={32} />
-                                </div>
-                                <div>
-                                    <h1 className="h3 mb-1 fw-bold text-dark">Scholarship Pre-Qualification Analysis</h1>
-                                    <p className="text-muted mb-0 small">Upload registrar data to identify qualified students proactively</p>
-                                </div>
+            {/* Header */}
+            <header className="bg-white border-bottom sticky-top shadow-sm z-20">
+                <div className="container-fluid px-4">
+                    <div className="d-flex justify-content-between align-items-center py-3">
+                        <div className="d-flex align-items-center gap-3">
+                            <div className="bg-primary text-white p-2 rounded-3 d-flex align-items-center justify-content-center shadow-sm">
+                                <TrendingUp size={24} />
                             </div>
-                            <button className="btn btn-outline-primary d-flex align-items-center" onClick={handleDownloadTemplate}>
-                                <Download size={16} className="me-2" />
-                                Download Template
-                            </button>
+                            <div>
+                                <h1 className="h5 fw-bold text-dark mb-0">Pre-Qualification Analysis</h1>
+                                <p className="text-secondary-custom small mb-0">Bulk Student Data Processing Tool</p>
+                            </div>
                         </div>
+                        <button
+                            className="btn btn-outline-secondary d-flex align-items-center gap-2 btn-sm rounded-pill px-3"
+                            onClick={handleDownloadTemplate}
+                        >
+                            <Download size={16} />
+                            <span>Template</span>
+                        </button>
                     </div>
                 </div>
+            </header>
 
-                <div className="container-fluid px-4 py-4">
-                    {/* Info Card */}
-                    <div className="row g-4 mb-4">
-                        <div className="col-12">
-                            <div className="card border-0 shadow-sm">
-                                <div className="card-body">
-                                    <div className="d-flex align-items-start">
-                                        <div className="me-3 p-2 bg-info bg-opacity-10 rounded">
-                                            <Info className="text-info" size={20} />
-                                        </div>
-                                        <div className="flex-grow-1">
-                                            <h6 className="fw-bold mb-3">How This Works</h6>
-                                            <div className="row g-3 small">
-                                                <div className="col-md-4">
-                                                    <div className="d-flex align-items-center mb-2">
-                                                        <span className="badge bg-success rounded-circle me-2 d-flex align-items-center justify-content-center" style={{width: '24px', height: '24px'}}>1</span>
-                                                        <strong>Upload Enrollment Data</strong>
-                                                    </div>
-                                                    <p className="text-muted mb-0 ms-4">Get student data from registrar (ID, GWA, Course, Income, etc.)</p>
+            <main className="container-fluid px-4 py-4">
+                {/* Main Action Area */}
+                <div className="row g-4 mb-5">
+                    {/* Left: Upload Section */}
+                    <div className="col-lg-5">
+                        <div className="custom-card h-100 d-flex flex-column">
+                            <div className="p-4 flex-grow-1">
+                                <h5 className="fw-bold mb-4 d-flex align-items-center gap-2">
+                                    <Upload size={20} className="text-primary" />
+                                    Import Data
+                                </h5>
+
+                                <div
+                                    className={`upload-zone p-5 text-center mb-4 cursor-pointer d-flex flex-column align-items-center justify-content-center ${dragActive ? 'drag-active' : ''}`}
+                                    style={{ minHeight: '260px' }}
+                                    onDragEnter={handleDrag}
+                                    onDragLeave={handleDrag}
+                                    onDragOver={handleDrag}
+                                    onDrop={handleDrop}
+                                    onClick={() => !processing && fileInputRef.current?.click()}
+                                >
+                                    {selectedFile ? (
+                                        <div className="fade-in-up w-100">
+                                            <div className="bg-white p-3 rounded-3 shadow-sm border mb-3 d-inline-flex align-items-center gap-3">
+                                                <div className="bg-success bg-opacity-10 p-2 rounded-circle">
+                                                    <FileSpreadsheet className="text-success" size={24} />
                                                 </div>
-                                                <div className="col-md-4">
-                                                    <div className="d-flex align-items-center mb-2">
-                                                        <span className="badge bg-success rounded-circle me-2 d-flex align-items-center justify-content-center" style={{width: '24px', height: '24px'}}>2</span>
-                                                        <strong>Automatic Analysis</strong>
-                                                    </div>
-                                                    <p className="text-muted mb-0 ms-4">System checks all students against active scholarships using fuzzy logic</p>
+                                                <div className="text-start">
+                                                    <div className="fw-semibold text-truncate" style={{ maxWidth: '200px' }}>{selectedFile.name}</div>
+                                                    <div className="small text-secondary-custom">{(selectedFile.size / 1024).toFixed(1)} KB</div>
                                                 </div>
-                                                <div className="col-md-4">
-                                                    <div className="d-flex align-items-center mb-2">
-                                                        <span className="badge bg-success rounded-circle me-2 d-flex align-items-center justify-content-center" style={{width: '24px', height: '24px'}}>3</span>
-                                                        <strong>Reach Out to Qualified</strong>
-                                                    </div>
-                                                    <p className="text-muted mb-0 ms-4">Export lists and contact qualified students who haven't applied</p>
-                                                </div>
+                                                {!processing && (
+                                                    <button
+                                                        className="btn btn-link text-danger p-1"
+                                                        onClick={(e) => { e.stopPropagation(); clearFile(); }}
+                                                    >
+                                                        <X size={18} />
+                                                    </button>
+                                                )}
                                             </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Error Alert */}
-                    {error && (
-                        <div className="row g-4 mb-4">
-                            <div className="col-12">
-                                <div className="alert alert-danger alert-dismissible fade show" role="alert">
-                                    <div className="d-flex align-items-center">
-                                        <AlertCircle className="me-2" size={20} />
-                                        <div>
-                                            <strong>Error:</strong> {error}
-                                        </div>
-                                    </div>
-                                    <button type="button" className="btn-close" onClick={() => setError(null)}></button>
-                                </div>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Upload & Overview */}
-                    <div className="row g-4 mb-4">
-                        {/* Upload Card */}
-                        <div className="col-lg-6">
-                            <div className="card border-0 shadow-sm h-100">
-                                <div className="card-header bg-white border-bottom">
-                                    <h5 className="card-title mb-0 fw-bold d-flex align-items-center">
-                                        <Upload className="me-2 text-primary" size={20} />
-                                        Upload Student Data
-                                    </h5>
-                                </div>
-                                <div className="card-body">
-                                    <div
-                                        className={`upload-area border border-2 border-dashed rounded-3 p-5 text-center mb-4 ${dragActive ? 'drag-active' : ''}`}
-                                        onDragEnter={handleDrag}
-                                        onDragLeave={handleDrag}
-                                        onDragOver={handleDrag}
-                                        onDrop={handleDrop}
-                                        onClick={() => !processing && fileInputRef.current?.click()}
-                                    >
-                                        <Upload className="text-muted mb-3" size={48} />
-                                        {selectedFile ? (
-                                            <div className="fade-in">
-                                                <div className="d-flex align-items-center justify-content-center mb-2">
-                                                    <FileText className="text-success me-2" size={20} />
-                                                    <span className="fw-medium">{selectedFile.name}</span>
-                                                    {!processing && (
-                                                        <button
-                                                            className="btn btn-sm btn-outline-danger ms-2"
-                                                            onClick={(e) => { e.stopPropagation(); clearFile(); }}
-                                                        >
-                                                            <X size={14} />
-                                                        </button>
-                                                    )}
-                                                </div>
-                                                <p className="text-muted small mb-0">Size: {(selectedFile.size / 1024).toFixed(1)} KB</p>
-                                            </div>
-                                        ) : (
-                                            <>
-                                                <h6 className="fw-medium mb-2">Drop a file here or click to browse</h6>
-                                                <p className="text-muted small mb-0">Excel or CSV with student enrollment data</p>
-                                            </>
-                                        )}
-                                    </div>
-
-                                    <input ref={fileInputRef} type="file" className="d-none" accept=".xlsx,.xls,.csv" onChange={handleFileChange} />
-
-                                    {processing && (
-                                        <div className="mb-3 fade-in">
-                                            <div className="d-flex justify-content-between mb-2">
-                                                <small className="text-muted fw-medium">Processing students...</small>
-                                                <small className="text-primary fw-bold">{progress.current} / {progress.total}</small>
-                                            </div>
-                                            <div className="progress" style={{ height: '10px' }}>
-                                                <div
-                                                    className="progress-bar progress-bar-striped progress-bar-animated bg-success"
-                                                    style={{ width: `${progress.total > 0 ? (progress.current / progress.total) * 100 : 0}%` }}
-                                                />
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    <div className="d-flex gap-2">
-                                        <button
-                                            className="btn btn-primary flex-fill d-flex align-items-center justify-content-center"
-                                            onClick={() => selectedFile && !processing && setConfirmAnalyzeModal(true)}
-                                            disabled={!selectedFile || processing}
-                                        >
-                                            <TrendingUp size={18} className="me-2" />
-                                            {processing ? 'Analyzing...' : 'Analyze Qualifications'}
-                                        </button>
-
-                                        {showResults && !processing && (
-                                            <button
-                                                className="btn btn-outline-success d-flex align-items-center"
-                                                onClick={() => setExportModal(true)}
-                                            >
-                                                <Download size={16} className="me-2" />
-                                                Export
-                                            </button>
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Overview Card */}
-                        <div className="col-lg-6">
-                            <div className="card border-0 shadow-sm h-100">
-                                <div className="card-header bg-white border-bottom">
-                                    <h5 className="card-title mb-0 fw-bold">Analysis Overview</h5>
-                                </div>
-                                <div className="card-body">
-                                    {showResults ? (
-                                        <div className="fade-in">
-                                            <div className="row g-3 mb-3">
-                                                <div className="col-6">
-                                                    <div className="stat-card p-3 bg-white rounded-3">
-                                                        <div className="d-flex align-items-center justify-content-between mb-2">
-                                                            <Users className="text-primary" size={28} />
-                                                            <h2 className="mb-0 fw-bold text-dark">{summary.total_students}</h2>
-                                                        </div>
-                                                        <small className="text-muted fw-medium">Total Students</small>
+                                            {processing ? (
+                                                <div className="mt-2">
+                                                    <div className="d-flex justify-content-between small mb-1 text-secondary-custom">
+                                                        <span>Processing...</span>
+                                                        <span className="fw-bold text-dark">{Math.round((progress.current / progress.total) * 100)}%</span>
+                                                    </div>
+                                                    <div className="progress" style={{ height: '6px' }}>
+                                                        <div
+                                                            className="progress-bar bg-primary rounded-pill"
+                                                            style={{ width: `${progress.total > 0 ? (progress.current / progress.total) * 100 : 0}%` }}
+                                                        />
                                                     </div>
                                                 </div>
-                                                <div className="col-6">
-                                                    <div className="stat-card p-3 bg-white rounded-3">
-                                                        <div className="d-flex align-items-center justify-content-between mb-2">
-                                                            <CheckCircle className="text-success" size={28} />
-                                                            <h2 className="mb-0 fw-bold text-dark">{summary.students_with_qualifications}</h2>
-                                                        </div>
-                                                        <small className="text-muted fw-medium">Have Qualifications</small>
-                                                    </div>
+                                            ) : (
+                                                <div className="text-success small fw-medium mt-2">
+                                                    <CheckCircle size={14} className="inline me-1" />
+                                                    Ready to analyze
                                                 </div>
-                                                <div className="col-6">
-                                                    <div className="stat-card p-3 bg-white rounded-3">
-                                                        <div className="d-flex align-items-center justify-content-between mb-2">
-                                                            <FileSpreadsheet className="text-info" size={28} />
-                                                            <h2 className="mb-0 fw-bold text-dark">{summary.total_qualifications}</h2>
-                                                        </div>
-                                                        <small className="text-muted fw-medium">Total Qualifications</small>
-                                                    </div>
-                                                </div>
-                                                <div className="col-6">
-                                                    <div className="stat-card p-3 bg-white rounded-3">
-                                                        <div className="d-flex align-items-center justify-content-between mb-2">
-                                                            <AlertCircle className="text-warning" size={28} />
-                                                            <h2 className="mb-0 fw-bold text-dark">{summary.students_needing_data}</h2>
-                                                        </div>
-                                                        <small className="text-muted fw-medium">Need More Data</small>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <div className="alert alert-success border-0 mb-0">
-                                                <div className="d-flex align-items-center">
-                                                    <CheckCircle size={18} className="me-2" />
-                                                    <small className="mb-0">
-                                                        <strong>{qualificationRate}%</strong> of students qualify for at least one scholarship. Consider reaching out!
-                                                    </small>
-                                                </div>
-                                            </div>
+                                            )}
                                         </div>
                                     ) : (
-                                        <div className="text-center text-muted py-5">
-                                            <TrendingUp size={56} className="mb-3 opacity-25" />
-                                            <p className="mb-0 fw-medium">Upload a file to see analysis results</p>
-                                        </div>
+                                        <>
+                                            <div className="mb-3 bg-white p-3 rounded-circle shadow-sm">
+                                                <Upload className="text-primary" size={32} />
+                                            </div>
+                                            <h6 className="fw-bold mb-1">Click or drag file here</h6>
+                                            <p className="text-secondary-custom small mb-0 px-4">
+                                                Supports .xlsx or .csv files containing student enrollment data.
+                                            </p>
+                                        </>
                                     )}
                                 </div>
+                                <input ref={fileInputRef} type="file" className="d-none" accept=".xlsx,.xls,.csv" onChange={handleFileChange} />
+                            </div>
+
+                            <div className="p-4 border-top bg-light rounded-bottom-3 d-flex gap-3">
+                                <button
+                                    className="btn btn-primary w-100 py-2 fw-medium shadow-sm"
+                                    onClick={() => selectedFile && !processing && setConfirmAnalyzeModal(true)}
+                                    disabled={!selectedFile || processing}
+                                >
+                                    {processing ? 'Processing...' : 'Run Analysis'}
+                                </button>
+                                {showResults && !processing && (
+                                    <button
+                                        className="btn btn-white border bg-white text-dark py-2 px-3 shadow-sm hover-shadow"
+                                        onClick={() => setExportModal(true)}
+                                        title="Export Results"
+                                    >
+                                        <Download size={18} />
+                                    </button>
+                                )}
                             </div>
                         </div>
                     </div>
 
-                    {/* Scholarship Breakdown */}
-                    {showResults && scholarshipsList.length > 0 && (
-                        <div className="row g-4 mb-4">
-                            <div className="col-12">
-                                <div className="card border-0 shadow-sm fade-in">
-                                    <div className="card-header bg-white border-bottom d-flex justify-content-between align-items-center">
-                                        <h5 className="card-title mb-0 fw-bold">Qualified Students by Scholarship</h5>
-                                        <span className="badge bg-primary">{scholarshipsList.length} Scholarships</span>
-                                    </div>
-                                    <div className="card-body">
-                                        <div className="row g-3">
-                                            {scholarshipsList.map((name, index) => {
-                                                const schData = summary.by_scholarship[name];
-                                                return (
-                                                    <div key={index} className="col-md-6 col-lg-4 col-xl-3">
-                                                        <div className="card border h-100">
-                                                            <div className="card-body">
-                                                                <div className="d-flex justify-content-between align-items-start mb-3">
-                                                                    <h6 className="fw-bold mb-0">{name}</h6>
-                                                                    <span className="badge bg-success fs-6">{schData.count}</span>
-                                                                </div>
-                                                                <p className="text-muted small mb-3">
-                                                                    <strong>Grant:</strong> ₱{Number(schData.grant_amount).toLocaleString()}
-                                                                </p>
-                                                                <button
-                                                                    className="btn btn-sm btn-outline-primary w-100 d-flex align-items-center justify-content-center"
-                                                                    onClick={() => handleExportQualified(name)}
-                                                                    disabled={schData.count === 0}
-                                                                >
-                                                                    <Download size={14} className="me-1" />
-                                                                    Export List
-                                                                </button>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                );
-                                            })}
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Results Table */}
-                    {showResults && (
-                        <div className="row g-4">
-                            <div className="col-12">
-                                <div className="card border-0 shadow-sm fade-in">
-                                    <div className="card-header bg-white border-bottom">
-                                        <div className="d-flex justify-content-between align-items-center flex-wrap gap-3">
-                                            <h5 className="card-title mb-0 fw-bold">Qualified Students Details</h5>
-
-                                            <div className="d-flex gap-2 flex-wrap align-items-center">
-                                                <select
-                                                    className="form-select form-select-sm"
-                                                    style={{ width: '200px' }}
-                                                    value={selectedScholarship}
-                                                    onChange={(e) => setSelectedScholarship(e.target.value)}
-                                                >
-                                                    <option value="all">All Scholarships</option>
-                                                    {scholarshipsList.map((name, i) => (
-                                                        <option key={i} value={name}>{name}</option>
-                                                    ))}
-                                                </select>
-
-                                                <select
-                                                    className="form-select form-select-sm"
-                                                    style={{ width: '180px' }}
-                                                    value={filterStatus}
-                                                    onChange={(e) => setFilterStatus(e.target.value)}
-                                                >
-                                                    <option value="all">All Students</option>
-                                                    <option value="high-score">High Score (≥80)</option>
-                                                    <option value="needs-data">Needs Data</option>
-                                                </select>
-
-                                                <span className="badge bg-primary fs-6 px-3 py-2">{filteredResults.length} results</span>
+                    {/* Right: Metrics Dashboard */}
+                    <div className="col-lg-7">
+                        <div className="row g-3 h-100 align-content-start">
+                            {showResults ? (
+                                <>
+                                    {/* Summary Stats */}
+                                    <div className="col-sm-6">
+                                        <div className="custom-card p-4 h-100 fade-in-up" style={{ animationDelay: '0ms' }}>
+                                            <div className="d-flex justify-content-between align-items-start mb-3">
+                                                <div className="bg-blue-50 p-2 rounded-3">
+                                                    <Users className="text-primary" size={24} />
+                                                </div>
+                                                <span className="badge bg-light text-dark border">Total</span>
                                             </div>
+                                            <h2 className="display-6 fw-bold mb-1">{summary.total_students}</h2>
+                                            <p className="text-secondary-custom small mb-0">Students processed</p>
                                         </div>
                                     </div>
-                                    <div className="card-body p-0">
-                                        <div className="table-responsive" style={{ maxHeight: '600px', overflowY: 'auto' }}>
-                                            <table className="table table-hover mb-0 align-middle">
-                                                <thead className="table-light">
-                                                <tr>
-                                                    <th className="border-0 fw-bold">Student ID</th>
-                                                    <th className="border-0 fw-bold">Name</th>
-                                                    <th className="border-0 fw-bold">Course</th>
-                                                    <th className="border-0 fw-bold text-center">Year</th>
-                                                    <th className="border-0 fw-bold text-center">GWA</th>
-                                                    <th className="border-0 fw-bold text-end">Income</th>
-                                                    <th className="border-0 fw-bold text-center">Score</th>
-                                                    <th className="border-0 fw-bold">Qualifications</th>
-                                                    <th className="border-0 fw-bold text-center">Action</th>
-                                                </tr>
-                                                </thead>
-                                                <tbody>
-                                                {filteredResults.length > 0 ? (
-                                                    filteredResults.map((student, idx) => (
-                                                        <tr key={idx}>
-                                                            <td className="fw-medium">{student.student_id}</td>
-                                                            <td>{student.name}</td>
-                                                            <td className="small">{student.course}</td>
-                                                            <td className="text-center">{student.year_level}</td>
-                                                            <td className="text-center">
-                                                                {student.gwa !== null ? (
-                                                                    <span className="badge bg-light text-dark border">{student.gwa.toFixed(2)}</span>
-                                                                ) : (
-                                                                    <span className="text-muted small">N/A</span>
-                                                                )}
-                                                            </td>
-                                                            <td className="text-end small">
-                                                                {student.income !== null ? `₱${student.income.toLocaleString()}` : <span className="text-muted">N/A</span>}
-                                                            </td>
-                                                            <td className="text-center">
-                                                                <div>
-                                                                    <span className={`badge ${
-                                                                        student.eligibility_score >= 80 ? 'bg-success' :
-                                                                            student.eligibility_score >= 60 ? 'bg-primary' :
-                                                                                student.eligibility_score >= 40 ? 'bg-warning' :
-                                                                                    'bg-secondary'
-                                                                    }`}>
-                                                                        {student.eligibility_score.toFixed(0)}%
-                                                                    </span>
-                                                                    <div className="small text-muted mt-1">{student.classification}</div>
-                                                                </div>
-                                                            </td>
-                                                            <td>
-                                                                <div className="d-flex flex-wrap gap-1">
-                                                                    {student.recommended_scholarships.length > 0 ? (
-                                                                        student.recommended_scholarships.slice(0, 2).map((sch, i) => (
-                                                                            <span
-                                                                                key={i}
-                                                                                className="badge bg-success small"
-                                                                                title={`Score: ${sch.score}% - ₱${Number(sch.amount).toLocaleString()}`}
-                                                                            >
-                                                                                {sch.name}
-                                                                            </span>
-                                                                        ))
-                                                                    ) : (
-                                                                        <span className="text-muted small">None</span>
-                                                                    )}
-                                                                    {student.recommended_scholarships.length > 2 && (
-                                                                        <span className="badge bg-info small">+{student.recommended_scholarships.length - 2}</span>
-                                                                    )}
-                                                                    {student.has_missing_data && (
-                                                                        <span
-                                                                            className="badge bg-warning small"
-                                                                            title={`Missing: ${student.missing_fields.join(', ')}`}
-                                                                        >
-                                                                            Missing Data
-                                                                        </span>
-                                                                    )}
-                                                                </div>
-                                                            </td>
-                                                            <td className="text-center">
-                                                                <button
-                                                                    className="btn btn-sm btn-outline-secondary"
-                                                                    onClick={() => setDetailModal(student)}
-                                                                    title="View Details"
-                                                                >
-                                                                    <Eye size={14} />
-                                                                </button>
-                                                            </td>
-                                                        </tr>
-                                                    ))
-                                                ) : (
-                                                    <tr>
-                                                        <td colSpan={9} className="text-center text-muted py-5">
-                                                            <AlertCircle size={48} className="mb-2 opacity-25" />
-                                                            <p className="mb-0">No students match the selected filters.</p>
-                                                        </td>
-                                                    </tr>
-                                                )}
-                                                </tbody>
-                                            </table>
+
+                                    <div className="col-sm-6">
+                                        <div className="custom-card p-4 h-100 fade-in-up" style={{ animationDelay: '100ms' }}>
+                                            <div className="d-flex justify-content-between align-items-start mb-3">
+                                                <div className="bg-green-50 p-2 rounded-3">
+                                                    <CheckCircle className="text-success" size={24} />
+                                                </div>
+                                                <span className="badge bg-success bg-opacity-10 text-success">
+                                                    {summary.total_students > 0 ? Math.round((summary.students_with_qualifications / summary.total_students) * 100) : 0}% Rate
+                                                </span>
+                                            </div>
+                                            <h2 className="display-6 fw-bold mb-1">{summary.students_with_qualifications}</h2>
+                                            <p className="text-secondary-custom small mb-0">Qualified students</p>
                                         </div>
+                                    </div>
+
+                                    <div className="col-sm-6">
+                                        <div className="custom-card p-4 h-100 fade-in-up" style={{ animationDelay: '200ms' }}>
+                                            <div className="d-flex justify-content-between align-items-start mb-3">
+                                                <div className="bg-purple-50 p-2 rounded-3">
+                                                    <FileSpreadsheet className="text-info" size={24} />
+                                                </div>
+                                            </div>
+                                            <h2 className="display-6 fw-bold mb-1">{summary.total_qualifications}</h2>
+                                            <p className="text-secondary-custom small mb-0">Total scholarship matches</p>
+                                        </div>
+                                    </div>
+
+                                    <div className="col-sm-6">
+                                        <div className="custom-card p-4 h-100 fade-in-up" style={{ animationDelay: '300ms' }}>
+                                            <div className="d-flex justify-content-between align-items-start mb-3">
+                                                <div className="bg-orange-50 p-2 rounded-3">
+                                                    <AlertCircle className="text-warning" size={24} />
+                                                </div>
+                                                {summary.students_needing_data > 0 && (
+                                                    <span className="badge bg-warning bg-opacity-10 text-warning border-warning border-opacity-25">Action Needed</span>
+                                                )}
+                                            </div>
+                                            <h2 className="display-6 fw-bold mb-1">{summary.students_needing_data}</h2>
+                                            <p className="text-secondary-custom small mb-0">Students missing key data</p>
+                                        </div>
+                                    </div>
+                                </>
+                            ) : (
+                                // Empty State for Dashboard
+                                <div className="col-12 h-100">
+                                    <div className="custom-card h-100 d-flex flex-column align-items-center justify-content-center text-center p-5 bg-white border-dashed">
+                                        <div className="bg-light p-4 rounded-circle mb-4">
+                                            <Info size={40} className="text-secondary-custom opacity-50" />
+                                        </div>
+                                        <h5 className="fw-bold">No Analysis Yet</h5>
+                                        <p className="text-secondary-custom" style={{ maxWidth: '300px' }}>
+                                            Upload a student roster file on the left to generate insights and identify scholarship candidates.
+                                        </p>
                                     </div>
                                 </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+
+                {/* Error Alert */}
+                {error && (
+                    <div className="alert alert-danger border-0 shadow-sm d-flex align-items-center mb-4 rounded-3 fade-in-up" role="alert">
+                        <AlertCircle className="me-3" size={24} />
+                        <div>
+                            <div className="fw-bold">Processing Failed</div>
+                            <div className="small">{error}</div>
+                        </div>
+                        <button type="button" className="btn-close ms-auto" onClick={() => setError(null)}></button>
+                    </div>
+                )}
+
+                {/* Results Section */}
+                {showResults && (
+                    <div className="fade-in-up" style={{ animationDelay: '400ms' }}>
+                        {/* Filter Bar */}
+                        <div className="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-3">
+                            <h5 className="fw-bold mb-0">Detailed Results</h5>
+                            <div className="d-flex gap-2">
+                                <div className="position-relative">
+                                    <Search size={16} className="position-absolute top-50 start-0 translate-middle-y ms-3 text-secondary-custom" />
+                                    <select
+                                        className="form-select ps-5 bg-white border-subtle shadow-sm"
+                                        style={{ width: '220px', fontSize: '0.9rem' }}
+                                        value={selectedScholarship}
+                                        onChange={(e) => setSelectedScholarship(e.target.value)}
+                                    >
+                                        <option value="all">All Scholarships</option>
+                                        {scholarshipsList.map((name, i) => (
+                                            <option key={i} value={name}>{name}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <select
+                                    className="form-select bg-white border-subtle shadow-sm"
+                                    style={{ width: '160px', fontSize: '0.9rem' }}
+                                    value={filterStatus}
+                                    onChange={(e) => setFilterStatus(e.target.value)}
+                                >
+                                    <option value="all">All Status</option>
+                                    <option value="high-score">High Score (≥80)</option>
+                                    <option value="needs-data">Needs Data</option>
+                                </select>
                             </div>
                         </div>
-                    )}
-                </div>
-            </div>
 
-            {/* Confirm Analyze Modal */}
+                        {/* Table Card */}
+                        <div className="custom-card overflow-hidden">
+                            <div className="table-responsive custom-scrollbar" style={{ maxHeight: '650px' }}>
+                                <table className="table mb-0 custom-table w-100">
+                                    <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Student Name</th>
+                                        <th>Academic Info</th>
+                                        <th className="text-end">Income</th>
+                                        <th className="text-center">Score</th>
+                                        <th>Matched Scholarships</th>
+                                        <th className="text-center">Action</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    {filteredResults.length > 0 ? (
+                                        filteredResults.map((student, idx) => (
+                                            <tr key={idx}>
+                                                <td className="text-secondary-custom fw-medium text-nowrap" style={{ fontSize: '0.85rem' }}>
+                                                    {student.student_id}
+                                                </td>
+                                                <td>
+                                                    <div className="fw-semibold text-dark">{student.name}</div>
+                                                </td>
+                                                <td>
+                                                    <div className="small text-dark fw-medium">{student.course}</div>
+                                                    <div className="small text-secondary-custom">
+                                                        Year {student.year_level} • GWA: {student.gwa?.toFixed(2) || 'N/A'}
+                                                    </div>
+                                                </td>
+                                                <td className="text-end fw-medium text-secondary-custom">
+                                                    {student.income !== null ? `₱${student.income.toLocaleString()}` : 'N/A'}
+                                                </td>
+                                                <td className="text-center">
+                                                        <span className={`badge badge-pill ${
+                                                            student.eligibility_score >= 80 ? 'bg-success text-white' :
+                                                                student.eligibility_score >= 60 ? 'bg-primary text-white' :
+                                                                    student.eligibility_score >= 40 ? 'bg-warning text-dark' : 'bg-secondary text-white'
+                                                        }`}>
+                                                            {student.eligibility_score.toFixed(0)}%
+                                                        </span>
+                                                    <div className="small text-secondary-custom mt-1" style={{ fontSize: '0.7rem' }}>
+                                                        {student.classification}
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <div className="d-flex flex-wrap gap-1">
+                                                        {student.recommended_scholarships.length > 0 ? (
+                                                            student.recommended_scholarships.slice(0, 2).map((sch, i) => (
+                                                                <span
+                                                                    key={i}
+                                                                    className="badge bg-white text-dark border fw-normal"
+                                                                    title={sch.name}
+                                                                >
+                                                                        {sch.name}
+                                                                    </span>
+                                                            ))
+                                                        ) : (
+                                                            <span className="text-muted small fst-italic">None</span>
+                                                        )}
+                                                        {student.recommended_scholarships.length > 2 && (
+                                                            <span className="badge bg-light text-secondary-custom border">+{student.recommended_scholarships.length - 2}</span>
+                                                        )}
+                                                        {student.has_missing_data && (
+                                                            <span className="badge bg-warning bg-opacity-10 text-warning border-warning border-opacity-25" title="Missing Data">!</span>
+                                                        )}
+                                                    </div>
+                                                </td>
+                                                <td className="text-center">
+                                                    <button
+                                                        className="btn btn-sm btn-light text-primary border-0 rounded-circle p-2"
+                                                        onClick={() => setDetailModal(student)}
+                                                    >
+                                                        <Eye size={18} />
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        ))
+                                    ) : (
+                                        <tr>
+                                            <td colSpan={7} className="text-center py-5">
+                                                <div className="text-secondary-custom opacity-50 mb-2">
+                                                    <Search size={32} />
+                                                </div>
+                                                <p className="mb-0 fw-medium text-secondary-custom">No results found matching filters</p>
+                                            </td>
+                                        </tr>
+                                    )}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                )}
+            </main>
+
+            {/* --- MODALS --- */}
+
+            {/* Confirm Analysis Modal */}
             {confirmAnalyzeModal && (
                 <>
                     <div className="modal-backdrop fade show"></div>
-                    <div className="modal fade show" tabIndex={-1} style={{ display: 'block' }}>
+                    <div className="modal fade show d-block" tabIndex={-1}>
                         <div className="modal-dialog modal-dialog-centered">
-                            <div className="modal-content shadow">
-                                <div className="modal-header border-0 pb-0">
-                                    <h5 className="modal-title fw-bold">Confirm Analysis</h5>
+                            <div className="modal-content">
+                                <div className="modal-header">
+                                    <h5 className="modal-title fw-bold">Ready to Analyze?</h5>
                                     <button type="button" className="btn-close" onClick={() => setConfirmAnalyzeModal(false)}></button>
                                 </div>
-                                <div className="modal-body">
-                                    <p className="mb-3">You are about to analyze <strong>{selectedFile?.name}</strong> for scholarship qualification.</p>
-                                    <div className="alert alert-info border-0 mb-0">
-                                        <small className="d-flex align-items-start">
-                                            <Info size={16} className="me-2 mt-1" />
-                                            <span>This process will check each student against all active scholarships using fuzzy logic. Large files may take a few minutes.</span>
-                                        </small>
+                                <div className="modal-body text-center py-4">
+                                    <div className="bg-primary bg-opacity-10 text-primary p-3 rounded-circle d-inline-block mb-3">
+                                        <TrendingUp size={32} />
                                     </div>
+                                    <h5 className="mb-2">{selectedFile?.name}</h5>
+                                    <p className="text-secondary-custom mb-0 px-4">
+                                        This will process all rows against active scholarship requirements using the fuzzy logic engine.
+                                    </p>
                                 </div>
-                                <div className="modal-footer border-0 pt-0">
-                                    <button type="button" className="btn btn-light" onClick={() => setConfirmAnalyzeModal(false)}>Cancel</button>
-                                    <button type="button" className="btn btn-primary d-flex align-items-center" onClick={handleAnalyze}>
-                                        <TrendingUp size={16} className="me-2" />
-                                        Start Analysis
-                                    </button>
+                                <div className="modal-footer bg-light border-0 d-flex gap-2 justify-content-center pb-4">
+                                    <button type="button" className="btn btn-white border px-4" onClick={() => setConfirmAnalyzeModal(false)}>Cancel</button>
+                                    <button type="button" className="btn btn-primary px-4 shadow-sm" onClick={handleAnalyze}>Start Analysis</button>
                                 </div>
                             </div>
                         </div>
@@ -862,46 +799,50 @@ const BulkAnalysisTool = () => {
             {exportModal && (
                 <>
                     <div className="modal-backdrop fade show"></div>
-                    <div className="modal fade show" tabIndex={-1} style={{ display: 'block' }}>
+                    <div className="modal fade show d-block" tabIndex={-1}>
                         <div className="modal-dialog modal-dialog-centered">
-                            <div className="modal-content shadow">
-                                <div className="modal-header border-0 pb-0">
-                                    <h5 className="modal-title fw-bold">Export Qualified Students</h5>
+                            <div className="modal-content">
+                                <div className="modal-header">
+                                    <h5 className="modal-title fw-bold">Export Qualified List</h5>
                                     <button type="button" className="btn-close" onClick={() => setExportModal(false)}></button>
                                 </div>
-                                <div className="modal-body">
-                                    <p className="text-muted mb-3">Select which students to export:</p>
-                                    <div className="list-group">
+                                <div className="modal-body p-0">
+                                    <div className="list-group list-group-flush">
                                         <button
-                                            className="list-group-item list-group-item-action d-flex justify-content-between align-items-center"
+                                            className="list-group-item list-group-item-action p-3 d-flex justify-content-between align-items-center"
                                             onClick={() => handleExportQualified()}
                                         >
-                                            <div>
-                                                <strong>All Qualified Students</strong>
-                                                <div className="small text-muted">Students with at least one qualification</div>
+                                            <div className="d-flex align-items-center gap-3">
+                                                <div className="bg-primary bg-opacity-10 p-2 rounded">
+                                                    <Users size={20} className="text-primary" />
+                                                </div>
+                                                <div>
+                                                    <div className="fw-semibold">All Qualified Students</div>
+                                                    <div className="small text-secondary-custom">Combined list of all matches</div>
+                                                </div>
                                             </div>
-                                            <span className="badge bg-primary">{summary.students_with_qualifications}</span>
+                                            <span className="badge bg-primary rounded-pill">{summary.students_with_qualifications}</span>
                                         </button>
-                                        {scholarshipsList.map((name, i) => {
-                                            const count = summary.by_scholarship[name].count;
-                                            return (
+
+                                        <div className="p-2 bg-light text-uppercase text-secondary-custom fw-bold small px-3">By Specific Scholarship</div>
+
+                                        <div style={{ maxHeight: '300px', overflowY: 'auto' }} className="custom-scrollbar">
+                                            {scholarshipsList.map((name, i) => (
                                                 <button
                                                     key={i}
-                                                    className="list-group-item list-group-item-action d-flex justify-content-between align-items-center"
+                                                    className="list-group-item list-group-item-action p-3 d-flex justify-content-between align-items-center"
                                                     onClick={() => handleExportQualified(name)}
                                                 >
-                                                    <div>
-                                                        <strong>{name}</strong>
-                                                        <div className="small text-muted">Qualified for this scholarship only</div>
+                                                    <div className="text-truncate me-3" style={{ maxWidth: '280px' }}>
+                                                        <span className="fw-medium">{name}</span>
                                                     </div>
-                                                    <span className="badge bg-success">{count}</span>
+                                                    <span className="badge bg-success bg-opacity-10 text-success rounded-pill border border-success border-opacity-25">
+                                                        {summary.by_scholarship[name].count}
+                                                    </span>
                                                 </button>
-                                            );
-                                        })}
+                                            ))}
+                                        </div>
                                     </div>
-                                </div>
-                                <div className="modal-footer border-0 pt-0">
-                                    <button type="button" className="btn btn-light" onClick={() => setExportModal(false)}>Cancel</button>
                                 </div>
                             </div>
                         </div>
@@ -913,132 +854,130 @@ const BulkAnalysisTool = () => {
             {detailModal && (
                 <>
                     <div className="modal-backdrop fade show"></div>
-                    <div className="modal fade show" tabIndex={-1} style={{ display: 'block' }}>
+                    <div className="modal fade show d-block" tabIndex={-1}>
                         <div className="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
-                            <div className="modal-content shadow">
-                                <div className="modal-header border-0">
-                                    <div>
-                                        <h5 className="modal-title fw-bold mb-1">{detailModal.name}</h5>
-                                        <p className="text-muted small mb-0">{detailModal.student_id}</p>
+                            <div className="modal-content">
+                                <div className="modal-header bg-white">
+                                    <div className="d-flex align-items-center gap-3">
+                                        <div className="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style={{ width: '48px', height: '48px', fontSize: '1.2rem', fontWeight: 'bold' }}>
+                                            {detailModal.name.charAt(0)}
+                                        </div>
+                                        <div>
+                                            <h5 className="modal-title fw-bold mb-0">{detailModal.name}</h5>
+                                            <p className="text-secondary-custom small mb-0 font-monospace">{detailModal.student_id}</p>
+                                        </div>
                                     </div>
                                     <button type="button" className="btn-close" onClick={() => setDetailModal(null)}></button>
                                 </div>
-                                <div className="modal-body">
-                                    {/* Personal Info */}
-                                    <div className="mb-4">
-                                        <h6 className="fw-bold mb-3 text-primary">Personal Information</h6>
-                                        <div className="row g-3">
-                                            <div className="col-6">
-                                                <small className="text-muted d-block">Course</small>
-                                                <strong>{detailModal.course}</strong>
-                                            </div>
-                                            <div className="col-6">
-                                                <small className="text-muted d-block">Year Level</small>
-                                                <strong>{detailModal.year_level}</strong>
-                                            </div>
-                                            <div className="col-6">
-                                                <small className="text-muted d-block">GWA</small>
-                                                <strong>{detailModal.gwa !== null ? detailModal.gwa.toFixed(2) : 'N/A'}</strong>
-                                            </div>
-                                            <div className="col-6">
-                                                <small className="text-muted d-block">Family Income</small>
-                                                <strong>{detailModal.income !== null ? `₱${detailModal.income.toLocaleString()}` : 'N/A'}</strong>
-                                            </div>
+                                <div className="modal-body bg-gray-50">
+                                    {/* Score Card */}
+                                    <div className="custom-card p-4 mb-4">
+                                        <div className="d-flex align-items-center justify-content-between mb-3">
+                                            <h6 className="fw-bold mb-0 text-dark">Eligibility Score</h6>
+                                            <span className="badge bg-light text-dark border">{detailModal.classification}</span>
                                         </div>
-                                    </div>
-
-                                    {/* Additional Info */}
-                                    <div className="mb-4">
-                                        <h6 className="fw-bold mb-3 text-primary">Additional Details</h6>
-                                        <div className="d-flex flex-wrap gap-2">
-                                            {detailModal.is_4ps_member && <span className="badge bg-info">4Ps Member</span>}
-                                            {detailModal.ip_affiliation && <span className="badge bg-info">IP Affiliation</span>}
-                                            {detailModal.is_pwd && <span className="badge bg-info">PWD</span>}
-                                            {detailModal.siblings_in_college! > 0 && (
-                                                <span className="badge bg-info">{detailModal.siblings_in_college} Siblings in College</span>
-                                            )}
+                                        <div className="progress mb-2" style={{ height: '10px' }}>
+                                            <div
+                                                className={`progress-bar rounded-pill ${
+                                                    detailModal.eligibility_score >= 80 ? 'bg-success' :
+                                                        detailModal.eligibility_score >= 60 ? 'bg-primary' :
+                                                            detailModal.eligibility_score >= 40 ? 'bg-warning' : 'bg-secondary'
+                                                }`}
+                                                style={{ width: `${detailModal.eligibility_score}%` }}
+                                            />
                                         </div>
-                                        <div className="row g-3 mt-2">
-                                            <div className="col-6">
-                                                <small className="text-muted d-block">Father's Occupation</small>
-                                                <strong>{detailModal.father_occupation || 'N/A'}</strong>
-                                            </div>
-                                            <div className="col-6">
-                                                <small className="text-muted d-block">Mother's Occupation</small>
-                                                <strong>{detailModal.mother_occupation || 'N/A'}</strong>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    {/* Eligibility */}
-                                    <div className="mb-4">
-                                        <h6 className="fw-bold mb-3 text-primary">Eligibility Analysis</h6>
-                                        <div className="d-flex align-items-center mb-3">
-                                            <div className="flex-grow-1">
-                                                <div className="progress" style={{ height: '24px' }}>
-                                                    <div
-                                                        className={`progress-bar ${
-                                                            detailModal.eligibility_score >= 80 ? 'bg-success' :
-                                                                detailModal.eligibility_score >= 60 ? 'bg-primary' :
-                                                                    detailModal.eligibility_score >= 40 ? 'bg-warning' : 'bg-secondary'
-                                                        }`}
-                                                        style={{ width: `${detailModal.eligibility_score}%` }}
-                                                    >
-                                                        <strong>{detailModal.eligibility_score.toFixed(1)}%</strong>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <span className="badge bg-light text-dark border ms-3">{detailModal.classification}</span>
+                                        <div className="d-flex justify-content-between small text-secondary-custom">
+                                            <span>0%</span>
+                                            <span className="fw-bold text-dark">{detailModal.eligibility_score.toFixed(1)}%</span>
+                                            <span>100%</span>
                                         </div>
 
                                         {detailModal.has_missing_data && (
-                                            <div className="alert alert-warning border-0">
-                                                <div className="d-flex align-items-start">
-                                                    <AlertCircle size={18} className="me-2 mt-1" />
-                                                    <div>
-                                                        <strong>Missing Data:</strong>
-                                                        <div className="small">{detailModal.missing_fields.join(', ')}</div>
-                                                    </div>
+                                            <div className="mt-3 p-3 bg-warning bg-opacity-10 border border-warning border-opacity-25 rounded-3 d-flex gap-2 align-items-start">
+                                                <AlertCircle size={16} className="text-warning mt-1 flex-shrink-0" />
+                                                <div className="small text-dark">
+                                                    <strong>Missing Data:</strong> {detailModal.missing_fields.join(', ')}. Update registrar records for better accuracy.
                                                 </div>
                                             </div>
                                         )}
                                     </div>
 
-                                    {/* Scholarships */}
-                                    <div>
-                                        <h6 className="fw-bold mb-3 text-primary">Qualified Scholarships</h6>
-                                        {detailModal.recommended_scholarships.length > 0 ? (
-                                            <div className="list-group">
-                                                {detailModal.recommended_scholarships.map((sch, i) => (
-                                                    <div key={i} className="list-group-item">
-                                                        <div className="d-flex justify-content-between align-items-start mb-2">
-                                                            <strong>{sch.name}</strong>
-                                                            <span className="badge bg-success">{sch.score}% match</span>
-                                                        </div>
-                                                        <p className="text-muted small mb-2">{sch.description}</p>
-                                                        <div className="d-flex justify-content-between align-items-center">
-                                                            <span className="badge bg-light text-dark border">{sch.classification}</span>
-                                                            <strong className="text-success">₱{Number(sch.amount).toLocaleString()}</strong>
-                                                        </div>
+                                    <div className="row g-4 mb-4">
+                                        <div className="col-md-6">
+                                            <div className="custom-card p-4 h-100">
+                                                <h6 className="fw-bold mb-3 text-secondary-custom text-uppercase small">Academic Profile</h6>
+                                                <div className="d-flex flex-column gap-3">
+                                                    <div className="d-flex justify-content-between border-bottom pb-2">
+                                                        <span className="text-secondary-custom">Course</span>
+                                                        <span className="fw-medium text-end">{detailModal.course}</span>
                                                     </div>
-                                                ))}
+                                                    <div className="d-flex justify-content-between border-bottom pb-2">
+                                                        <span className="text-secondary-custom">Year Level</span>
+                                                        <span className="fw-medium">{detailModal.year_level}</span>
+                                                    </div>
+                                                    <div className="d-flex justify-content-between pb-2">
+                                                        <span className="text-secondary-custom">GWA</span>
+                                                        <span className="fw-bold badge bg-light text-dark border px-3">{detailModal.gwa?.toFixed(2) || 'N/A'}</span>
+                                                    </div>
+                                                </div>
                                             </div>
-                                        ) : (
-                                            <div className="alert alert-secondary border-0 mb-0">
-                                                <small>No scholarship qualifications found.</small>
+                                        </div>
+                                        <div className="col-md-6">
+                                            <div className="custom-card p-4 h-100">
+                                                <h6 className="fw-bold mb-3 text-secondary-custom text-uppercase small">Socio-Economic</h6>
+                                                <div className="d-flex flex-column gap-3">
+                                                    <div className="d-flex justify-content-between border-bottom pb-2">
+                                                        <span className="text-secondary-custom">Income</span>
+                                                        <span className="fw-medium">₱{detailModal.income?.toLocaleString() || 'N/A'}</span>
+                                                    </div>
+                                                    <div className="d-flex flex-wrap gap-2 mt-1">
+                                                        {detailModal.is_4ps_member && <span className="badge bg-info bg-opacity-10 text-info border border-info border-opacity-25">4Ps Member</span>}
+                                                        {detailModal.ip_affiliation && <span className="badge bg-purple-100 text-purple-700 border">IP Member</span>}
+                                                        {detailModal.is_pwd && <span className="badge bg-light text-dark border">PWD</span>}
+                                                        {(!detailModal.is_4ps_member && !detailModal.ip_affiliation && !detailModal.is_pwd) && (
+                                                            <span className="text-secondary-custom small italic">No special status indicators</span>
+                                                        )}
+                                                    </div>
+                                                </div>
                                             </div>
-                                        )}
+                                        </div>
                                     </div>
+
+                                    <h6 className="fw-bold mb-3 px-1">Recommended Scholarships</h6>
+                                    {detailModal.recommended_scholarships.length > 0 ? (
+                                        <div className="d-flex flex-column gap-3">
+                                            {detailModal.recommended_scholarships.map((sch, i) => (
+                                                <div key={i} className="custom-card p-3 d-flex align-items-center gap-3">
+                                                    <div className="bg-success bg-opacity-10 p-3 rounded-3 d-flex flex-column align-items-center justify-content-center" style={{ minWidth: '80px' }}>
+                                                        <span className="fw-bold text-success">{sch.score}%</span>
+                                                        <span className="small text-success" style={{ fontSize: '0.65rem' }}>MATCH</span>
+                                                    </div>
+                                                    <div className="flex-grow-1">
+                                                        <div className="d-flex justify-content-between align-items-start">
+                                                            <h6 className="fw-bold mb-1">{sch.name}</h6>
+                                                            <span className="badge bg-light text-dark border">₱{sch.amount.toLocaleString()}</span>
+                                                        </div>
+                                                        <p className="small text-secondary-custom mb-0 line-clamp-2">{sch.description}</p>
+                                                    </div>
+                                                    <ChevronRight size={18} className="text-gray-300" />
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <div className="text-center py-4 border rounded-3 border-dashed">
+                                            <p className="text-secondary-custom mb-0">No specific scholarship recommendations found based on current criteria.</p>
+                                        </div>
+                                    )}
                                 </div>
-                                <div className="modal-footer border-0">
-                                    <button type="button" className="btn btn-light" onClick={() => setDetailModal(null)}>Close</button>
+                                <div className="modal-footer bg-white">
+                                    <button type="button" className="btn btn-light w-100" onClick={() => setDetailModal(null)}>Close Details</button>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </>
             )}
-        </>
+        </div>
     );
 };
 
