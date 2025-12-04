@@ -71,6 +71,7 @@ const EditApplication = () => {
     }
 
     const [formData, setFormData] = useState<ApplicationForm>({
+        zipCode: "",
         firstName: '',
         middleName: '',
         lastName: '',
@@ -125,7 +126,7 @@ const EditApplication = () => {
         scholarshipAmount: 0,
         itr: null,
         grades: null,
-        gradesList: [{ subject: "", grade: "" }],
+        gradesList: [{ subject: "", grade: "" }]
     });
 
     // Fetch application data
@@ -154,6 +155,7 @@ const EditApplication = () => {
 
                 // Populate form with existing data
                 setFormData({
+                    zipCode: data.zip_code,
                     firstName: data.first_name || '',
                     middleName: data.middle_name || '',
                     lastName: data.last_name || '',
@@ -208,7 +210,7 @@ const EditApplication = () => {
                     scholarshipAmount: 0,
                     itr: null,
                     grades: null,
-                    gradesList: [],
+                    gradesList: []
                 });
 
                 // Set location data
@@ -658,7 +660,7 @@ const EditApplication = () => {
                                             </select>
                                         </div>
 
-                                        <div className="col-md-3">
+                                        <div className="col-md-2">
                                             <label>Municipality</label>
                                             <select className="form-control" value={selectedMunicipality} onChange={handleMunicipalityChange} disabled={!municipalities.length}>
                                                 <option value="">Select Municipality</option>
@@ -668,7 +670,7 @@ const EditApplication = () => {
                                             </select>
                                         </div>
 
-                                        <div className="col-md-3">
+                                        <div className="col-md-2">
                                             <label>Barangay</label>
                                             <select className="form-control" value={selectedBarangay} onChange={handleBarangayChange} disabled={!barangays.length}>
                                                 <option value="">Select Barangay</option>
@@ -676,6 +678,11 @@ const EditApplication = () => {
                                                     <option key={b.bgy_code} value={b.bgy_code}>{b.name}</option>
                                                 ))}
                                             </select>
+                                        </div>
+
+                                        <div className="col-md-2">
+                                            <label>Zip Code</label>
+                                            <input type="number" className="form-control" value={formData.zipCode} onChange={(e => setFormData({...formData, zipCode: e.target.value}))}/>
                                         </div>
 
                                         <div className="row">

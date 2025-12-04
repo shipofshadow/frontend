@@ -93,6 +93,7 @@ const Apply = () => {
         municipalityName: user?.profile?.municipality_name ||'',
         barangayCode: user?.profile?.barangay_code || '',
         barangayName: user?.profile?.barangay_name || '',
+        zipCode: user?.profile?.zip_code || '',
         father: {
             lastName: user?.profile?.father_last_name || '',
             firstName: user?.profile?.father_first_name || '',
@@ -180,7 +181,6 @@ const Apply = () => {
         );
         setGrades(updated);
     };
-
 
     const handleRegionChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
         const selectedCode = e.target.value;
@@ -323,6 +323,7 @@ const Apply = () => {
         if (grades && grades.length > 0) {
             data.append('gradesList', JSON.stringify(grades));
         }
+
 
         try {
             const res = await fetch(`${API_BASE_URL}/api/application/apply`, {
@@ -530,7 +531,7 @@ const Apply = () => {
                                             </select>
                                         </div>
 
-                                        <div className="col-md-3">
+                                        <div className="col-md-2">
                                             <label>Municipality</label>
                                             <select className="form-control" value={selectedMunicipality} onChange={handleMunicipalityChange} disabled={!municipalities.length}>
                                                 <option value="">Select Municipality</option>
@@ -540,7 +541,7 @@ const Apply = () => {
                                             </select>
                                         </div>
 
-                                        <div className="col-md-3">
+                                        <div className="col-md-2">
                                             <label>Barangay</label>
                                             <select className="form-control" value={selectedBarangay} onChange={handleBarangayChange} disabled={!barangays.length}>
                                                 <option value="">Select Barangay</option>
@@ -548,6 +549,11 @@ const Apply = () => {
                                                     <option key={b.bgy_code} value={b.bgy_code}>{b.name}</option>
                                                 ))}
                                             </select>
+                                        </div>
+
+                                        <div className="col-md-2">
+                                            <label>Zip Code</label>
+                                            <input type="number" className="form-control" value={formData.zipCode} onChange={(e => setFormData({...formData, zipCode: e.target.value}))}/>
                                         </div>
 
 

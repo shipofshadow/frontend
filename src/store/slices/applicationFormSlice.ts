@@ -15,7 +15,7 @@ const emptyDraft: SerializableForm = {
     firstName: '', middleName: '', lastName: '', nameExtension: '',
     email: '', phone: '', birthDate: '', civilStatus: '', citizenship: 'Filipino',
     street: '', regionCode: '', regionName: '', provinceCode: '', provinceName: '',
-    municipalityCode: '', municipalityName: '', barangayCode: '', barangayName: '',
+    municipalityCode: '', municipalityName: '', barangayCode: '', barangayName: '', zipCode: '',
     father: { lastName: '', firstName: '', middleName: '', extension: '', occupation: '', income: 0 },
     mother: { lastName: '', firstName: '', middleName: '', occupation: '', income: 0 },
     emergencyContactName: '', emergencyContactNumber: '',

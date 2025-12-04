@@ -20,6 +20,7 @@ export interface Profile {
     municipality_name: string;
     barangay_code: string;
     barangay_name: string;
+    zip_code: string;
 
     father_last_name: string;
     father_first_name: string;

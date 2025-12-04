@@ -57,7 +57,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         try {
             setIsLoading(true);
 
-            const response = await fetch(`${API_BASE_URL}/api/profile/scholarship/summary`, {
+            const response = await fetch(`${API_BASE_URL}/api/profile/scholarship/summary?active_only=false`, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json',

@@ -26,6 +26,8 @@ export interface ApplicationForm {
     barangayCode: string;
     barangayName: string;
 
+    zipCode: string;
+
     // Parental Info
     father: {
         lastName: string;
