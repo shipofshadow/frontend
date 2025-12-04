@@ -1,83 +1,70 @@
 import React, { useState, useEffect } from 'react';
 import { Settings } from "lucide-react";
-
-// Interface
-interface SystemConfig {
-    // General & Support
-    systemName: string;
-    organizationName: string;
-    supportEmail: string;
-    supportPhone: string;
-
-    // Application Control
-    isApplicationOpen: boolean;
-    allowNewRegistrations: boolean;
-    applicationStartDate: string;
-    applicationEndDate: string;
-
-    // Notifications
-    enableEmailAlerts: boolean;
-    enableInAppNotifications: boolean;
-    emailSenderName: string;
-
-    email_activation_enabled: boolean;
-
-    // Authentication & Security
-    maintenanceMode: boolean;
-    sessionTimeout: number;
-    maxLoginAttempts: number;
-    enableNativeLogin: boolean;
-    enableGoogleLogin: boolean;
-    minPasswordLength: number;
-
-    // Data Management
-    logRetentionDays: number;
-    cleanupIntervalHours: number;
-
-    // Storage
-    storageProvider: 'local' | 's3';
-}
+import Swal from 'sweetalert2';
+import { useAuth } from "../../context/AuthContext.tsx";
+import { 
+    getSystemSettings, 
+    updateSystemSettings,
+    type SystemConfig 
+} from "../../services/settingsService.ts";
 
 const SystemSetting = () => {
+    const { token } = useAuth();
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [successMsg, setSuccessMsg] = useState('');
     const [showConfirmModal, setShowConfirmModal] = useState(false);
     const [pendingConfig, setPendingConfig] = useState<SystemConfig | null>(null);
 
-    // Mock Data
+    // Initial config state (will be replaced by API data)
     const [config, setConfig] = useState<SystemConfig>({
-        systemName: 'iScholarship Portal',
-        organizationName: 'ISPSC - Scholarship Unit',
-        supportEmail: 'scholarship@ispsc.edu.ph',
-        supportPhone: '(077) 123-4567',
-
-        isApplicationOpen: true,
-        allowNewRegistrations: true,
-        applicationStartDate: '2024-08-01',
-        applicationEndDate: '2024-09-30',
-
-        enableEmailAlerts: true,
-        enableInAppNotifications: true,
-        emailSenderName: 'ISPSC Scholarship Admin',
-
+        systemName: '',
+        organizationName: '',
+        supportEmail: '',
+        supportPhone: '',
+        isApplicationOpen: false,
+        allowNewRegistrations: false,
+        applicationStartDate: '',
+        applicationEndDate: '',
+        enableEmailAlerts: false,
+        enableInAppNotifications: false,
+        emailSenderName: '',
         email_activation_enabled: false,
-
         maintenanceMode: false,
         sessionTimeout: 30,
         maxLoginAttempts: 5,
         enableNativeLogin: true,
         enableGoogleLogin: false,
         minPasswordLength: 8,
-
         logRetentionDays: 90,
         cleanupIntervalHours: 24,
         storageProvider: 'local'
     });
 
     useEffect(() => {
-        setTimeout(() => setLoading(false), 800);
-    }, []);
+        const fetchSettings = async () => {
+            if (!token) {
+                setLoading(false);
+                return;
+            }
+            
+            setLoading(true);
+            try {
+                const data = await getSystemSettings(token);
+                setConfig(data);
+            } catch (error) {
+                console.error('Failed to fetch settings:', error);
+                await Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Failed to load system settings. Please try again later.'
+                });
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchSettings();
+    }, [token]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value, type } = e.target;
@@ -99,14 +86,34 @@ const SystemSetting = () => {
         setShowConfirmModal(true);
     };
 
-    const confirmSave = () => {
+    const confirmSave = async () => {
         setShowConfirmModal(false);
         setSaving(true);
-        setTimeout(() => {
+        
+        if (!token) {
+            await Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Authentication required. Please log in again.'
+            });
             setSaving(false);
+            return;
+        }
+        
+        try {
+            await updateSystemSettings(config, token);
             setSuccessMsg("System configuration saved successfully.");
             setTimeout(() => setSuccessMsg(''), 3000);
-        }, 1500);
+        } catch (error) {
+            console.error('Error saving settings:', error);
+            await Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Failed to save system settings. Please try again.'
+            });
+        } finally {
+            setSaving(false);
+        }
     };
 
     if (loading) return (
