@@ -11,13 +11,16 @@ import {
     Info,
     TrendingUp,
     FileSpreadsheet,
-    Eye
+    Eye,
+    Mail,
+    RefreshCw
 } from 'lucide-react';
 import {API_BASE_URL} from "../../config.ts";
 
 interface Student {
     student_id: string;
     name: string;
+    email?: string;
     course: string;
     year_level: string;
     gwa: number | null;
@@ -48,6 +51,22 @@ interface StudentResult extends Student {
     missing_fields: string[];
 }
 
+interface EmailFilters {
+    min_score: number;
+    classifications: string[];
+    scholarship_id: number | null;
+    student_ids: string[];
+}
+
+interface EmailSendResult {
+    success: boolean;
+    total_sent: number;
+    total_failed: number;
+    sent_students: { student_id: string; name: string; email: string }[];
+    failed_students: { student_id: string; name: string; email: string; reason: string }[];
+    error?: string;
+}
+
 const BulkAnalysisTool = () => {
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [dragActive, setDragActive] = useState(false);
@@ -64,6 +83,19 @@ const BulkAnalysisTool = () => {
     const [confirmAnalyzeModal, setConfirmAnalyzeModal] = useState(false);
     const [exportModal, setExportModal] = useState(false);
     const [detailModal, setDetailModal] = useState<StudentResult | null>(null);
+
+    // Email notification states
+    const [emailModal, setEmailModal] = useState(false);
+    const [sendingEmails, setSendingEmails] = useState(false);
+    const [emailFilters, setEmailFilters] = useState<EmailFilters>({
+        min_score: 60,
+        classifications: ['Eligible', 'Conditionally Eligible'],
+        scholarship_id: null,
+        student_ids: []
+    });
+    const [emailResults, setEmailResults] = useState<EmailSendResult | null>(null);
+    const [selectedStudentsForEmail, setSelectedStudentsForEmail] = useState<string[]>([]);
+    const [emailResultsModal, setEmailResultsModal] = useState(false);
 
     const analyzeStudent = async (student: Student): Promise<StudentResult> => {
         try {
@@ -148,6 +180,7 @@ const BulkAnalysisTool = () => {
                         return {
                             student_id: String(row['Student ID'] || row['student_id'] || ''),
                             name: String(row['Name'] || row['name'] || ''),
+                            email: String(row['Email'] || row['email'] || '').trim() || undefined,
                             course: String(row['Course'] || row['course'] || ''),
                             year_level: String(row['Year Level'] || row['year_level'] || row['Year'] || ''),
                             gwa: parseNumber(row['GWA'] || row['gwa']),
@@ -247,6 +280,7 @@ const BulkAnalysisTool = () => {
             [
                 'Student ID',
                 'Name',
+                'Email',
                 'Course',
                 'Year Level',
                 'GWA',
@@ -262,6 +296,7 @@ const BulkAnalysisTool = () => {
             [
                 'E21-00193',
                 'Juan Dela Cruz',
+                'juan.delacruz@email.com',
                 'BS Information Technology',
                 '3',
                 '1.25',
@@ -349,6 +384,130 @@ const BulkAnalysisTool = () => {
     const qualificationRate = summary.total_students > 0
         ? Math.round((summary.students_with_qualifications / summary.total_students) * 100)
         : 0;
+
+    // Email helper functions
+    const getEligibleStudentsForEmail = () => {
+        return students.filter(student => {
+            // Must have email
+            if (!student.email) return false;
+
+            // Check min score
+            if (student.eligibility_score < emailFilters.min_score) return false;
+
+            // Check classification
+            if (!emailFilters.classifications.includes(student.classification)) return false;
+
+            // Check scholarship qualification
+            if (emailFilters.scholarship_id !== null) {
+                const hasScholarship = student.recommended_scholarships.some(
+                    s => s.scholarship_id === emailFilters.scholarship_id
+                );
+                if (!hasScholarship) return false;
+            }
+
+            return true;
+        });
+    };
+
+    const eligibleStudentsForEmail = getEligibleStudentsForEmail();
+
+    const studentsWithoutEmail = students.filter(s =>
+        !s.email &&
+        s.eligibility_score >= emailFilters.min_score &&
+        emailFilters.classifications.includes(s.classification)
+    );
+
+    const handleOpenEmailModal = () => {
+        const eligible = getEligibleStudentsForEmail();
+        setSelectedStudentsForEmail(eligible.map(s => s.student_id));
+        setEmailModal(true);
+    };
+
+    const handleSelectAllForEmail = () => {
+        setSelectedStudentsForEmail(eligibleStudentsForEmail.map(s => s.student_id));
+    };
+
+    const handleDeselectAllForEmail = () => {
+        setSelectedStudentsForEmail([]);
+    };
+
+    const toggleStudentForEmail = (studentId: string) => {
+        setSelectedStudentsForEmail(prev =>
+            prev.includes(studentId)
+                ? prev.filter(id => id !== studentId)
+                : [...prev, studentId]
+        );
+    };
+
+    const handleClassificationChange = (classification: string) => {
+        setEmailFilters(prev => ({
+            ...prev,
+            classifications: prev.classifications.includes(classification)
+                ? prev.classifications.filter(c => c !== classification)
+                : [...prev.classifications, classification]
+        }));
+    };
+
+    const sendEligibilityEmails = async () => {
+        if (selectedStudentsForEmail.length === 0) return;
+
+        try {
+            setSendingEmails(true);
+            const response = await fetch(`${API_BASE_URL}/api/prequalify/send_eligibility_emails`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    min_score: emailFilters.min_score,
+                    classifications: emailFilters.classifications,
+                    scholarship_id: emailFilters.scholarship_id,
+                    student_ids: selectedStudentsForEmail
+                })
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                setEmailResults(result);
+                setEmailModal(false);
+                setEmailResultsModal(true);
+            } else {
+                setEmailResults({
+                    success: false,
+                    total_sent: 0,
+                    total_failed: 0,
+                    sent_students: [],
+                    failed_students: [],
+                    error: result.error || 'Failed to send emails'
+                });
+                setEmailModal(false);
+                setEmailResultsModal(true);
+            }
+        } catch (err) {
+            setEmailResults({
+                success: false,
+                total_sent: 0,
+                total_failed: 0,
+                sent_students: [],
+                failed_students: [],
+                error: 'Network error: Failed to send emails'
+            });
+            setEmailModal(false);
+            setEmailResultsModal(true);
+        } finally {
+            setSendingEmails(false);
+        }
+    };
+
+    const handleRetryFailedEmails = async () => {
+        if (!emailResults || emailResults.failed_students.length === 0) return;
+
+        const failedIds = emailResults.failed_students.map(s => s.student_id);
+        setSelectedStudentsForEmail(failedIds);
+        setEmailResultsModal(false);
+        setEmailModal(true);
+    };
 
     return (
         <>
@@ -453,12 +612,12 @@ const BulkAnalysisTool = () => {
                                                     </div>
                                                     <p className="text-muted mb-0 ms-4">System checks all students against active scholarships using fuzzy logic</p>
                                                 </div>
-                                                <div className="col-md-4">
+                                        <div className="col-md-4">
                                                     <div className="d-flex align-items-center mb-2">
                                                         <span className="badge bg-success rounded-circle me-2 d-flex align-items-center justify-content-center" style={{width: '24px', height: '24px'}}>3</span>
                                                         <strong>Reach Out to Qualified</strong>
                                                     </div>
-                                                    <p className="text-muted mb-0 ms-4">Export lists and contact qualified students who haven't applied</p>
+                                                    <p className="text-muted mb-0 ms-4">Export lists or send email notifications to qualified students (include email column in data)</p>
                                                 </div>
                                             </div>
                                         </div>
@@ -564,6 +723,17 @@ const BulkAnalysisTool = () => {
                                             >
                                                 <Download size={16} className="me-2" />
                                                 Export
+                                            </button>
+                                        )}
+
+                                        {showResults && !processing && (
+                                            <button
+                                                className="btn btn-outline-primary d-flex align-items-center"
+                                                onClick={handleOpenEmailModal}
+                                                disabled={processing}
+                                            >
+                                                <Mail size={16} className="me-2" />
+                                                Send Emails
                                             </button>
                                         )}
                                     </div>
@@ -944,6 +1114,12 @@ const BulkAnalysisTool = () => {
                                                 <small className="text-muted d-block">Family Income</small>
                                                 <strong>{detailModal.income !== null ? `₱${detailModal.income.toLocaleString()}` : 'N/A'}</strong>
                                             </div>
+                                            {detailModal.email && (
+                                                <div className="col-12">
+                                                    <small className="text-muted d-block">Email</small>
+                                                    <strong>{detailModal.email}</strong>
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
 
@@ -1032,6 +1208,334 @@ const BulkAnalysisTool = () => {
                                 </div>
                                 <div className="modal-footer border-0">
                                     <button type="button" className="btn btn-light" onClick={() => setDetailModal(null)}>Close</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </>
+            )}
+
+            {/* Email Notification Modal */}
+            {emailModal && (
+                <>
+                    <div className="modal-backdrop fade show"></div>
+                    <div className="modal fade show" tabIndex={-1} style={{ display: 'block' }}>
+                        <div className="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+                            <div className="modal-content shadow">
+                                <div className="modal-header border-0 pb-0">
+                                    <div className="d-flex align-items-center">
+                                        <Mail className="text-primary me-2" size={24} />
+                                        <h5 className="modal-title fw-bold mb-0">Send Eligibility Notifications</h5>
+                                    </div>
+                                    <button type="button" className="btn-close" onClick={() => setEmailModal(false)} disabled={sendingEmails}></button>
+                                </div>
+                                <div className="modal-body">
+                                    {/* Filters Section */}
+                                    <div className="mb-4">
+                                        <h6 className="fw-bold mb-3">Filter Recipients</h6>
+                                        <div className="row g-3">
+                                            <div className="col-md-4">
+                                                <label className="form-label small fw-medium">Minimum Score</label>
+                                                <input
+                                                    type="number"
+                                                    className="form-control"
+                                                    value={emailFilters.min_score}
+                                                    onChange={(e) => setEmailFilters(prev => ({ ...prev, min_score: parseInt(e.target.value) || 0 }))}
+                                                    min="0"
+                                                    max="100"
+                                                />
+                                            </div>
+                                            <div className="col-md-4">
+                                                <label className="form-label small fw-medium">Classification</label>
+                                                <div className="d-flex flex-column gap-1">
+                                                    {['Eligible', 'Conditionally Eligible', 'Low Eligibility', 'Not Eligible'].map(cls => (
+                                                        <div key={cls} className="form-check">
+                                                            <input
+                                                                type="checkbox"
+                                                                className="form-check-input"
+                                                                id={`cls-${cls}`}
+                                                                checked={emailFilters.classifications.includes(cls)}
+                                                                onChange={() => handleClassificationChange(cls)}
+                                                            />
+                                                            <label className="form-check-label small" htmlFor={`cls-${cls}`}>{cls}</label>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                            <div className="col-md-4">
+                                                <label className="form-label small fw-medium">Scholarship</label>
+                                                <select
+                                                    className="form-select"
+                                                    value={emailFilters.scholarship_id ?? ''}
+                                                    onChange={(e) => setEmailFilters(prev => ({
+                                                        ...prev,
+                                                        scholarship_id: e.target.value ? parseInt(e.target.value) : null
+                                                    }))}
+                                                >
+                                                    <option value="">All Scholarships</option>
+                                                    {scholarshipsList.map((name, i) => {
+                                                        const scholarship = students.find(s =>
+                                                            s.recommended_scholarships.some(sch => sch.name === name)
+                                                        )?.recommended_scholarships.find(sch => sch.name === name);
+                                                        return (
+                                                            <option key={i} value={scholarship?.scholarship_id}>
+                                                                {name}
+                                                            </option>
+                                                        );
+                                                    })}
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Student Count Preview */}
+                                    <div className="alert alert-info border-0 mb-4">
+                                        <div className="d-flex align-items-center justify-content-between">
+                                            <div>
+                                                <strong>{eligibleStudentsForEmail.length}</strong> students match your filters
+                                                {studentsWithoutEmail.length > 0 && (
+                                                    <span className="text-warning ms-2">
+                                                        ({studentsWithoutEmail.length} without email will be skipped)
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <div className="d-flex gap-2">
+                                                <button
+                                                    className="btn btn-sm btn-outline-primary"
+                                                    onClick={handleSelectAllForEmail}
+                                                    disabled={eligibleStudentsForEmail.length === 0}
+                                                >
+                                                    Select All
+                                                </button>
+                                                <button
+                                                    className="btn btn-sm btn-outline-secondary"
+                                                    onClick={handleDeselectAllForEmail}
+                                                    disabled={selectedStudentsForEmail.length === 0}
+                                                >
+                                                    Deselect All
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Students Table */}
+                                    <div className="table-responsive" style={{ maxHeight: '300px' }}>
+                                        <table className="table table-hover table-sm mb-0">
+                                            <thead className="table-light sticky-top">
+                                                <tr>
+                                                    <th className="border-0" style={{ width: '40px' }}></th>
+                                                    <th className="border-0">Student ID</th>
+                                                    <th className="border-0">Name</th>
+                                                    <th className="border-0">Email</th>
+                                                    <th className="border-0 text-center">Score</th>
+                                                    <th className="border-0">Classification</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {eligibleStudentsForEmail.length > 0 ? (
+                                                    eligibleStudentsForEmail.map((student) => (
+                                                        <tr key={student.student_id}>
+                                                            <td>
+                                                                <input
+                                                                    type="checkbox"
+                                                                    className="form-check-input"
+                                                                    checked={selectedStudentsForEmail.includes(student.student_id)}
+                                                                    onChange={() => toggleStudentForEmail(student.student_id)}
+                                                                />
+                                                            </td>
+                                                            <td className="small fw-medium">{student.student_id}</td>
+                                                            <td className="small">{student.name}</td>
+                                                            <td className="small text-muted">{student.email}</td>
+                                                            <td className="text-center">
+                                                                <span className={`badge ${
+                                                                    student.eligibility_score >= 80 ? 'bg-success' :
+                                                                    student.eligibility_score >= 60 ? 'bg-primary' :
+                                                                    student.eligibility_score >= 40 ? 'bg-warning' : 'bg-secondary'
+                                                                }`}>
+                                                                    {student.eligibility_score.toFixed(0)}%
+                                                                </span>
+                                                            </td>
+                                                            <td className="small">{student.classification}</td>
+                                                        </tr>
+                                                    ))
+                                                ) : (
+                                                    <tr>
+                                                        <td colSpan={6} className="text-center text-muted py-4">
+                                                            <AlertCircle size={32} className="mb-2 opacity-50" />
+                                                            <p className="mb-0">No students with email addresses match your filters.</p>
+                                                        </td>
+                                                    </tr>
+                                                )}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                <div className="modal-footer border-0 pt-0">
+                                    <div className="d-flex justify-content-between align-items-center w-100">
+                                        <span className="text-muted small">
+                                            {selectedStudentsForEmail.length} students selected
+                                        </span>
+                                        <div className="d-flex gap-2">
+                                            <button
+                                                type="button"
+                                                className="btn btn-light"
+                                                onClick={() => setEmailModal(false)}
+                                                disabled={sendingEmails}
+                                            >
+                                                Cancel
+                                            </button>
+                                            <button
+                                                type="button"
+                                                className="btn btn-primary d-flex align-items-center"
+                                                onClick={sendEligibilityEmails}
+                                                disabled={selectedStudentsForEmail.length === 0 || sendingEmails}
+                                            >
+                                                {sendingEmails ? (
+                                                    <>
+                                                        <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                                        Sending...
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <Mail size={16} className="me-2" />
+                                                        Send to {selectedStudentsForEmail.length} Students
+                                                    </>
+                                                )}
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </>
+            )}
+
+            {/* Email Results Modal */}
+            {emailResultsModal && emailResults && (
+                <>
+                    <div className="modal-backdrop fade show"></div>
+                    <div className="modal fade show" tabIndex={-1} style={{ display: 'block' }}>
+                        <div className="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+                            <div className="modal-content shadow">
+                                <div className="modal-header border-0 pb-0">
+                                    <div className="d-flex align-items-center">
+                                        {emailResults.success ? (
+                                            <CheckCircle className="text-success me-2" size={24} />
+                                        ) : (
+                                            <AlertCircle className="text-danger me-2" size={24} />
+                                        )}
+                                        <h5 className="modal-title fw-bold mb-0">
+                                            {emailResults.success ? 'Emails Sent Successfully' : 'Email Sending Results'}
+                                        </h5>
+                                    </div>
+                                    <button type="button" className="btn-close" onClick={() => setEmailResultsModal(false)}></button>
+                                </div>
+                                <div className="modal-body">
+                                    {emailResults.error && (
+                                        <div className="alert alert-danger mb-4">
+                                            <AlertCircle size={18} className="me-2" />
+                                            {emailResults.error}
+                                        </div>
+                                    )}
+
+                                    {/* Summary */}
+                                    <div className="row g-3 mb-4">
+                                        <div className="col-6">
+                                            <div className="card bg-success bg-opacity-10 border-0">
+                                                <div className="card-body text-center py-3">
+                                                    <h3 className="fw-bold text-success mb-1">{emailResults.total_sent}</h3>
+                                                    <small className="text-muted">Emails Sent</small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="col-6">
+                                            <div className="card bg-danger bg-opacity-10 border-0">
+                                                <div className="card-body text-center py-3">
+                                                    <h3 className="fw-bold text-danger mb-1">{emailResults.total_failed}</h3>
+                                                    <small className="text-muted">Failed</small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Sent Students */}
+                                    {emailResults.sent_students.length > 0 && (
+                                        <div className="mb-4">
+                                            <h6 className="fw-bold mb-3 text-success">
+                                                <CheckCircle size={16} className="me-2" />
+                                                Successfully Sent ({emailResults.sent_students.length})
+                                            </h6>
+                                            <div className="table-responsive" style={{ maxHeight: '150px' }}>
+                                                <table className="table table-sm mb-0">
+                                                    <tbody>
+                                                        {emailResults.sent_students.map((student, idx) => (
+                                                            <tr key={idx}>
+                                                                <td className="small fw-medium">{student.student_id}</td>
+                                                                <td className="small">{student.name}</td>
+                                                                <td className="small text-muted">{student.email}</td>
+                                                            </tr>
+                                                        ))}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Failed Students */}
+                                    {emailResults.failed_students.length > 0 && (
+                                        <div>
+                                            <h6 className="fw-bold mb-3 text-danger">
+                                                <AlertCircle size={16} className="me-2" />
+                                                Failed ({emailResults.failed_students.length})
+                                            </h6>
+                                            <div className="table-responsive" style={{ maxHeight: '150px' }}>
+                                                <table className="table table-sm mb-0">
+                                                    <thead className="table-light">
+                                                        <tr>
+                                                            <th className="border-0">Student ID</th>
+                                                            <th className="border-0">Name</th>
+                                                            <th className="border-0">Email</th>
+                                                            <th className="border-0">Reason</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        {emailResults.failed_students.map((student, idx) => (
+                                                            <tr key={idx}>
+                                                                <td className="small fw-medium">{student.student_id}</td>
+                                                                <td className="small">{student.name}</td>
+                                                                <td className="small text-muted">{student.email}</td>
+                                                                <td className="small text-danger">{student.reason}</td>
+                                                            </tr>
+                                                        ))}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                                <div className="modal-footer border-0 pt-0">
+                                    <div className="d-flex justify-content-between align-items-center w-100">
+                                        <div>
+                                            {emailResults.failed_students.length > 0 && (
+                                                <button
+                                                    type="button"
+                                                    className="btn btn-outline-warning d-flex align-items-center"
+                                                    onClick={handleRetryFailedEmails}
+                                                >
+                                                    <RefreshCw size={16} className="me-2" />
+                                                    Retry Failed
+                                                </button>
+                                            )}
+                                        </div>
+                                        <button
+                                            type="button"
+                                            className="btn btn-primary"
+                                            onClick={() => setEmailResultsModal(false)}
+                                        >
+                                            Close
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
