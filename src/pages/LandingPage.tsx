@@ -13,7 +13,7 @@ import {
     ArrowRight,
     Shield,
     Clock,
-    Target
+    Target, Bell, AlertCircle, Info
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Hero from "../components/Hero.tsx";
@@ -59,8 +59,17 @@ interface Testimonial {
     rating: number;
 }
 
+interface Announcement {
+    id: number;
+    title: string;
+    message: string;
+    priority: 'low' | 'normal' | 'high' | 'urgent';
+    created_at: string;
+}
+
 const LandingPage: React.FC = () => {
     const navigate = useNavigate();
+    const [announcements, setAnnouncements] = useState<Announcement[]>([]);
     const [activeScholarships, setActiveScholarships] = useState<Scholarship[]>([]);
     const [statistics, setStatistics] = useState({
         totalScholarships: 0,
@@ -77,33 +86,52 @@ const LandingPage: React.FC = () => {
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
-        const fetchScholarships = async () => {
+        const fetchInitialData = async () => {
             try {
+                // 1. Fetch Scholarships
                 const res = await fetch(`${API_BASE_URL}/api/scholarships/`);
-                if (!res.ok) throw new Error("Failed to fetch scholarships");
-                const data = await res.json();
-                setActiveScholarships(data.filter((s: Scholarship) => s.is_active).slice(0, 6));
+                if (res.ok) {
+                    const data = await res.json();
+                    setActiveScholarships(data.filter((s: Scholarship) => s.is_active).slice(0, 6));
+                    setStatistics(prev => ({ ...prev, totalScholarships: data.filter((s: Scholarship) => s.is_active).length }));
+                }
 
-                const active_res = await fetch(`${API_BASE_URL}/api/dashboard/active-applicants`);
-                if (!active_res.ok) throw new Error("Failed to fetch scholarships");
-                const active_applicants = await active_res.json();
+                // 2. Fetch Dashboard Stats (Active/Approved) - Simplified for brevity
+                try {
+                    const activeRes = await fetch(`${API_BASE_URL}/api/dashboard/active-applicants`);
+                    const approvedRes = await fetch(`${API_BASE_URL}/api/dashboard/approved-applicants`);
+                    if (activeRes.ok && approvedRes.ok) {
+                        const activeData = await activeRes.json();
+                        const approvedData = await approvedRes.json();
+                        setStatistics(prev => ({
+                            ...prev,
+                            totalApplications: activeData.active_applicants,
+                            approvedStudents: approvedData.approved_applicants
+                        }));
+                    }
+                } catch (e) { console.warn("Stats fetch failed", e); }
 
-                const approved_res = await fetch(`${API_BASE_URL}/api/dashboard/approved-applicants`);
-                if (!approved_res.ok) throw new Error("Failed to fetch scholarships");
-                const approved_applicants = await approved_res.json();
+                // 3. Fetch Public Announcements [NEW]
+                const annRes = await fetch(`${API_BASE_URL}/api/announcements/public`);
+                if (annRes.ok) {
+                    const annData = await annRes.json();
+                    setAnnouncements(annData);
+                }
 
-                setStatistics({
-                    totalScholarships: data.filter((s: Scholarship) => s.is_active).length,
-                    totalApplications: active_applicants.active_applicants,
-                    approvedStudents: approved_applicants.approved_applicants
-                });
             } catch (error) {
-                console.error("Error fetching scholarships:", error);
+                console.error("Error fetching data:", error);
             }
         };
-        fetchScholarships();
+        fetchInitialData();
     }, []);
 
+    const getAnnouncementIcon = (priority: string) => {
+        switch (priority) {
+            case 'urgent': return { icon: AlertCircle, bg: '#f8d7da', color: '#dc3545', label: 'Urgent' };
+            case 'high': return { icon: Star, bg: '#fff3cd', color: '#ffc107', label: 'Important' };
+            default: return { icon: Bell, bg: '#e8eaf6', color: '#5e72e4', label: 'Update' };
+        }
+    };
     const testimonials: Testimonial[] = [
         {
             name: 'Maria Santos',
@@ -544,7 +572,6 @@ const LandingPage: React.FC = () => {
                 </div>
             </section>
 
-            {/* Announcements - Modern Card Design */}
             <section className="py-5 bg-white">
                 <div className="container py-4">
                     <div className="text-center mb-5">
@@ -557,73 +584,46 @@ const LandingPage: React.FC = () => {
                         </p>
                     </div>
 
-                    <div className="row g-4">
-                        <div className="col-lg-4">
-                            <div className="card border-0 h-100 hover-lift rounded-4" style={{ boxShadow: '0 4px 20px rgba(0,0,0,0.08)' }}>
-                                <div className="card-body p-4">
-                                    <div className="d-flex align-items-center mb-3">
-                                        <div className="rounded-3 p-2 me-3" style={{ backgroundColor: '#f8d7da' }}>
-                                            <Calendar style={{ color: '#dc3545' }} size={24} />
+                    <div className="row g-4 justify-content-center">
+                        {announcements.length > 0 ? (
+                            announcements.map((announcement) => {
+                                const style = getAnnouncementIcon(announcement.priority);
+                                const Icon = style.icon;
+                                return (
+                                    <div key={announcement.id} className="col-lg-4 col-md-6">
+                                        <div className="card border-0 h-100 hover-lift rounded-4" style={{ boxShadow: '0 4px 20px rgba(0,0,0,0.08)' }}>
+                                            <div className="card-body p-4 d-flex flex-column">
+                                                <div className="d-flex align-items-center mb-3">
+                                                    <div className="rounded-3 p-2 me-3" style={{ backgroundColor: style.bg }}>
+                                                        <Icon style={{ color: style.color }} size={24} />
+                                                    </div>
+                                                    <span className="badge rounded-pill px-3 py-2" style={{ backgroundColor: style.bg, color: style.color, fontSize: '0.75rem', fontWeight: 600 }}>
+                                                        {style.label}
+                                                    </span>
+                                                </div>
+                                                <h5 className="fw-bold mb-3">{announcement.title}</h5>
+                                                <p className="text-muted mb-4 flex-grow-1" style={{ fontSize: '0.95rem', lineHeight: '1.6' }}>
+                                                    {announcement.message.length > 150
+                                                        ? announcement.message.substring(0, 150) + '...'
+                                                        : announcement.message}
+                                                </p>
+                                                <div className="d-flex align-items-center text-muted small mt-auto border-top pt-3">
+                                                    <Clock size={14} className="me-2" />
+                                                    <span>Posted: {new Date(announcement.created_at).toLocaleDateString()}</span>
+                                                </div>
+                                            </div>
                                         </div>
-                                        <span className="badge rounded-pill px-3 py-2" style={{ backgroundColor: '#f8d7da', color: '#721c24', fontSize: '0.75rem', fontWeight: 600 }}>
-                                            Deadline
-                                        </span>
                                     </div>
-                                    <h5 className="fw-bold mb-3">1st Semester Applications</h5>
-                                    <p className="text-muted mb-4" style={{ fontSize: '0.95rem', lineHeight: '1.6' }}>
-                                        Application deadline for 1st Semester scholarships: September 30, 2025
-                                    </p>
-                                    <div className="d-flex align-items-center text-muted small">
-                                        <Clock size={14} className="me-2" />
-                                        <span>Posted: September 1, 2025</span>
-                                    </div>
+                                );
+                            })
+                        ) : (
+                            <div className="col-12 text-center py-5">
+                                <div className="text-muted opacity-50">
+                                    <Info size={48} className="mb-3" />
+                                    <p>No active announcements at the moment.</p>
                                 </div>
                             </div>
-                        </div>
-                        <div className="col-lg-4">
-                            <div className="card border-0 h-100 hover-lift rounded-4" style={{ boxShadow: '0 4px 20px rgba(0,0,0,0.08)' }}>
-                                <div className="card-body p-4">
-                                    <div className="d-flex align-items-center mb-3">
-                                        <div className="rounded-3 p-2 me-3" style={{ backgroundColor: '#d4edda' }}>
-                                            <Award style={{ color: '#28a745' }} size={24} />
-                                        </div>
-                                        <span className="badge rounded-pill px-3 py-2" style={{ backgroundColor: '#d4edda', color: '#155724', fontSize: '0.75rem', fontWeight: 600 }}>
-                                            New Program
-                                        </span>
-                                    </div>
-                                    <h5 className="fw-bold mb-3">STEM Excellence Program</h5>
-                                    <p className="text-muted mb-4" style={{ fontSize: '0.95rem', lineHeight: '1.6' }}>
-                                        New scholarship program launched for Science and Technology students.
-                                    </p>
-                                    <div className="d-flex align-items-center text-muted small">
-                                        <Clock size={14} className="me-2" />
-                                        <span>Posted: August 28, 2025</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div className="col-lg-4">
-                            <div className="card border-0 h-100 hover-lift rounded-4" style={{ boxShadow: '0 4px 20px rgba(0,0,0,0.08)' }}>
-                                <div className="card-body p-4">
-                                    <div className="d-flex align-items-center mb-3">
-                                        <div className="rounded-3 p-2 me-3" style={{ backgroundColor: '#e8eaf6' }}>
-                                            <CheckCircle style={{ color: '#5e72e4' }} size={24} />
-                                        </div>
-                                        <span className="badge rounded-pill px-3 py-2" style={{ backgroundColor: '#e8eaf6', color: '#5e72e4', fontSize: '0.75rem', fontWeight: 600 }}>
-                                            Update
-                                        </span>
-                                    </div>
-                                    <h5 className="fw-bold mb-3">System Enhancement</h5>
-                                    <p className="text-muted mb-4" style={{ fontSize: '0.95rem', lineHeight: '1.6' }}>
-                                        New features added to improve application tracking and document management.
-                                    </p>
-                                    <div className="d-flex align-items-center text-muted small">
-                                        <Clock size={14} className="me-2" />
-                                        <span>Posted: August 25, 2025</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                        )}
                     </div>
                 </div>
             </section>

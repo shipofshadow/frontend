@@ -135,6 +135,12 @@ const Sidebar: React.FC = () => {
 
               {/* Academic Config */}
               <div className="sidenav-menu-heading">Academic Config</div>
+
+                <NavLink to="/admin/announcements" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
+                    <div className="nav-link-icon"><i data-feather="calendar"></i></div>
+                    Announcements
+                </NavLink>
+
               <NavLink to="/admin/academic-years" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
                 <div className="nav-link-icon"><i data-feather="calendar"></i></div>
                 Academic Years

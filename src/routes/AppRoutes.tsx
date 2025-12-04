@@ -54,6 +54,7 @@ import Scholarships from "../pages/Scholarships.tsx";
 import EditApplication from "../pages/applicant/EditApplication.tsx";
 import BulkAnalysisTool from "../pages/admin/BulkAnalysisTool.tsx";
 import BackupRestore from "../pages/admin/BackupRestore.tsx";
+import ManageAnnouncements from "../pages/admin/ManageAnnouncements.tsx";
 export function AuthRedirect() {
     const { isAuthenticated, isAdmin, isStudent } = useAuth();
 
@@ -85,6 +86,7 @@ const AppRoutes: React.FC = () => {
                     <Route path="departments" element={<Departments />} />
                     <Route path="academic-years" element={<AcademicYears />} />
                     <Route path="courses" element={<Courses />} />
+                    <Route path="announcements" element={<ManageAnnouncements />} />
 
                     {/* Applicants Routes */}
                     <Route path="applicants">

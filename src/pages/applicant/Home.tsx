@@ -27,10 +27,20 @@ import { useDispatch, useSelector } from "react-redux";
 import { fetchSemester } from "../../store/slices/semesterSlice.ts";
 import type { AppDispatch, RootState } from "../../store/slices";
 import {Link} from "react-router-dom";
+import {API_BASE_URL} from "../../config.ts";
 
+interface Announcement {
+    id: number;
+    title: string;
+    message: string;
+    priority: 'low' | 'normal' | 'high' | 'urgent';
+    created_at: string;
+    audience_type: string;
+}
 const Home = () => {
     const { user, token, applications} = useAuth();
     const [applicationInfo, setApplicationInfo] = useState<ApplicationStatus | null>(null);
+    const [announcements, setAnnouncements] = useState<Announcement[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const dispatch = useDispatch<AppDispatch>();
     const { current } = useSelector((state: RootState) => state.semester);
@@ -44,11 +54,27 @@ const Home = () => {
             .then(setApplicationInfo)
             .catch(() => setApplicationInfo({ has_applied: false }))
             .finally(() => setIsLoading(false));
+        const fetchAnnouncements = async () => {
+            try {
+                const res = await fetch(`${API_BASE_URL}/api/announcements/feed`, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                const json = await res.json();
+                if (json.success) {
+                    setAnnouncements(json.data);
+                }
+            } catch (err) {
+                console.error("Failed to load announcements", err);
+            }
+        };
+        fetchAnnouncements();
     }, [token]);
 
     useEffect(() => {
         dispatch(fetchSemester());
     }, [dispatch]);
+
+
 
     const eligibilityScore = ((applicant?.evaluation?.score ?? 0) * 100).toFixed(2);
 
@@ -540,7 +566,7 @@ const Home = () => {
                         </section>
 
 
-                        {/* Recent Announcements - Enhanced */}
+                        {/* Recent Announcements - DYNAMIC */}
                         <section className="card shadow-sm border-0 rounded-4 mb-4">
                             <div className="card-header bg-gradient border-0 rounded-top-4">
                                 <div className="d-flex align-items-center">
@@ -549,52 +575,54 @@ const Home = () => {
                                 </div>
                             </div>
                             <div className="card-body">
-                                <div className="list-group list-group-flush">
-                                    <div className="list-group-item px-0 py-3 border-0">
-                                        <div className="d-flex align-items-start">
-                                            <div className="bg-danger bg-opacity-10 rounded-2 p-2 me-3 flex-shrink-0">
-                                                <Calendar className="text-danger" size={18} />
-                                            </div>
-                                            <div className="flex-grow-1">
-                                                <h6 className="fw-bold mb-1">Application Deadline Extended</h6>
-                                                <p className="mb-2 small text-muted">
-                                                    AY 2024-2025 scholarship applications deadline extended to October 15, 2024.
-                                                </p>
-                                                <small className="text-muted">2 days ago</small>
-                                            </div>
-                                        </div>
-                                    </div>
+                                {announcements.length > 0 ? (
+                                    <div className="list-group list-group-flush">
+                                        {announcements.map((ann) => {
+                                            // Determine styling based on priority
+                                            let iconColor = 'text-info';
+                                            let bgClass = 'bg-info';
+                                            let Icon = Info;
 
-                                    <div className="list-group-item px-0 py-3 border-0">
-                                        <div className="d-flex align-items-start">
-                                            <div className="bg-success bg-opacity-10 rounded-2 p-2 me-3 flex-shrink-0">
-                                                <Award className="text-success" size={18} />
-                                            </div>
-                                            <div className="flex-grow-1">
-                                                <h6 className="fw-bold mb-1">New STEM Scholarship Available</h6>
-                                                <p className="mb-2 small text-muted">
-                                                    ₱30,000 scholarship for Computer Science and Engineering students.
-                                                </p>
-                                                <small className="text-muted">5 days ago</small>
-                                            </div>
-                                        </div>
-                                    </div>
+                                            if (ann.priority === 'urgent') {
+                                                iconColor = 'text-danger';
+                                                bgClass = 'bg-danger';
+                                                Icon = AlertCircle;
+                                            } else if (ann.priority === 'high') {
+                                                iconColor = 'text-warning';
+                                                bgClass = 'bg-warning';
+                                                Icon = Award; // Or Star
+                                            } else if (ann.priority === 'normal') {
+                                                iconColor = 'text-primary';
+                                                bgClass = 'bg-primary';
+                                                Icon = Bell;
+                                            }
 
-                                    <div className="list-group-item px-0 py-3 border-0">
-                                        <div className="d-flex align-items-start">
-                                            <div className="bg-info bg-opacity-10 rounded-2 p-2 me-3 flex-shrink-0">
-                                                <Info className="text-info" size={18} />
-                                            </div>
-                                            <div className="flex-grow-1">
-                                                <h6 className="fw-bold mb-1">System Maintenance Notice</h6>
-                                                <p className="mb-2 small text-muted">
-                                                    Scheduled maintenance on October 20, 2024 from 2:00 AM - 4:00 AM.
-                                                </p>
-                                                <small className="text-muted">1 week ago</small>
-                                            </div>
-                                        </div>
+                                            return (
+                                                <div key={ann.id} className="list-group-item px-0 py-3 border-0">
+                                                    <div className="d-flex align-items-start">
+                                                        <div className={`${bgClass} bg-opacity-10 rounded-2 p-2 me-3 flex-shrink-0`}>
+                                                            <Icon className={iconColor} size={18} />
+                                                        </div>
+                                                        <div className="flex-grow-1">
+                                                            <h6 className="fw-bold mb-1">{ann.title}</h6>
+                                                            <p className="mb-2 small text-muted">
+                                                                {ann.message.length > 80 ? ann.message.substring(0, 80) + '...' : ann.message}
+                                                            </p>
+                                                            <small className="text-muted">
+                                                                {new Date(ann.created_at).toLocaleDateString()}
+                                                            </small>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
                                     </div>
-                                </div>
+                                ) : (
+                                    <div className="text-center py-4 text-muted">
+                                        <Bell size={32} className="mb-2 opacity-25" />
+                                        <p className="mb-0 small">No new announcements.</p>
+                                    </div>
+                                )}
 
                                 <button className="btn btn-outline-info w-100 mt-3">
                                     <Bell size={18} className="me-2" />
