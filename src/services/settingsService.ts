@@ -19,7 +19,7 @@ export interface SystemConfig {
     enableInAppNotifications: boolean;
     emailSenderName: string;
 
-    email_activation_enabled: boolean;
+    emailActivationEnabled: boolean;
 
     // Authentication & Security
     maintenanceMode: boolean;
@@ -111,7 +111,7 @@ export const getSystemSettings = async (token: string): Promise<SystemConfig> =>
 // Update all system settings (bulk)
 export const updateSystemSettings = async (settings: SystemConfig, token: string): Promise<void> => {
     const payload = mapConfigToApiPayload(settings);
-    
+
     const response = await fetch(`${API_BASE_URL}/api/settings/`, {
         method: 'POST',
         headers: {

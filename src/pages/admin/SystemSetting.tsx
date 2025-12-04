@@ -29,12 +29,12 @@ const SystemSetting = () => {
         enableEmailAlerts: false,
         enableInAppNotifications: false,
         emailSenderName: '',
-        email_activation_enabled: false,
+        emailActivationEnabled: false,
         maintenanceMode: false,
         sessionTimeout: 30,
         maxLoginAttempts: 5,
         enableNativeLogin: true,
-        enableGoogleLogin: false,
+        enableGoogleLogin: true,
         minPasswordLength: 8,
         logRetentionDays: 90,
         cleanupIntervalHours: 24,
@@ -267,7 +267,7 @@ const SystemSetting = () => {
                                                 <small className="text-muted">Automatically send an email verification link to new users upon registration.</small>
                                             </div>
                                             <label className="switch mb-0">
-                                                <input type="checkbox" name="email_activation_enabled" checked={config.email_activation_enabled} onChange={handleChange} />
+                                                <input type="checkbox" name="emailActivationEnabled" checked={config.emailActivationEnabled} onChange={handleChange} />
                                                 <span className="slider round"></span>
                                             </label>
                                         </div>
