@@ -177,10 +177,18 @@ const BulkAnalysisTool = () => {
                             return isNaN(num) ? null : num;
                         };
 
+                        const parseEmail = (val: any): string | undefined => {
+                            if (val === undefined || val === null || val === '') return undefined;
+                            const email = String(val).trim();
+                            // Basic email validation
+                            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                            return emailRegex.test(email) ? email : undefined;
+                        };
+
                         return {
                             student_id: String(row['Student ID'] || row['student_id'] || ''),
                             name: String(row['Name'] || row['name'] || ''),
-                            email: String(row['Email'] || row['email'] || '').trim() || undefined,
+                            email: parseEmail(row['Email'] || row['email']),
                             course: String(row['Course'] || row['course'] || ''),
                             year_level: String(row['Year Level'] || row['year_level'] || row['Year'] || ''),
                             gwa: parseNumber(row['GWA'] || row['gwa']),
@@ -352,6 +360,18 @@ const BulkAnalysisTool = () => {
         )
     );
 
+    // Pre-compute scholarship lookup map for better performance
+    const scholarshipMap = React.useMemo(() => {
+        const map: Record<string, Scholarship | undefined> = {};
+        for (const name of scholarshipsList) {
+            const student = students.find(s =>
+                s.recommended_scholarships.some(sch => sch.name === name)
+            );
+            map[name] = student?.recommended_scholarships.find(sch => sch.name === name);
+        }
+        return map;
+    }, [students, scholarshipsList]);
+
     const summary = {
         total_students: students.length,
         students_with_qualifications: students.filter(s => s.recommended_scholarships.length > 0).length,
@@ -466,6 +486,10 @@ const BulkAnalysisTool = () => {
                 })
             });
 
+            if (!response.ok) {
+                throw new Error(`HTTP error: ${response.status} ${response.statusText}`);
+            }
+
             const result = await response.json();
 
             if (result.success) {
@@ -485,13 +509,14 @@ const BulkAnalysisTool = () => {
                 setEmailResultsModal(true);
             }
         } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : 'Network error: Failed to send emails';
             setEmailResults({
                 success: false,
                 total_sent: 0,
                 total_failed: 0,
                 sent_students: [],
                 failed_students: [],
-                error: 'Network error: Failed to send emails'
+                error: errorMessage
             });
             setEmailModal(false);
             setEmailResultsModal(true);
@@ -612,7 +637,7 @@ const BulkAnalysisTool = () => {
                                                     </div>
                                                     <p className="text-muted mb-0 ms-4">System checks all students against active scholarships using fuzzy logic</p>
                                                 </div>
-                                        <div className="col-md-4">
+                                                <div className="col-md-4">
                                                     <div className="d-flex align-items-center mb-2">
                                                         <span className="badge bg-success rounded-circle me-2 d-flex align-items-center justify-content-center" style={{width: '24px', height: '24px'}}>3</span>
                                                         <strong>Reach Out to Qualified</strong>
@@ -1240,7 +1265,7 @@ const BulkAnalysisTool = () => {
                                                     type="number"
                                                     className="form-control"
                                                     value={emailFilters.min_score}
-                                                    onChange={(e) => setEmailFilters(prev => ({ ...prev, min_score: parseInt(e.target.value) || 0 }))}
+                                                    onChange={(e) => setEmailFilters(prev => ({ ...prev, min_score: parseInt(e.target.value, 10) || 0 }))}
                                                     min="0"
                                                     max="100"
                                                 />
@@ -1269,14 +1294,12 @@ const BulkAnalysisTool = () => {
                                                     value={emailFilters.scholarship_id ?? ''}
                                                     onChange={(e) => setEmailFilters(prev => ({
                                                         ...prev,
-                                                        scholarship_id: e.target.value ? parseInt(e.target.value) : null
+                                                        scholarship_id: e.target.value ? parseInt(e.target.value, 10) : null
                                                     }))}
                                                 >
                                                     <option value="">All Scholarships</option>
                                                     {scholarshipsList.map((name, i) => {
-                                                        const scholarship = students.find(s =>
-                                                            s.recommended_scholarships.some(sch => sch.name === name)
-                                                        )?.recommended_scholarships.find(sch => sch.name === name);
+                                                        const scholarship = scholarshipMap[name];
                                                         return (
                                                             <option key={i} value={scholarship?.scholarship_id}>
                                                                 {name}
