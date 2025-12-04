@@ -7,7 +7,6 @@ import {
     Upload,
     Brain,
     TrendingUp,
-    Calendar,
     Star,
     Quote,
     ArrowRight,

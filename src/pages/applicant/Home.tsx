@@ -17,7 +17,7 @@ import {
     ArrowRight,
     Info,
     Library,
-    Send, Search
+    Send, Search, AlertCircle
 } from "lucide-react";
 
 import type { ApplicationStatus } from "../../interfaces/application_status.ts";

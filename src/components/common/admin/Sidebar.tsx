@@ -181,10 +181,7 @@ const Sidebar: React.FC = () => {
                 <div className="nav-link-icon"><i data-feather="shield"></i></div>
                 Manage Accounts
               </NavLink>
-              <NavLink to="/admin/system/logs" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
-                <div className="nav-link-icon"><i data-feather="file-text"></i></div>
-                System Logs
-              </NavLink>
+
               <NavLink to="/admin/system/backups" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
                 <div className="nav-link-icon"><i data-feather="database"></i></div>
                 Backup & Restore

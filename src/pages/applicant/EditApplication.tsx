@@ -409,13 +409,14 @@ const EditApplication = () => {
         // Append application ID
         data.append('application_id', application_id || '');
 
-        // Append all simple fields
+        // Append simple fields
         Object.entries(formData).forEach(([key, value]) => {
-            if (typeof value !== 'object' || value instanceof File || value === null) {
-                data.append(key, value ?? '');
+            if (key !== 'father' && key !== 'mother' && key !== 'gradesList' && key !== 'itr' && key !== 'grades') {
+                data.append(key, value as string);
             }
         });
 
+        // Append Nested Fields
         Object.entries(formData.father).forEach(([key, value]) => {
             data.append(`father[${key}]`, String(value ?? ''));
         });
@@ -424,14 +425,19 @@ const EditApplication = () => {
             data.append(`mother[${key}]`, String(value ?? ''));
         });
 
-        // Files (only if new files uploaded)
+        // Append Files (Only if they exist)
         if (formData.itr) data.append('itr', formData.itr);
         if (formData.grades) data.append('grades', formData.grades);
 
+        // FIX: Filter and Validate Grades before sending
         if (grades && grades.length > 0) {
-            data.append('gradesList', JSON.stringify(grades));
+            const validGrades = grades.filter(g =>
+                g.subject.trim() !== "" &&
+                g.grade.toString().trim() !== "" &&
+                !isNaN(parseFloat(g.grade))
+            );
+            data.append('gradesList', JSON.stringify(validGrades));
         }
-
         try {
             const res = await fetch(`${API_BASE_URL}/api/application/update/${application_id}`, {
                 method: 'PUT',
