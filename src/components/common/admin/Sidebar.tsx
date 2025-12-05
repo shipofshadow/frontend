@@ -246,7 +246,12 @@ const Sidebar: React.FC = () => {
           <div className="sidenav-footer">
             <div className="sidenav-footer-content">
               <div className="sidenav-footer-subtitle">Logged in as:</div>
-              <div className={`sidenav-footer-title ${roleInfo.color}`}>
+              <div className="sidenav-footer-title">
+                {user?.profile?.first_name && user?.profile?.last_name
+                  ? `${user.profile.first_name} ${user.profile.last_name}`
+                  : user?.username || 'User'}
+              </div>
+              <div className={`sidenav-footer-role small ${roleInfo.color}`}>
                 {roleInfo.icon} {roleInfo.label}
               </div>
               {roleInfo.campus && (
