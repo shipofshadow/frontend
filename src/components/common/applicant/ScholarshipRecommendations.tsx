@@ -1,19 +1,29 @@
-import  { useState } from 'react';
-import { Star, Target, ArrowRight, Eye, Award, TrendingUp, Filter, Clock } from "lucide-react";
-
-interface RecommendedScholarship {
-    scholarship_name: string;
-    scholarship_description: string;
-    grant_amount: number | null;
-    score: number; // match %
-}
+import { useState, useCallback } from 'react';
+import { Star, Target, ArrowRight, Eye, Award, TrendingUp, Filter, Clock, Sparkles } from "lucide-react";
+import { useAuth } from '../../../context/AuthContext';
+import alertService from '../../../services/alertService';
+import MatchExplanation from './MatchExplanation';
+import type { MatchExplanation as MatchExplanationType, RecommendedScholarship } from '../../../interfaces/alert';
 
 interface Props {
     recommendedScholarships: RecommendedScholarship[];
 }
 
+// Helper to check if scholarship was added in last 7 days
+const isNewScholarship = (createdAt?: string): boolean => {
+    if (!createdAt) return false;
+    const createdDate = new Date(createdAt);
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    return createdDate > sevenDaysAgo;
+};
+
 export default function ScholarshipRecommendations({ recommendedScholarships }: Props) {
+    const { token } = useAuth();
     const [activeFilter, setActiveFilter] = useState('all');
+    const [expandedCards, setExpandedCards] = useState<Record<number, boolean>>({});
+    const [explanations, setExplanations] = useState<Record<number, MatchExplanationType | null>>({});
+    const [loadingExplanations, setLoadingExplanations] = useState<Record<number, boolean>>({});
 
     const highMatch = recommendedScholarships.filter(s => s.score >= 90);
     const goodMatch = recommendedScholarships.filter(s => s.score >= 70 && s.score < 90);
@@ -25,9 +35,34 @@ export default function ScholarshipRecommendations({ recommendedScholarships }: 
         return { level: 'other', color: 'info', label: 'Potential Match' };
     };
 
+    const handleToggleExplanation = useCallback(async (scholarshipId: number) => {
+        const isCurrentlyExpanded = expandedCards[scholarshipId];
+        
+        setExpandedCards(prev => ({
+            ...prev,
+            [scholarshipId]: !isCurrentlyExpanded
+        }));
+
+        // Fetch explanation only if expanding and not already loaded
+        if (!isCurrentlyExpanded && !explanations[scholarshipId] && token) {
+            setLoadingExplanations(prev => ({ ...prev, [scholarshipId]: true }));
+            try {
+                const explanation = await alertService.getMatchExplanation(token, scholarshipId);
+                setExplanations(prev => ({ ...prev, [scholarshipId]: explanation }));
+            } catch (error) {
+                console.error('Failed to fetch match explanation:', error);
+                setExplanations(prev => ({ ...prev, [scholarshipId]: null }));
+            } finally {
+                setLoadingExplanations(prev => ({ ...prev, [scholarshipId]: false }));
+            }
+        }
+    }, [expandedCards, explanations, token]);
+
     const renderScholarshipCard = (scholarship: RecommendedScholarship, index: number) => {
         const match = getMatchLevel(scholarship.score);
         const isHighMatch = scholarship.score >= 90;
+        const scholarshipId = scholarship.scholarship_id;
+        const isNew = isNewScholarship(scholarship.created_at);
 
         return (
             <div
@@ -75,6 +110,17 @@ export default function ScholarshipRecommendations({ recommendedScholarships }: 
                         </div>
                     )}
 
+                    {/* NEW Badge for recently added scholarships */}
+                    {isNew && !isHighMatch && (
+                        <div className="position-absolute top-0 start-0 mt-3 ms-3">
+                            <div className="badge text-white px-2 py-1 rounded-pill d-flex align-items-center gap-1"
+                                 style={{ fontSize: '0.7rem', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}>
+                                <Sparkles size={10} />
+                                NEW
+                            </div>
+                        </div>
+                    )}
+
                     <div className="card-body p-4">
                         {/* Header */}
                         <div className="mb-3">
@@ -117,9 +163,19 @@ export default function ScholarshipRecommendations({ recommendedScholarships }: 
                             </div>
                         </div>
 
+                        {/* Match Explanation Section */}
+                        {scholarshipId && (
+                            <MatchExplanation
+                                explanation={scholarship.match_explanation || explanations[scholarshipId]}
+                                isLoading={loadingExplanations[scholarshipId]}
+                                isExpanded={expandedCards[scholarshipId]}
+                                onToggle={() => handleToggleExplanation(scholarshipId)}
+                            />
+                        )}
+
                         {/* Action Button */}
                         <button
-                            className={`btn ${isHighMatch ? 'btn-success' : 'btn-outline-primary'} w-100 d-flex align-items-center justify-content-center gap-2`}
+                            className={`btn ${isHighMatch ? 'btn-success' : 'btn-outline-primary'} w-100 d-flex align-items-center justify-content-center gap-2 mt-3`}
                             style={{ borderRadius: '8px' }}
                         >
                             {isHighMatch ? (

@@ -58,6 +58,9 @@ import BulkAnalysisTool from "../pages/admin/BulkAnalysisTool.tsx";
 import BackupRestore from "../pages/admin/BackupRestore.tsx";
 import ManageAnnouncements from "../pages/admin/ManageAnnouncements.tsx";
 import PotentialApplicants from "../pages/admin/students/PotentialApplicants.tsx";
+import ScholarshipAlerts from "../pages/student/ScholarshipAlerts.tsx";
+import AlertSettings from "../pages/student/AlertSettings.tsx";
+
 export function AuthRedirect() {
     const { isAuthenticated, isAdmin, isStudent } = useAuth();
 
@@ -157,6 +160,8 @@ const AppRoutes: React.FC = () => {
                     <Route path="prequalify" element={<Prequalify />} />
                     <Route path="application/:application_id" element={<Application />} />
                     <Route path="application/:application_id/edit" element={<EditApplication />} />
+                    <Route path="alerts" element={<ScholarshipAlerts />} />
+                    <Route path="settings/alerts" element={<AlertSettings />} />
                 </Route>
             </Route>
 
