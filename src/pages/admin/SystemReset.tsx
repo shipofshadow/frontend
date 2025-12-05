@@ -8,21 +8,34 @@ import {
     Database,
     Users,
     FileText,
-    Shield
+    Shield,
+    Settings,
+    GraduationCap,
+    Calendar,
+    Bell
 } from 'lucide-react';
 import Swal from 'sweetalert2';
 import { useAuth } from '../../context/AuthContext.tsx';
 import { API_BASE_URL } from '../../config.ts';
 
 interface ResetPreview {
-    users_count: number;
-    applications_count: number;
-    documents_count: number;
-    notifications_count: number;
-    activity_logs_count: number;
-    backups_count: number;
-    total_records: number;
-    warning: string;
+    success: boolean;
+    will_delete: {
+        applications?: number;
+        students?: number;
+        users?: number;
+        notifications?: number;
+        announcements?: number;
+        scholarships?: number;
+        academic_years?: number;
+        semesters?: number;
+        [key: string]: number | undefined;
+    };
+    will_preserve: {
+        admin_users?: number;
+        fuzzy_variables?: number;
+        configs?: number;
+    };
 }
 
 const SystemReset = () => {
@@ -53,8 +66,12 @@ const SystemReset = () => {
                 throw new Error('Failed to fetch reset preview');
             }
             
-            const data = await res.json();
-            setPreview(data);
+            const data: ResetPreview = await res.json();
+            if (data.success) {
+                setPreview(data);
+            } else {
+                throw new Error('Failed to load preview data');
+            }
         } catch (err) {
             setError(err instanceof Error ? err.message : 'An error occurred');
         } finally {
@@ -76,6 +93,9 @@ const SystemReset = () => {
             return;
         }
 
+        // Calculate total from will_delete
+        const totalRecords = preview ? Object.values(preview.will_delete).reduce((sum, val) => (sum || 0) + (val || 0), 0) : 0;
+
         const firstConfirm = await Swal.fire({
             title: '⚠️ Final Warning',
             html: `
@@ -83,11 +103,13 @@ const SystemReset = () => {
                     <p class="text-danger fw-bold">You are about to reset the entire system!</p>
                     <p>This will permanently delete:</p>
                     <ul>
-                        <li><strong>${preview?.users_count || 0}</strong> users</li>
-                        <li><strong>${preview?.applications_count || 0}</strong> applications</li>
-                        <li><strong>${preview?.documents_count || 0}</strong> documents</li>
-                        <li><strong>${preview?.total_records || 0}</strong> total records</li>
+                        <li><strong>${preview?.will_delete.users || 0}</strong> users</li>
+                        <li><strong>${preview?.will_delete.applications || 0}</strong> applications</li>
+                        <li><strong>${preview?.will_delete.students || 0}</strong> students</li>
+                        <li><strong>${preview?.will_delete.scholarships || 0}</strong> scholarships</li>
+                        <li><strong>${totalRecords}</strong> total records</li>
                     </ul>
+                    <p class="text-success"><strong>Preserved:</strong> ${preview?.will_preserve.admin_users || 0} admin users, ${preview?.will_preserve.fuzzy_variables || 0} fuzzy variables, ${preview?.will_preserve.configs || 0} configs</p>
                     <p class="text-danger"><strong>This action cannot be undone!</strong></p>
                 </div>
             `,
@@ -111,6 +133,9 @@ const SystemReset = () => {
                     'Content-Type': 'application/json',
                     Authorization: `Bearer ${token}`,
                 },
+                body: JSON.stringify({
+                    confirmation: 'RESET_SYSTEM_CONFIRM'
+                }),
             });
 
             if (!res.ok) {
@@ -241,55 +266,81 @@ const SystemReset = () => {
                                         <div className="col-md-4">
                                             <div className="p-3 bg-light rounded text-center">
                                                 <Users size={32} className="text-primary mb-2" />
-                                                <h3 className="mb-0 fw-bold">{preview.users_count}</h3>
+                                                <h3 className="mb-0 fw-bold">{preview.will_delete.users || 0}</h3>
                                                 <small className="text-muted">Users</small>
                                             </div>
                                         </div>
                                         <div className="col-md-4">
                                             <div className="p-3 bg-light rounded text-center">
+                                                <GraduationCap size={32} className="text-info mb-2" />
+                                                <h3 className="mb-0 fw-bold">{preview.will_delete.students || 0}</h3>
+                                                <small className="text-muted">Students</small>
+                                            </div>
+                                        </div>
+                                        <div className="col-md-4">
+                                            <div className="p-3 bg-light rounded text-center">
                                                 <FileText size={32} className="text-success mb-2" />
-                                                <h3 className="mb-0 fw-bold">{preview.applications_count}</h3>
+                                                <h3 className="mb-0 fw-bold">{preview.will_delete.applications || 0}</h3>
                                                 <small className="text-muted">Applications</small>
                                             </div>
                                         </div>
                                         <div className="col-md-4">
                                             <div className="p-3 bg-light rounded text-center">
-                                                <FileText size={32} className="text-warning mb-2" />
-                                                <h3 className="mb-0 fw-bold">{preview.documents_count}</h3>
-                                                <small className="text-muted">Documents</small>
-                                            </div>
-                                        </div>
-                                        <div className="col-md-4">
-                                            <div className="p-3 bg-light rounded text-center">
-                                                <Database size={32} className="text-info mb-2" />
-                                                <h3 className="mb-0 fw-bold">{preview.notifications_count}</h3>
+                                                <Bell size={32} className="text-warning mb-2" />
+                                                <h3 className="mb-0 fw-bold">{preview.will_delete.notifications || 0}</h3>
                                                 <small className="text-muted">Notifications</small>
                                             </div>
                                         </div>
                                         <div className="col-md-4">
                                             <div className="p-3 bg-light rounded text-center">
                                                 <Database size={32} className="text-secondary mb-2" />
-                                                <h3 className="mb-0 fw-bold">{preview.activity_logs_count}</h3>
-                                                <small className="text-muted">Activity Logs</small>
+                                                <h3 className="mb-0 fw-bold">{preview.will_delete.scholarships || 0}</h3>
+                                                <small className="text-muted">Scholarships</small>
                                             </div>
                                         </div>
                                         <div className="col-md-4">
                                             <div className="p-3 bg-light rounded text-center">
-                                                <Database size={32} className="text-dark mb-2" />
-                                                <h3 className="mb-0 fw-bold">{preview.backups_count}</h3>
-                                                <small className="text-muted">Backups</small>
+                                                <Calendar size={32} className="text-dark mb-2" />
+                                                <h3 className="mb-0 fw-bold">{preview.will_delete.academic_years || 0}</h3>
+                                                <small className="text-muted">Academic Years</small>
                                             </div>
                                         </div>
                                     </div>
 
+                                    {/* Total to delete */}
                                     <div className="mt-4 p-3 bg-danger bg-opacity-10 rounded border border-danger">
                                         <div className="d-flex align-items-center gap-2 text-danger">
                                             <AlertTriangle size={20} />
-                                            <strong>Total Records to Delete: {preview.total_records}</strong>
+                                            <strong>Total Records to Delete: {Object.values(preview.will_delete).reduce((sum, val) => (sum || 0) + (val || 0), 0)}</strong>
                                         </div>
-                                        {preview.warning && (
-                                            <p className="mb-0 mt-2 text-danger small">{preview.warning}</p>
-                                        )}
+                                    </div>
+
+                                    {/* Preserved items */}
+                                    <div className="mt-3 p-3 bg-success bg-opacity-10 rounded border border-success">
+                                        <h6 className="text-success fw-bold mb-2 d-flex align-items-center gap-2">
+                                            <Settings size={18} />
+                                            Data to be Preserved
+                                        </h6>
+                                        <div className="row g-2">
+                                            <div className="col-md-4">
+                                                <div className="d-flex align-items-center gap-2">
+                                                    <Shield size={16} className="text-success" />
+                                                    <span className="small">{preview.will_preserve.admin_users || 0} Admin Users</span>
+                                                </div>
+                                            </div>
+                                            <div className="col-md-4">
+                                                <div className="d-flex align-items-center gap-2">
+                                                    <Database size={16} className="text-success" />
+                                                    <span className="small">{preview.will_preserve.fuzzy_variables || 0} Fuzzy Variables</span>
+                                                </div>
+                                            </div>
+                                            <div className="col-md-4">
+                                                <div className="d-flex align-items-center gap-2">
+                                                    <Settings size={16} className="text-success" />
+                                                    <span className="small">{preview.will_preserve.configs || 0} Configs</span>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
