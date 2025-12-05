@@ -40,6 +40,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const [isLoading, setIsLoading] = useState<boolean>(!!token);
     const [sessionExpired, setSessionExpired] = useState<boolean>(false);
 
+    // isAdmin includes faculty as they have access to admin routes (with campus restrictions)
     const isAdmin = user?.role === "admin" || user?.role === "bitress" || user?.role === "faculty";
     const isStudent = user?.role === "student";
     const isBitress = user?.role === "bitress";
