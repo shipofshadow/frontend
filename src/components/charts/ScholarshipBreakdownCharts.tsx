@@ -3,6 +3,7 @@ import Chart from 'react-apexcharts';
 import { API_BASE_URL } from '../../config';
 import { BarChart3, Users, Building, GraduationCap, BookOpen, Award, RefreshCw, AlertCircle } from 'lucide-react';
 import type {ApexOptions} from "apexcharts";
+import { useAuth } from "../../context/AuthContext.tsx";
 
 interface ApplicantData {
     course: string;
@@ -42,6 +43,7 @@ interface Course {
 }
 
 const ApplicantsBarChart = () => {
+    const { token } = useAuth();
     // Data states
     const [data, setData] = useState<ApplicantData[]>([]);
     const [semesters, setSemesters] = useState<Semester[]>([]);
@@ -179,7 +181,9 @@ const ApplicantsBarChart = () => {
 
     const fetchCampuses = async () => {
         try {
-            const res = await fetch(`${API_BASE_URL}/api/campuses`);
+            const res = await fetch(`${API_BASE_URL}/api/campus`, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
             if (!res.ok) throw new Error(`Failed to fetch campuses: ${res.statusText}`);
 
             const data: Campus[] = await res.json();
@@ -192,7 +196,9 @@ const ApplicantsBarChart = () => {
 
     const fetchDepartments = async () => {
         try {
-            const res = await fetch(`${API_BASE_URL}/api/departments`);
+            const res = await fetch(`${API_BASE_URL}/api/campus/department`, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
             if (!res.ok) throw new Error(`Failed to fetch departments: ${res.statusText}`);
 
             const data: Department[] = await res.json();
@@ -205,7 +211,9 @@ const ApplicantsBarChart = () => {
 
     const fetchCourses = async () => {
         try {
-            const res = await fetch(`${API_BASE_URL}/api/courses`);
+            const res = await fetch(`${API_BASE_URL}/api/campus/course`, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
             if (!res.ok) throw new Error(`Failed to fetch courses: ${res.statusText}`);
 
             const data: Course[] = await res.json();

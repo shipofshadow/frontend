@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import type { Course } from '../../interfaces/meta.ts';
 import { API_BASE_URL } from '../../config.ts';
+import { useAuth } from '../../context/AuthContext.tsx';
 
 interface Props {
     departmentId: string;
@@ -11,19 +12,21 @@ interface Props {
 
 const CourseSelect: React.FC<Props> = ({ departmentId, value, onChange }) => {
     const [courses, setCourses] = useState<Course[]>([]);
+    const { token } = useAuth();
 
     useEffect(() => {
         if (departmentId) {
             axios
-                .get<Course[]>(`${API_BASE_URL}/api/courses`, {
+                .get<Course[]>(`${API_BASE_URL}/api/campus/course`, {
                     params: { department_id: departmentId },
+                    headers: { Authorization: `Bearer ${token}` },
                 })
                 .then((res) => setCourses(res.data))
                 .catch((err) => console.error('Failed to load courses', err));
         } else {
             setCourses([]);
         }
-    }, [departmentId]);
+    }, [departmentId, token]);
 
     return (
         <select

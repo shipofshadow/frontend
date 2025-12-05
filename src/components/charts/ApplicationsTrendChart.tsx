@@ -3,6 +3,7 @@ import Chart from 'react-apexcharts';
 import { API_BASE_URL } from "../../config.ts";
 import { TrendingUp, AlertCircle, RefreshCw, BarChart3, GraduationCap, BookOpen, Building, Users, Award } from 'lucide-react';
 import type {ApexOptions} from "apexcharts";
+import { useAuth } from "../../context/AuthContext.tsx";
 
 interface AcademicYear {
     id: number;
@@ -50,6 +51,7 @@ interface ChartSeries {
 }
 
 const ApplicationsTrendChart = () => {
+    const { token } = useAuth();
     const [selectedAcademicYearId, setSelectedAcademicYearId] = useState<number | null>(null);
     const [selectedSemesterId, setSelectedSemesterId] = useState<number | null>(null);
     const [selectedCampusId, setSelectedCampusId] = useState<number | null>(null);
@@ -208,7 +210,9 @@ const ApplicationsTrendChart = () => {
     const fetchCampuses = async () => {
         setCampusesLoading(true);
         try {
-            const res = await fetch(`${API_BASE_URL}/api/campuses`);
+            const res = await fetch(`${API_BASE_URL}/api/campus`, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
             if (!res.ok) {
                 throw new Error(`Failed to fetch campuses: ${res.status} ${res.statusText}`);
             }
@@ -227,7 +231,9 @@ const ApplicationsTrendChart = () => {
     const fetchDepartments = async () => {
         setDepartmentsLoading(true);
         try {
-            const res = await fetch(`${API_BASE_URL}/api/departments`);
+            const res = await fetch(`${API_BASE_URL}/api/campus/department`, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
             if (!res.ok) {
                 throw new Error(`Failed to fetch departments: ${res.status} ${res.statusText}`);
             }
@@ -246,7 +252,9 @@ const ApplicationsTrendChart = () => {
     const fetchCourses = async () => {
         setCoursesLoading(true);
         try {
-            const res = await fetch(`${API_BASE_URL}/api/courses`);
+            const res = await fetch(`${API_BASE_URL}/api/campus/course`, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
             if (!res.ok) {
                 throw new Error(`Failed to fetch courses: ${res.status} ${res.statusText}`);
             }

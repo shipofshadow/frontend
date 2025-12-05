@@ -210,7 +210,9 @@ const ScholarshipDashboard = () => {
 
 
     useEffect(() => {
-        fetch(`${API_BASE_URL}/api/courses`)
+        fetch(`${API_BASE_URL}/api/campus/course`, {
+            headers: { Authorization: `Bearer ${token}` },
+        })
             .then((res) => res.json())
             .then((data: Course[]) => {
                 const mapped: Record<number, Course> = {};
@@ -222,7 +224,7 @@ const ScholarshipDashboard = () => {
                 setCourses(mapped);
             })
             .catch((err) => console.error("Failed to fetch courses", err));
-    }, []);
+    }, [token]);
 
 
 

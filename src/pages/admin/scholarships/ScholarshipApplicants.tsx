@@ -129,7 +129,9 @@ const ScholarshipApplicants: React.FC = () => {
     // Fetch courses for display
     const fetchCourses = async () => {
         try {
-            const response = await fetch(`${API_BASE_URL}/api/courses`);
+            const response = await fetch(`${API_BASE_URL}/api/campus/course`, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
             const data: Course[] = await response.json();
             const mapped: Record<number, Course> = {};
             data.forEach((course) => {

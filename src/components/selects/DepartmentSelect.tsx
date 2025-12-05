@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import type { Department } from '../../interfaces/meta.ts';
 import { API_BASE_URL } from '../../config.ts';
+import { useAuth } from '../../context/AuthContext.tsx';
 
 interface Props {
     campusId: string;
@@ -11,19 +12,21 @@ interface Props {
 
 const DepartmentSelect: React.FC<Props> = ({ campusId, value, onChange }) => {
     const [departments, setDepartments] = useState<Department[]>([]);
+    const { token } = useAuth();
 
     useEffect(() => {
         if (campusId) {
             axios
-                .get<Department[]>(`${API_BASE_URL}/api/departments`, {
+                .get<Department[]>(`${API_BASE_URL}/api/campus/department`, {
                     params: { campus_id: campusId },
+                    headers: { Authorization: `Bearer ${token}` },
                 })
                 .then((res) => setDepartments(res.data))
                 .catch((err) => console.error('Failed to load departments', err));
         } else {
             setDepartments([]);
         }
-    }, [campusId]);
+    }, [campusId, token]);
 
     return (
         <select
