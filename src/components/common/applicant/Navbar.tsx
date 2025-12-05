@@ -2,6 +2,7 @@ import React from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../../context/AuthContext';
 import { NotificationBell } from './NotificationBell.tsx';
+import { ScholarshipAlertBell } from './ScholarshipAlertBell.tsx';
 import {API_BASE_URL} from "../../../config.ts";
 
 const Navbar: React.FC = () => {
@@ -110,17 +111,25 @@ const Navbar: React.FC = () => {
                     <ul className="navbar-nav ms-auto align-items-lg-center">
                         {isAuthenticated && (
                             <>
-                                {/* Mobile: direct notifications link */}
+                                {/* Mobile: direct links */}
                                 <li className="nav-item d-lg-none">
                                     <Link to="/applicant/notifications" className="nav-link d-flex align-items-center gap-2">
                                         <i className="fa-regular fa-bell fa-sm fa-fw"></i>
                                         <span>Notifications</span>
                                     </Link>
                                 </li>
+                                <li className="nav-item d-lg-none">
+                                    <Link to="/applicant/alerts" className="nav-link d-flex align-items-center gap-2">
+                                        <i className="fa-solid fa-graduation-cap fa-sm fa-fw"></i>
+                                        <span>Scholarship Alerts</span>
+                                    </Link>
+                                </li>
 
-                                {/* Desktop: NotificationBell (unchanged functionality) */}
+                                {/* Desktop: NotificationBell */}
                                 <NotificationBell />
 
+                                {/* Desktop: ScholarshipAlertBell */}
+                                <ScholarshipAlertBell />
 
                                 {/* Profile dropdown */}
                                 <li className="nav-item dropdown ms-lg-3">

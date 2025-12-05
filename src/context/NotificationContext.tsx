@@ -44,7 +44,8 @@ const mapServerToClient = (payload: any): NotificationData => {
             payload.type === 'application_denied' ? 'error' :
                 payload.type === 'system_announcement' ? 'info' :
                     payload.type === 'scholarship_recommended' ? 'success' :
-                        ['urgent', 'high'].includes(payload.priority) ? 'warning' : 'info';
+                        payload.type === 'scholarship_match' ? 'success' :
+                            ['urgent', 'high'].includes(payload.priority) ? 'warning' : 'info';
 
     return {
         id: String(payload.id ?? payload.notification_id ?? Date.now()),
@@ -183,6 +184,22 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
                 const name = data.scholarship_name || data?.metadata?.scholarship_name || 'a scholarship';
                 const message = `You've been recommended for ${name}!`;
                 const mapped = mapServerToClient({ ...data, message });
+                upsertNotifications(mapped);
+                setUnreadCount(prev => prev + 1);
+                notyf.success(message);
+            });
+
+            // New scholarship match alert
+            newSocket.on('new_scholarship_match', (data) => {
+                const name = data.scholarship_name || 'a scholarship';
+                const score = data.match_score || data.score || 0;
+                const message = `New Scholarship Match: ${name} - ${score}% match!`;
+                const mapped = mapServerToClient({ 
+                    ...data, 
+                    message,
+                    type: 'scholarship_match',
+                    title: 'New Scholarship Match!'
+                });
                 upsertNotifications(mapped);
                 setUnreadCount(prev => prev + 1);
                 notyf.success(message);

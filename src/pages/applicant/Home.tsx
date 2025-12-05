@@ -17,7 +17,8 @@ import {
     ArrowRight,
     Info,
     Library,
-    Send, Search, AlertCircle
+    Send, Search, AlertCircle,
+    Sparkles
 } from "lucide-react";
 
 import type { ApplicationStatus } from "../../interfaces/application_status.ts";
@@ -28,6 +29,7 @@ import { fetchSemester } from "../../store/slices/semesterSlice.ts";
 import type { AppDispatch, RootState } from "../../store/slices";
 import {Link} from "react-router-dom";
 import {API_BASE_URL} from "../../config.ts";
+import useScholarshipAlerts from "../../hooks/useScholarshipAlerts.ts";
 
 interface Announcement {
     id: number;
@@ -43,6 +45,7 @@ const Home = () => {
     const [announcements, setAnnouncements] = useState<Announcement[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const dispatch = useDispatch<AppDispatch>();
+    const { alerts, unreadAlertCount } = useScholarshipAlerts();
     const { current } = useSelector((state: RootState) => state.semester);
 
     const applicant = applications?.applications?.[0] ?? null;
@@ -565,6 +568,64 @@ const Home = () => {
                             </div>
                         </section>
 
+                        {/* New Matches For You Widget */}
+                        <section className="card shadow-sm border-0 rounded-4 mb-4">
+                            <div 
+                                className="card-header border-0 rounded-top-4"
+                                style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}
+                            >
+                                <div className="d-flex align-items-center justify-content-between">
+                                    <div className="d-flex align-items-center text-white">
+                                        <Sparkles className="me-2" size={20} />
+                                        <h5 className="fw-bold mb-0">New Matches For You</h5>
+                                    </div>
+                                    {unreadAlertCount > 0 && (
+                                        <span className="badge bg-white text-primary rounded-pill">{unreadAlertCount}</span>
+                                    )}
+                                </div>
+                            </div>
+                            <div className="card-body">
+                                {alerts.length > 0 ? (
+                                    <>
+                                        <div className="list-group list-group-flush">
+                                            {alerts.slice(0, 3).map((alert) => {
+                                                const matchColor = alert.match_score >= 90 ? 'success' : alert.match_score >= 75 ? 'warning' : 'info';
+                                                return (
+                                                    <div key={alert.id} className="list-group-item px-0 py-3 border-0">
+                                                        <div className="d-flex align-items-center justify-content-between">
+                                                            <div className="flex-grow-1 me-3">
+                                                                <h6 className="fw-bold mb-1 text-truncate" style={{ maxWidth: '200px' }}>
+                                                                    {alert.scholarship_name}
+                                                                </h6>
+                                                                {alert.top_matching_factors && alert.top_matching_factors.length > 0 && (
+                                                                    <small className="text-muted">
+                                                                        <CheckCircle size={12} className="me-1 text-success" />
+                                                                        {alert.top_matching_factors[0]}
+                                                                    </small>
+                                                                )}
+                                                            </div>
+                                                            <span className={`badge bg-${matchColor} ${matchColor === 'warning' ? 'text-dark' : ''} rounded-pill px-2 py-1`}>
+                                                                {alert.match_score}%
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                        <Link to="/applicant/alerts" className="btn btn-outline-primary w-100 mt-3 d-flex align-items-center justify-content-center gap-2">
+                                            <Award size={18} />
+                                            View All Alerts
+                                        </Link>
+                                    </>
+                                ) : (
+                                    <div className="text-center py-4 text-muted">
+                                        <Sparkles size={32} className="mb-2 opacity-25" />
+                                        <p className="mb-0 small">No scholarship matches yet.</p>
+                                        <small>Complete your profile for better matches!</small>
+                                    </div>
+                                )}
+                            </div>
+                        </section>
 
                         {/* Recent Announcements - DYNAMIC */}
                         <section className="card shadow-sm border-0 rounded-4 mb-4">
