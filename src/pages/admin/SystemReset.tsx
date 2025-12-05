@@ -93,9 +93,6 @@ const SystemReset = () => {
             return;
         }
 
-        // Calculate total from will_delete
-        const totalRecords = preview ? Object.values(preview.will_delete).reduce((sum, val) => (sum || 0) + (val || 0), 0) : 0;
-
         const firstConfirm = await Swal.fire({
             title: '⚠️ Final Warning',
             html: `
@@ -107,7 +104,7 @@ const SystemReset = () => {
                         <li><strong>${preview?.will_delete.applications || 0}</strong> applications</li>
                         <li><strong>${preview?.will_delete.students || 0}</strong> students</li>
                         <li><strong>${preview?.will_delete.scholarships || 0}</strong> scholarships</li>
-                        <li><strong>${totalRecords}</strong> total records</li>
+                        <li><strong>${totalRecordsToDelete}</strong> total records</li>
                     </ul>
                     <p class="text-success"><strong>Preserved:</strong> ${preview?.will_preserve.admin_users || 0} admin users, ${preview?.will_preserve.fuzzy_variables || 0} fuzzy variables, ${preview?.will_preserve.configs || 0} configs</p>
                     <p class="text-danger"><strong>This action cannot be undone!</strong></p>
@@ -170,6 +167,11 @@ const SystemReset = () => {
     };
 
     const isConfirmValid = confirmChecked && confirmText === 'RESET';
+
+    // Calculate total records from will_delete
+    const totalRecordsToDelete = preview 
+        ? Object.values(preview.will_delete).reduce((sum, val) => (sum || 0) + (val || 0), 0) 
+        : 0;
 
     if (!isBitress) {
         return (
@@ -311,7 +313,7 @@ const SystemReset = () => {
                                     <div className="mt-4 p-3 bg-danger bg-opacity-10 rounded border border-danger">
                                         <div className="d-flex align-items-center gap-2 text-danger">
                                             <AlertTriangle size={20} />
-                                            <strong>Total Records to Delete: {Object.values(preview.will_delete).reduce((sum, val) => (sum || 0) + (val || 0), 0)}</strong>
+                                            <strong>Total Records to Delete: {totalRecordsToDelete}</strong>
                                         </div>
                                     </div>
 
