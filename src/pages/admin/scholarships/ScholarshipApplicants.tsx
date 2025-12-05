@@ -23,12 +23,7 @@ import { DataTable } from "simple-datatables";
 import "simple-datatables/dist/style.css";
 import type { Applicant } from "../../../interfaces/applicant.ts";
 import type { Course } from "../../../interfaces/meta.ts";
-
-export interface GradeEntry {
-    grade: number;
-    subject_name: string;
-    units: number;
-}
+import type { GradeEntry } from "../../../interfaces/GradeEntry.ts";
 
 export interface ApplicantData {
     application_id: number;
@@ -267,9 +262,9 @@ const ScholarshipApplicants: React.FC = () => {
         loadApplicantData();
     }, [applications.length]);
 
-    // Initialize DataTable
+    // Initialize DataTable - only when applications are first loaded
     useEffect(() => {
-        if (tableRef.current && filteredApplications.length > 0 && !datatable) {
+        if (tableRef.current && applications.length > 0 && !datatable) {
             const dt = new DataTable(tableRef.current, {
                 searchable: false, // We use custom search
                 perPageSelect: [10, 25, 50, 100],
@@ -281,13 +276,22 @@ const ScholarshipApplicants: React.FC = () => {
             });
             setDatatable(dt);
         }
+    }, [applications.length, datatable]);
+
+    // Cleanup DataTable on unmount
+    useEffect(() => {
         return () => {
             if (datatable) {
                 datatable.destroy();
-                setDatatable(null);
             }
         };
-    }, [filteredApplications.length]);
+    }, [datatable]);
+
+    // Handler for selecting a scholarship
+    const handleScholarshipSelect = (scholarshipId: number, amount: number) => {
+        setSelectedScholarshipId(scholarshipId);
+        setCustomAmount(amount.toString());
+    };
 
     // View applicant details
     const handleView = async (app: ApplicantData) => {
@@ -539,6 +543,17 @@ const ScholarshipApplicants: React.FC = () => {
         }
     };
 
+    // Helper function to escape CSV values
+    const escapeCSVValue = (value: string | number): string => {
+        const stringValue = String(value);
+        // If the value contains a comma, quote, or newline, wrap it in quotes
+        if (stringValue.includes(',') || stringValue.includes('"') || stringValue.includes('\n') || stringValue.includes('\r')) {
+            // Escape existing quotes by doubling them
+            return `"${stringValue.replace(/"/g, '""')}"`;
+        }
+        return stringValue;
+    };
+
     // Export to CSV
     const handleExport = () => {
         const headers = ['#', 'Name', 'Course', 'Year Level', 'GWA', 'Family Income', 'Status', 'Score', 'Classification'];
@@ -558,7 +573,9 @@ const ScholarshipApplicants: React.FC = () => {
             ];
         });
 
-        const csvContent = [headers, ...rows].map(row => row.join(',')).join('\n');
+        const csvContent = [headers, ...rows]
+            .map(row => row.map(escapeCSVValue).join(','))
+            .join('\n');
         const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
         const link = document.createElement('a');
         link.href = URL.createObjectURL(blob);
@@ -1147,11 +1164,8 @@ const ScholarshipApplicants: React.FC = () => {
                                             {recommendations[currentApplicant.id].map((rec) => (
                                                 <div key={rec.scholarship_id} className="col-12">
                                                     <div
-                                                        className={`card border-2 cursor-pointer ${selectedScholarshipId === rec.scholarship_id ? 'border-success bg-success bg-opacity-10' : ''}`}
-                                                        onClick={() => {
-                                                            setSelectedScholarshipId(rec.scholarship_id);
-                                                            setCustomAmount(rec.amount.toString());
-                                                        }}
+                                                        className={`card border-2 ${selectedScholarshipId === rec.scholarship_id ? 'border-success bg-success bg-opacity-10' : ''}`}
+                                                        onClick={() => handleScholarshipSelect(rec.scholarship_id, rec.amount)}
                                                         style={{ cursor: 'pointer' }}
                                                     >
                                                         <div className="card-body">
@@ -1162,10 +1176,7 @@ const ScholarshipApplicants: React.FC = () => {
                                                                     name="scholarshipSelection"
                                                                     id={`scholarship-${rec.scholarship_id}`}
                                                                     checked={selectedScholarshipId === rec.scholarship_id}
-                                                                    onChange={() => {
-                                                                        setSelectedScholarshipId(rec.scholarship_id);
-                                                                        setCustomAmount(rec.amount.toString());
-                                                                    }}
+                                                                    onChange={() => handleScholarshipSelect(rec.scholarship_id, rec.amount)}
                                                                 />
                                                                 <label className="form-check-label w-100" htmlFor={`scholarship-${rec.scholarship_id}`}>
                                                                     <div className="d-flex justify-content-between align-items-center">
