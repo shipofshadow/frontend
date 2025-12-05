@@ -329,7 +329,7 @@ const Settings: React.FC = () => {
                                         </div>
                                         <div className="col-12">
                                             <label className="form-label fw-medium">
-                                                <i className="far fa-phone me-1 text-primary"></i>
+                                                <i className="fas fa-phone me-1 text-primary"></i>
                                                 Contact Number
                                             </label>
                                             <input
@@ -371,7 +371,7 @@ const Settings: React.FC = () => {
                         <div className="card border-0 shadow-sm h-100">
                             <div className="card-header bg-danger text-white py-3">
                                 <h5 className="card-title mb-0 d-flex align-items-center">
-                                    <i className="far fa-shield me-2"></i>
+                                    <i className="fas fa-shield me-2"></i>
                                     Change Password
                                 </h5>
                             </div>
@@ -515,7 +515,7 @@ const Settings: React.FC = () => {
                                                 </>
                                             ) : (
                                                 <>
-                                                    <i className="far fa-shield me-2"></i>
+                                                    <i className="fas fa-shield me-2"></i>
                                                     Change Password
                                                 </>
                                             )}
