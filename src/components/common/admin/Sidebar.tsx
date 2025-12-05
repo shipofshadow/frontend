@@ -1,6 +1,6 @@
-import React, { useEffect } from 'react';
+import React, {useEffect} from 'react';
 import feather from 'feather-icons';
-import { NavLink, useLocation } from 'react-router-dom';
+import {NavLink, useLocation} from 'react-router-dom';
 import SidebarCollapse from './SidebarCollapse';
 import {useNotifications} from "../../../context/NotificationContext.tsx";
 import {useAuth} from "../../../context/AuthContext.tsx";
@@ -31,9 +31,8 @@ const Sidebar: React.FC = () => {
 
   // Faculty can access most features but not cross-campus management
   const canManageCampuses = !isFaculty; // Faculty cannot manage campuses
-  const canAccessSystemSettings = isBitress; // Only bitress can access system settings
-
-  return (
+   // Only bitress can access system settings
+    return (
       <div id="layoutSidenav_nav">
         <nav className="sidenav shadow-right sidenav-light">
           <div className="sidenav-menu">
@@ -198,7 +197,7 @@ const Sidebar: React.FC = () => {
 
 
 
-                {canAccessSystemSettings && (
+                {isBitress && (
                     <>
                         <div className="sidenav-menu-heading">System</div>
 

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { API_BASE_URL } from "../../config.ts";
+import {useAuth} from "../../context/AuthContext.tsx";
 
 type Campus = {
     id: number;
@@ -34,6 +35,8 @@ const ManageCourses = () => {
     const [selectedCampusId, setSelectedCampusId] = useState("");
     const [selectedDeptId, setSelectedDeptId] = useState("");
 
+    const {token} = useAuth();
+
     useEffect(() => {
         fetchCampuses();
         fetchCourses();
@@ -41,7 +44,9 @@ const ManageCourses = () => {
 
     const fetchCampuses = () => {
         axios
-            .get<Campus[]>(`${API_BASE_URL}/api/campus`)
+            .get<Campus[]>(`${API_BASE_URL}/api/campus`, {
+                headers: { Authorization: `Bearer ${token}` },
+            })
             .then((res) => setCampuses(res.data))
             .catch((err) => console.error("Failed to load campuses", err));
     };
@@ -52,7 +57,9 @@ const ManageCourses = () => {
             return;
         }
         axios
-            .get<Department[]>(`${API_BASE_URL}/api/campus/department?campus_id=${campusId}`)
+            .get<Department[]>(`${API_BASE_URL}/api/campus/department?campus_id=${campusId}`, {
+                headers: { Authorization: `Bearer ${token}` },
+            })
             .then((res) => setDepartments(res.data))
             .catch((err) => console.error("Failed to load departments", err));
     };
@@ -60,7 +67,9 @@ const ManageCourses = () => {
     const fetchCourses = () => {
         setLoading(true);
         axios
-            .get<Course[]>(`${API_BASE_URL}/api/campus/course`)
+            .get<Course[]>(`${API_BASE_URL}/api/campus/course`, {
+                headers: { Authorization: `Bearer ${token}` },
+            })
             .then((res) => setCourses(res.data))
             .catch((err) => console.error("Failed to load courses", err))
         setLoading(false)
@@ -96,7 +105,9 @@ const ManageCourses = () => {
 
         if (editing) {
             axios
-                .put(`${API_BASE_URL}/api/campus/course/${editing.id}`, data)
+                .put(`${API_BASE_URL}/api/campus/course/${editing.id}`, data, {
+                    headers: { Authorization: `Bearer ${token}` },
+                })
                 .then(() => {
                     fetchCourses();
                     setShowModal(false);
@@ -105,7 +116,9 @@ const ManageCourses = () => {
                 .catch((err) => console.error("Failed to update course", err));
         } else {
             axios
-                .post(`${API_BASE_URL}/api/campus/course`, data)
+                .post(`${API_BASE_URL}/api/campus/course`, data, {
+                    headers: { Authorization: `Bearer ${token}` },
+                })
                 .then(() => {
                     fetchCourses();
                     setShowModal(false);
@@ -118,7 +131,9 @@ const ManageCourses = () => {
     const handleDelete = (id: number) => {
         if (!confirm("Are you sure you want to delete this course? This action cannot be undone.")) return;
         axios
-            .delete(`${API_BASE_URL}/api/campus/course/${id}`)
+            .delete(`${API_BASE_URL}/api/campus/course/${id}`, {
+                headers: { Authorization: `Bearer ${token}` },
+            })
             .then(() => fetchCourses())
             .catch((err) => console.error("Failed to delete course", err));
     };

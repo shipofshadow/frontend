@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { API_BASE_URL } from "../../config.ts";
+import {useAuth} from "../../context/AuthContext.tsx";
 
 type Campus = {
     id: number;
@@ -23,6 +24,7 @@ const ManageDepartments = () => {
 
     const [deptName, setDeptName] = useState("");
     const [selectedCampusId, setSelectedCampusId] = useState("");
+    const {token} = useAuth();
 
     useEffect(() => {
         fetchCampuses();
@@ -31,7 +33,9 @@ const ManageDepartments = () => {
 
     const fetchCampuses = () => {
         axios
-            .get<Campus[]>(`${API_BASE_URL}/api/campus/`)
+            .get<Campus[]>(`${API_BASE_URL}/api/campus/`, {
+                headers: { Authorization: `Bearer ${token}` },
+            })
             .then((res) => setCampuses(res.data))
             .catch((err) => console.error("Failed to load campuses", err));
     };
@@ -39,7 +43,9 @@ const ManageDepartments = () => {
     const fetchDepartments = () => {
         setLoading(true);
         axios
-            .get<Department[]>(`${API_BASE_URL}/api/campus/department`)
+            .get<Department[]>(`${API_BASE_URL}/api/campus/department`, {
+                headers: { Authorization: `Bearer ${token}` },
+            })
             .then((res) => setDepartments(res.data))
             .catch((err) => console.error("Failed to load departments", err))
         setLoading(false)
@@ -65,7 +71,9 @@ const ManageDepartments = () => {
 
         if (editing) {
             axios
-                .put(`${API_BASE_URL}/api/campus/department/${editing.id}`, data)
+                .put(`${API_BASE_URL}/api/campus/department/${editing.id}`, data, {
+                    headers: { Authorization: `Bearer ${token}` },
+                })
                 .then(() => {
                     fetchDepartments();
                     setShowModal(false);
@@ -75,7 +83,9 @@ const ManageDepartments = () => {
                 .catch((err) => console.error("Failed to update department", err));
         } else {
             axios
-                .post(`${API_BASE_URL}/api/campus/department`, data)
+                .post(`${API_BASE_URL}/api/campus/department`, data, {
+                    headers: { Authorization: `Bearer ${token}` },
+                }   )
                 .then(() => {
                     fetchDepartments();
                     setShowModal(false);
@@ -89,7 +99,9 @@ const ManageDepartments = () => {
     const handleDelete = (id: number) => {
         if (!confirm("Are you sure you want to delete this department? This action cannot be undone.")) return;
         axios
-            .delete(`${API_BASE_URL}/api/campus/department/${id}`)
+            .delete(`${API_BASE_URL}/api/campus/department/${id}`, {
+                headers: { Authorization: `Bearer ${token}` },
+            })
             .then(() => fetchDepartments())
             .catch((err) => console.error("Failed to delete department", err));
     };

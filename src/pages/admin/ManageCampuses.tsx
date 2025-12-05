@@ -10,7 +10,7 @@ type Campus = {
 };
 
 const ManageCampuses = () => {
-    const { isFaculty } = useAuth();
+    const { isFaculty, token } = useAuth();
     const [campuses, setCampuses] = useState<Campus[]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -30,7 +30,9 @@ const ManageCampuses = () => {
     const fetchCampuses = () => {
         setLoading(true);
         axios
-            .get<Campus[]>(`${API_BASE_URL}/api/campus`)
+            .get<Campus[]>(`${API_BASE_URL}/api/campus`, {
+                headers: { Authorization: `Bearer ${token}` },
+            })
             .then((res) => setCampuses(res.data))
             .catch((err) => console.error("Failed to load campuses", err))
         setLoading(false)
@@ -52,7 +54,9 @@ const ManageCampuses = () => {
         if (editingCampus) {
             // Update
             axios
-                .put(`${API_BASE_URL}/api/campus/${editingCampus.id}`, { name: campusName })
+                .put(`${API_BASE_URL}/api/campus/${editingCampus.id}`, { name: campusName }, {
+                    headers: { Authorization: `Bearer ${token}` },
+                })
                 .then(() => {
                     fetchCampuses();
                     setShowModal(false);
@@ -62,7 +66,9 @@ const ManageCampuses = () => {
         } else {
             // Create
             axios
-                .post(`${API_BASE_URL}/api/campus`, { name: campusName })
+                .post(`${API_BASE_URL}/api/campus`, { name: campusName }, {
+                    headers: { Authorization: `Bearer ${token}` },
+                })
                 .then(() => {
                     fetchCampuses();
                     setShowModal(false);
@@ -75,7 +81,9 @@ const ManageCampuses = () => {
     const handleDelete = (id: number) => {
         if (!confirm("Are you sure you want to delete this campus? This action cannot be undone.")) return;
         axios
-            .delete(`${API_BASE_URL}/api/campus/${id}`)
+            .delete(`${API_BASE_URL}/api/campus/${id}`, {
+                headers: { Authorization: `Bearer ${token}` },
+            })
             .then(() => fetchCampuses())
             .catch((err) => console.error("Failed to delete campus", err));
     };
