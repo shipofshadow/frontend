@@ -597,10 +597,10 @@ const Home = () => {
                                                                 <h6 className="fw-bold mb-1 text-truncate" style={{ maxWidth: '200px' }}>
                                                                     {alert.scholarship_name}
                                                                 </h6>
-                                                                {alert.top_matching_factors && alert.top_matching_factors.length > 0 && (
+                                                                {alert.top_factors && alert.top_factors.length > 0 && (
                                                                     <small className="text-muted">
                                                                         <CheckCircle size={12} className="me-1 text-success" />
-                                                                        {alert.top_matching_factors[0]}
+                                                                        {alert.top_factors[0]}
                                                                     </small>
                                                                 )}
                                                             </div>

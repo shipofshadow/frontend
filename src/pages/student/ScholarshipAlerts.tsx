@@ -171,12 +171,12 @@ const ScholarshipAlerts = () => {
                             </div>
 
                             {/* Summary */}
-                            <p className="text-muted small mb-3">{alert.summary}</p>
+                            <p className="text-muted small mb-3">{alert.match_summary}</p>
 
                             {/* Top Matching Factors */}
-                            {alert.top_matching_factors && alert.top_matching_factors.length > 0 && (
+                            {alert.top_factors && alert.top_factors.length > 0 && (
                                 <div className="d-flex flex-wrap gap-2">
-                                    {alert.top_matching_factors.slice(0, 3).map((factor, idx) => (
+                                    {alert.top_factors.slice(0, 3).map((factor, idx) => (
                                         <span 
                                             key={idx}
                                             className="badge rounded-pill px-3 py-2"

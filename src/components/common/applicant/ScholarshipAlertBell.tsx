@@ -98,12 +98,12 @@ export function ScholarshipAlertBell() {
                                             </span>
                                         </div>
                                         <p className="text-muted small mb-0 text-truncate" style={{ maxWidth: '280px' }}>
-                                            {alert.summary || 'New scholarship match for you!'}
+                                            {alert.match_summary || 'New scholarship match for you!'}
                                         </p>
-                                        {alert.top_matching_factors && alert.top_matching_factors.length > 0 && (
+                                        {alert.top_factors && alert.top_factors.length > 0 && (
                                             <div className="mt-1">
                                                 <span className="badge bg-light text-dark me-1 small">
-                                                    {alert.top_matching_factors[0]}
+                                                    {alert.top_factors[0]}
                                                 </span>
                                             </div>
                                         )}

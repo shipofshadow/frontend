@@ -9,7 +9,7 @@ interface UseScholarshipAlertsReturn {
     unreadAlertCount: number;
     isLoading: boolean;
     error: string | null;
-    fetchAlerts: (filters?: { status?: 'all' | 'unread' | 'read'; min_score?: number }) => Promise<void>;
+    fetchAlerts: (filters?: { unread_only?: boolean }) => Promise<void>;
     markAsRead: (alertId: number) => Promise<void>;
     dismissAlert: (alertId: number) => Promise<void>;
     refreshAlerts: () => Promise<void>;
@@ -24,7 +24,7 @@ export const useScholarshipAlerts = (): UseScholarshipAlertsReturn => {
     const [error, setError] = useState<string | null>(null);
 
     const fetchAlerts = useCallback(async (
-        filters?: { status?: 'all' | 'unread' | 'read'; min_score?: number }
+        filters?: { unread_only?: boolean }
     ) => {
         if (!token) return;
         
@@ -33,10 +33,8 @@ export const useScholarshipAlerts = (): UseScholarshipAlertsReturn => {
         
         try {
             const response = await alertService.getMyAlerts(token, filters);
-            if (response.success && response.data) {
-                setAlerts(response.data.alerts || []);
-                setUnreadAlertCount(response.data.unread_count || 0);
-            }
+            setAlerts(response.alerts || []);
+            setUnreadAlertCount(response.unread_count || 0);
         } catch (err) {
             console.error('Error fetching alerts:', err);
             setError('Failed to load scholarship alerts');

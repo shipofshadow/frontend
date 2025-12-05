@@ -45,8 +45,8 @@ export interface ScholarshipAlert {
     scholarship_description?: string;
     grant_amount: number | null;
     match_score: number;
-    top_matching_factors: string[];
-    summary: string;
+    top_factors: string[];
+    match_summary: string;
     deadline?: string;
     is_read: boolean;
     created_at: string;
@@ -59,12 +59,12 @@ export interface AlertPreferences {
 }
 
 export interface AlertsResponse {
-    success: boolean;
-    data: {
-        alerts: ScholarshipAlert[];
-        total: number;
+    unread_count: number;
+    alerts: ScholarshipAlert[];
+    pagination: {
         page: number;
         limit: number;
-        unread_count: number;
+        total: number;
+        pages: number;
     };
 }

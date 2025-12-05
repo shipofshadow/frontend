@@ -7,11 +7,10 @@ export const alertService = {
      */
     getMyAlerts: async (
         token: string,
-        filters?: { status?: 'all' | 'unread' | 'read'; min_score?: number; page?: number; limit?: number }
+        filters?: { unread_only?: boolean; page?: number; limit?: number }
     ): Promise<AlertsResponse> => {
         const params = new URLSearchParams();
-        if (filters?.status) params.append('status', filters.status);
-        if (filters?.min_score) params.append('min_score', String(filters.min_score));
+        if (filters?.unread_only) params.append('unread_only', 'true');
         if (filters?.page) params.append('page', String(filters.page));
         if (filters?.limit) params.append('limit', String(filters.limit));
         
@@ -42,66 +41,42 @@ export const alertService = {
 
     /**
      * Dismiss/delete an alert
+     * TODO: Backend endpoint DELETE /api/alerts/{id} doesn't exist yet
      */
-    dismissAlert: async (token: string, alertId: number): Promise<void> => {
-        const response = await fetch(`${API_BASE_URL}/api/alerts/${alertId}`, {
-            method: 'DELETE',
-            headers: { Authorization: `Bearer ${token}` }
-        });
-        
-        if (!response.ok) {
-            throw new Error('Failed to dismiss alert');
-        }
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    dismissAlert: async (_token: string, _alertId: number): Promise<void> => {
+        console.warn('dismissAlert: Backend endpoint not implemented yet');
+        throw new Error('Not implemented: DELETE /api/alerts/{id} endpoint does not exist');
     },
 
     /**
      * Get match explanation for a specific scholarship
+     * TODO: Backend endpoint GET /api/scholarships/{id}/match-explanation doesn't exist yet
      */
-    getMatchExplanation: async (token: string, scholarshipId: number): Promise<MatchExplanation> => {
-        const response = await fetch(`${API_BASE_URL}/api/scholarships/${scholarshipId}/match-explanation`, {
-            headers: { Authorization: `Bearer ${token}` }
-        });
-        
-        if (!response.ok) {
-            throw new Error('Failed to fetch match explanation');
-        }
-        
-        const data = await response.json();
-        return data.data || data;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    getMatchExplanation: async (_token: string, _scholarshipId: number): Promise<MatchExplanation> => {
+        console.warn('getMatchExplanation: Backend endpoint not implemented yet');
+        throw new Error('Not implemented: GET /api/scholarships/{id}/match-explanation endpoint does not exist');
     },
 
     /**
      * Get user's alert preferences
+     * TODO: Backend endpoint GET /api/profile/alert-preferences doesn't exist yet
      */
-    getAlertPreferences: async (token: string): Promise<AlertPreferences> => {
-        const response = await fetch(`${API_BASE_URL}/api/profile/alert-preferences`, {
-            headers: { Authorization: `Bearer ${token}` }
-        });
-        
-        if (!response.ok) {
-            throw new Error('Failed to fetch alert preferences');
-        }
-        
-        const data = await response.json();
-        return data.data || data;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    getAlertPreferences: async (_token: string): Promise<AlertPreferences> => {
+        console.warn('getAlertPreferences: Backend endpoint not implemented yet');
+        throw new Error('Not implemented: GET /api/profile/alert-preferences endpoint does not exist');
     },
 
     /**
      * Update user's alert preferences
+     * TODO: Backend endpoint PATCH /api/profile/alert-preferences doesn't exist yet
      */
-    updateAlertPreferences: async (token: string, preferences: AlertPreferences): Promise<void> => {
-        const response = await fetch(`${API_BASE_URL}/api/profile/alert-preferences`, {
-            method: 'PATCH',
-            headers: { 
-                Authorization: `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(preferences)
-        });
-        
-        if (!response.ok) {
-            throw new Error('Failed to update alert preferences');
-        }
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    updateAlertPreferences: async (_token: string, _preferences: AlertPreferences): Promise<void> => {
+        console.warn('updateAlertPreferences: Backend endpoint not implemented yet');
+        throw new Error('Not implemented: PATCH /api/profile/alert-preferences endpoint does not exist');
     }
 };
 
