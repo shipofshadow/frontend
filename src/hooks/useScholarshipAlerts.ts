@@ -67,11 +67,15 @@ export const useScholarshipAlerts = (): UseScholarshipAlertsReturn => {
         if (!token) return;
         
         try {
+            // Find the alert before removing it to check if it was unread
+            const alertToRemove = alerts.find(a => a.id === alertId);
+            const wasUnread = alertToRemove && !alertToRemove.is_read;
+            
             await alertService.dismissAlert(token, alertId);
             setAlerts(prev => prev.filter(alert => alert.id !== alertId));
+            
             // Update unread count if the dismissed alert was unread
-            const dismissedAlert = alerts.find(a => a.id === alertId);
-            if (dismissedAlert && !dismissedAlert.is_read) {
+            if (wasUnread) {
                 setUnreadAlertCount(prev => Math.max(0, prev - 1));
             }
         } catch (err) {

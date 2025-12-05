@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { Bell, Award, TrendingUp, ArrowRight } from 'lucide-react';
 import useScholarshipAlerts from '../../../hooks/useScholarshipAlerts';
+import { getMatchScoreGradient } from './MatchExplanation';
 
 export function ScholarshipAlertBell() {
     const { alerts, unreadAlertCount, markAsRead } = useScholarshipAlerts();
@@ -79,7 +80,7 @@ export function ScholarshipAlertBell() {
                                     <div 
                                         className="rounded-2 p-2 d-flex align-items-center justify-content-center flex-shrink-0"
                                         style={{ 
-                                            background: `linear-gradient(135deg, ${getMatchBadgeColor(alert.match_score) === 'success' ? '#11998e, #38ef7d' : getMatchBadgeColor(alert.match_score) === 'warning' ? '#f093fb, #f5576c' : '#4facfe, #00f2fe'})`,
+                                            background: `linear-gradient(135deg, ${getMatchScoreGradient(alert.match_score)})`,
                                             width: '40px',
                                             height: '40px'
                                         }}

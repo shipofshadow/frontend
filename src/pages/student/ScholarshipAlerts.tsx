@@ -17,6 +17,7 @@ import { Link } from 'react-router-dom';
 import useScholarshipAlerts from '../../hooks/useScholarshipAlerts';
 import Swal from 'sweetalert2';
 import type { ScholarshipAlert } from '../../interfaces/alert';
+import { getMatchScoreGradient } from '../../components/common/applicant/MatchExplanation';
 
 type FilterType = 'all' | 'unread' | 'high_match' | 'good_match';
 
@@ -134,7 +135,7 @@ const ScholarshipAlerts = () => {
                                 <div 
                                     className="rounded-3 p-2 d-flex align-items-center justify-content-center"
                                     style={{ 
-                                        background: `linear-gradient(135deg, ${matchBadge.color === 'success' ? '#11998e, #38ef7d' : matchBadge.color === 'warning' ? '#f093fb, #f5576c' : '#4facfe, #00f2fe'})`,
+                                        background: `linear-gradient(135deg, ${getMatchScoreGradient(alert.match_score)})`,
                                         minWidth: '48px',
                                         minHeight: '48px'
                                     }}

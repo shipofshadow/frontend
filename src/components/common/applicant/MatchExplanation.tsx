@@ -24,22 +24,41 @@ interface MatchExplanationSectionProps {
     explanation: MatchExplanationType;
 }
 
+// Constants for impact level configurations
+const IMPACT_PERCENTAGES = {
+    high: 90,
+    medium: 65,
+    low: 35,
+    default: 50
+} as const;
+
+const IMPACT_COLORS = {
+    high: 'success',
+    medium: 'warning',
+    low: 'info',
+    default: 'secondary'
+} as const;
+
+// Gradient colors for score badges
+export const MATCH_SCORE_GRADIENTS = {
+    high: '#11998e, #38ef7d',      // success (green)
+    medium: '#f093fb, #f5576c',    // warning (pink/red)
+    low: '#4facfe, #00f2fe'        // info (blue)
+} as const;
+
 const getImpactColor = (impact: 'high' | 'medium' | 'low'): string => {
-    switch (impact) {
-        case 'high': return 'success';
-        case 'medium': return 'warning';
-        case 'low': return 'info';
-        default: return 'secondary';
-    }
+    return IMPACT_COLORS[impact] || IMPACT_COLORS.default;
 };
 
 const getImpactPercentage = (impact: 'high' | 'medium' | 'low'): number => {
-    switch (impact) {
-        case 'high': return 90;
-        case 'medium': return 65;
-        case 'low': return 35;
-        default: return 50;
-    }
+    return IMPACT_PERCENTAGES[impact] || IMPACT_PERCENTAGES.default;
+};
+
+// Helper to get gradient based on match score
+export const getMatchScoreGradient = (score: number): string => {
+    if (score >= 90) return MATCH_SCORE_GRADIENTS.high;
+    if (score >= 75) return MATCH_SCORE_GRADIENTS.medium;
+    return MATCH_SCORE_GRADIENTS.low;
 };
 
 const StrengthFactorItem = ({ factor }: { factor: StrengthFactor }) => {
@@ -252,7 +271,7 @@ export default function MatchExplanation({
                     }
                     to {
                         opacity: 1;
-                        max-height: 800px;
+                        max-height: 2000px;
                         transform: translateY(0);
                     }
                 }
