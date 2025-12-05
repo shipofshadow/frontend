@@ -6,26 +6,32 @@ import {useNotifications} from "../../../context/NotificationContext.tsx";
 import {useAuth} from "../../../context/AuthContext.tsx";
 
 // Helper function to get role display info
-const getRoleDisplayInfo = (role: string | undefined) => {
+const getRoleDisplayInfo = (role: string | undefined, campusName?: string) => {
     switch (role) {
         case 'bitress':
-            return { icon: '⚡', label: 'Bitress', color: 'text-warning' };
+            return { icon: '⚡', label: 'Bitress', color: 'text-warning', campus: null };
         case 'admin':
-            return { icon: '🔧', label: 'Admin', color: 'text-info' };
+            return { icon: '🔧', label: 'Admin', color: 'text-info', campus: null };
+        case 'faculty':
+            return { icon: '👨‍🏫', label: 'Faculty', color: 'text-primary', campus: campusName };
         default:
-            return { icon: '👤', label: 'Admin', color: 'text-secondary' };
+            return { icon: '👤', label: 'Admin', color: 'text-secondary', campus: null };
     }
 };
 
 const Sidebar: React.FC = () => {
   const location = useLocation();
   const { unreadCount } = useNotifications();
-  const { user, isBitress } = useAuth();
-  const roleInfo = getRoleDisplayInfo(user?.role);
+  const { user, isBitress, isFaculty, userCampusName } = useAuth();
+  const roleInfo = getRoleDisplayInfo(user?.role, userCampusName);
 
   useEffect(() => {
     feather.replace();
   }, [location]);
+
+  // Faculty can access most features but not cross-campus management
+  const canManageCampuses = !isFaculty; // Faculty cannot manage campuses
+  const canAccessSystemSettings = isBitress; // Only bitress can access system settings
 
   return (
       <div id="layoutSidenav_nav">
@@ -163,10 +169,12 @@ const Sidebar: React.FC = () => {
                 <div className="nav-link-icon"><i data-feather="calendar"></i></div>
                 Academic Years
               </NavLink>
-              <NavLink to="/admin/campuses" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
-                <div className="nav-link-icon"><i data-feather="map"></i></div>
-                Campuses
-              </NavLink>
+              {canManageCampuses && (
+                <NavLink to="/admin/campuses" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
+                  <div className="nav-link-icon"><i data-feather="map"></i></div>
+                  Campuses
+                </NavLink>
+              )}
               <NavLink to="/admin/departments" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
                 <div className="nav-link-icon"><i data-feather="grid"></i></div>
                 Departments
@@ -190,7 +198,7 @@ const Sidebar: React.FC = () => {
 
 
 
-                {isBitress && (
+                {canAccessSystemSettings && (
                     <>
                         <div className="sidenav-menu-heading">System</div>
 
@@ -242,6 +250,12 @@ const Sidebar: React.FC = () => {
               <div className={`sidenav-footer-title ${roleInfo.color}`}>
                 {roleInfo.icon} {roleInfo.label}
               </div>
+              {roleInfo.campus && (
+                <div className="sidenav-footer-campus small text-muted mt-1">
+                  <i className="fas fa-map-marker-alt me-1"></i>
+                  {roleInfo.campus}
+                </div>
+              )}
             </div>
           </div>
         </nav>

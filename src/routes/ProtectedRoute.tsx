@@ -20,6 +20,9 @@ const hasRoleAccess = (userRole: string | undefined, allowedRoles: string[]): bo
     // Super admin has access to all admin routes
     if (userRole === 'super_admin' && allowedRoles.includes('admin')) return true;
     
+    // Faculty has access to admin routes (with campus restrictions handled at component level)
+    if (userRole === 'faculty' && allowedRoles.includes('admin')) return true;
+    
     return false;
 };
 
@@ -41,7 +44,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ allowedRoles }) => {
 
     if (allowedRoles && !hasRoleAccess(user?.role, allowedRoles)) {
         if (user?.role === "student") return <Navigate to="/applicant/home" replace />;
-        if (user?.role === "admin" || user?.role === "super_admin" || user?.role === "bitress") {
+        if (user?.role === "admin" || user?.role === "super_admin" || user?.role === "bitress" || user?.role === "faculty") {
             return <Navigate to="/admin" replace />;
         }
         return <Navigate to="/" replace />;

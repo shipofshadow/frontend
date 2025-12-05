@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { API_BASE_URL } from "../../config.ts";
+import { useAuth } from "../../context/AuthContext.tsx";
+import { Navigate } from "react-router-dom";
 
 type Campus = {
     id: number;
@@ -8,12 +10,18 @@ type Campus = {
 };
 
 const ManageCampuses = () => {
+    const { isFaculty } = useAuth();
     const [campuses, setCampuses] = useState<Campus[]>([]);
     const [loading, setLoading] = useState(true);
 
     const [showModal, setShowModal] = useState(false);
     const [editingCampus, setEditingCampus] = useState<Campus | null>(null);
     const [campusName, setCampusName] = useState("");
+
+    // Faculty users cannot access campus management
+    if (isFaculty) {
+        return <Navigate to="/admin" replace />;
+    }
 
     useEffect(() => {
         fetchCampuses();

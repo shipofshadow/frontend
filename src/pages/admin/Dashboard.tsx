@@ -4,8 +4,10 @@ import { API_BASE_URL } from '../../config';
 import { activeApplicants, approvedApplicants, pendingApplicants, rejectedApplicants } from "../../services/dashboard.ts";
 import ApplicantsBarChart from "../../components/charts/ScholarshipBreakdownCharts";
 import ApplicationsTrendChart from "../../components/charts/ApplicationsTrendChart.tsx";
+import { useAuth } from "../../context/AuthContext.tsx";
 
 const Dashboard = () => {
+    const { isFaculty, userCampusId, userCampusName } = useAuth();
     const [currentDate, setCurrentDate] = useState(new Date());
     const [activeApplicantsCount, setActiveApplicantsCount] = useState<number | null>(null);
     const [approvedApplicantsCount, setApprovedApplicantsCount] = useState<number | null>(null);
@@ -40,12 +42,15 @@ const Dashboard = () => {
             setLoading(true);
             setError(null);
 
+            // Pass campus_id for faculty users to filter data
+            const campusIdParam = isFaculty ? userCampusId : undefined;
+
             try {
                 const [active, approved, pending, rejected] = await Promise.all([
-                    activeApplicants().catch(() => 0),
-                    approvedApplicants().catch(() => 0),
-                    pendingApplicants().catch(() => 0),
-                    rejectedApplicants().catch(() => 0)
+                    activeApplicants(campusIdParam).catch(() => 0),
+                    approvedApplicants(campusIdParam).catch(() => 0),
+                    pendingApplicants(campusIdParam).catch(() => 0),
+                    rejectedApplicants(campusIdParam).catch(() => 0)
                 ]);
 
                 setActiveApplicantsCount(active);
@@ -63,7 +68,7 @@ const Dashboard = () => {
         fetchAllData().catch((err) =>
             console.error("Promise rejection in fetchAllData:", err)
         );
-    }, []);
+    }, [isFaculty, userCampusId]);
 
     const formatDate = (date: Date) => {
         const options: Intl.DateTimeFormatOptions = { month: 'long', day: 'numeric', year: 'numeric' };
@@ -109,6 +114,20 @@ const Dashboard = () => {
 
     return (
         <>
+            {/* Faculty Campus Scope Banner */}
+            {isFaculty && userCampusName && (
+                <div className="alert alert-info alert-dismissible fade show mb-0 rounded-0 border-0 py-2" role="alert">
+                    <div className="container-fluid">
+                        <div className="d-flex align-items-center justify-content-center">
+                            <i className="fas fa-map-marker-alt me-2"></i>
+                            <span>
+                                You are viewing data for <strong>{userCampusName}</strong> campus only.
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Enhanced Header */}
             <header className="bg-primary position-relative overflow-hidden">
                 <div className="container-fluid px-4 py-5">

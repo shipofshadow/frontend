@@ -16,7 +16,7 @@ const ApplicantsTable = () => {
     const [selectedApplicant, setSelectedApplicant] = useState<Applicant | null>(null);
     const [statusFilter, setStatusFilter] = useState('all');
     const [sortBy, setSortBy] = useState('newest');
-    const {token} = useAuth();
+    const {token, isFaculty, userCampusId} = useAuth();
 
     const fetchApplicants = async () => {
         try {
@@ -25,8 +25,13 @@ const ApplicantsTable = () => {
                     Authorization: `Bearer ${token}`
                 }
             });
-            setApplicants(response.data);
-            setFilteredApplicants(response.data);
+            // Filter by campus for faculty users
+            let data = response.data;
+            if (isFaculty && userCampusId) {
+                data = data.filter(applicant => applicant.campus_id === userCampusId);
+            }
+            setApplicants(data);
+            setFilteredApplicants(data);
         } catch (error) {
             console.error('Error fetching applicants:', error);
             await Swal.fire('Error', 'Failed to load applicants.', 'error');

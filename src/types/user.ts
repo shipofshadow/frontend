@@ -1,6 +1,6 @@
 import type {Profile} from "../interfaces/profile.ts";
 
-export type UserRole = 'bitress' | 'super_admin' | 'admin' | 'student';
+export type UserRole = 'bitress' | 'super_admin' | 'admin' | 'faculty' | 'student';
 
 export default interface User {
     id: number;
@@ -9,4 +9,6 @@ export default interface User {
     username: string;
     profile?: Profile;
     email: string;
+    campus_id?: number;
+    campus_name?: string;
 }

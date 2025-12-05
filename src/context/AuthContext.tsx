@@ -26,6 +26,9 @@ interface AuthData {
     isAdmin: boolean;
     isStudent: boolean;
     isBitress: boolean;
+    isFaculty: boolean;
+    userCampusId: number | undefined;
+    userCampusName: string | undefined;
 }
 
 const AuthContext = createContext<AuthData | undefined>(undefined);
@@ -37,9 +40,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const [isLoading, setIsLoading] = useState<boolean>(!!token);
     const [sessionExpired, setSessionExpired] = useState<boolean>(false);
 
-    const isAdmin = user?.role === "admin" || user?.role === "bitress";
+    const isAdmin = user?.role === "admin" || user?.role === "bitress" || user?.role === "faculty";
     const isStudent = user?.role === "student";
     const isBitress = user?.role === "bitress";
+    const isFaculty = user?.role === "faculty";
+    const userCampusId = user?.campus_id;
+    const userCampusName = user?.campus_name;
 
     const logout = useCallback(() => {
         setUser(null);
@@ -202,6 +208,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         isAdmin,
         isStudent,
         isBitress,
+        isFaculty,
+        userCampusId,
+        userCampusName,
     };
 
     return (

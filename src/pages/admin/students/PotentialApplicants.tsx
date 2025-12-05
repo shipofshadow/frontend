@@ -17,6 +17,7 @@ interface PotentialApplicant {
     registered_at: string;
     reminder_sent: boolean;
     reminder_sent_at: string | null;
+    campus_id?: number;
 }
 
 interface ActiveSemester {
@@ -62,7 +63,7 @@ const PotentialApplicants = () => {
     const [isBulkSending, setIsBulkSending] = useState(false);
     const [bulkProgress, setBulkProgress] = useState({ sent: 0, total: 0 });
     const [statusFilter, setStatusFilter] = useState<'all' | 'sent' | 'not_sent'>('all');
-    const { token, user, isAdmin } = useAuth();
+    const { token, user, isAdmin, isFaculty, userCampusId } = useAuth();
 
     // Computed stats
     const stats = useMemo(() => {
@@ -96,7 +97,12 @@ const PotentialApplicants = () => {
                 }
             );
 
-            setApplicants(response.data.potentialApplicants);
+            // Filter by campus for faculty users
+            let data = response.data.potentialApplicants;
+            if (isFaculty && userCampusId) {
+                data = data.filter(applicant => applicant.campus_id === userCampusId);
+            }
+            setApplicants(data);
             setActiveSemester(response.data.activeSemester);
         } catch (err) {
             console.error('Error fetching potential applicants:', err);
@@ -111,7 +117,7 @@ const PotentialApplicants = () => {
         } finally {
             setLoading(false);
         }
-    }, [token, isAdmin]);
+    }, [token, isAdmin, isFaculty, userCampusId]);
 
 
     const handleSendReminder = useCallback(async (student: PotentialApplicant) => {

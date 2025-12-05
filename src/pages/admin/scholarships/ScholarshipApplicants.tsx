@@ -75,7 +75,7 @@ interface Selection {
 type StatusFilter = 'all' | 'pending' | 'evaluated' | 'approved' | 'denied';
 
 const ScholarshipApplicants: React.FC = () => {
-    const { token } = useAuth();
+    const { token, isFaculty, userCampusId } = useAuth();
     const tableRef = useRef<HTMLTableElement>(null);
     const [datatable, setDatatable] = useState<DataTable | null>(null);
 
@@ -112,7 +112,12 @@ const ScholarshipApplicants: React.FC = () => {
             const response = await axios.get<ApplicantData[]>(`${API_BASE_URL}/api/evaluations/`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
-            setApplications(response.data);
+            // Filter by campus for faculty users
+            let data = response.data;
+            if (isFaculty && userCampusId) {
+                data = data.filter(app => app.campus_id === userCampusId);
+            }
+            setApplications(data);
         } catch (error) {
             console.error("Error fetching evaluatees:", error);
             await Swal.fire('Error', 'Failed to load applicants.', 'error');

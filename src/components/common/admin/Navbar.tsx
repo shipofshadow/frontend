@@ -5,6 +5,46 @@ import {useAuth} from "../../../context/AuthContext.tsx";
 import {NotificationBell} from "./NotificationBell.tsx";
 import {API_BASE_URL} from "../../../config.ts";
 
+// Role badge component for displaying user role and campus scope
+const RoleBadge: React.FC = () => {
+  const { user, isFaculty, userCampusName } = useAuth();
+  
+  if (!user) return null;
+
+  const getRoleBadgeInfo = () => {
+    switch (user.role) {
+      case 'bitress':
+        return { label: 'Bitress', bgColor: 'bg-warning', textColor: 'text-dark', icon: '⚡' };
+      case 'super_admin':
+        return { label: 'Super Admin', bgColor: 'bg-danger', textColor: 'text-white', icon: '👑' };
+      case 'admin':
+        return { label: 'Admin', bgColor: 'bg-info', textColor: 'text-white', icon: '🔧' };
+      case 'faculty':
+        return { label: 'Faculty', bgColor: 'bg-primary', textColor: 'text-white', icon: '👨‍🏫' };
+      default:
+        return null;
+    }
+  };
+
+  const badgeInfo = getRoleBadgeInfo();
+  if (!badgeInfo) return null;
+
+  return (
+    <li className="nav-item d-none d-lg-flex align-items-center me-3">
+      <div className={`badge ${badgeInfo.bgColor} ${badgeInfo.textColor} d-flex align-items-center py-2 px-3`}>
+        <span className="me-1">{badgeInfo.icon}</span>
+        <span>{badgeInfo.label}</span>
+        {isFaculty && userCampusName && (
+          <span className="ms-2 badge bg-light text-dark">
+            <i className="fas fa-map-marker-alt me-1" style={{ fontSize: '0.7rem' }}></i>
+            {userCampusName}
+          </span>
+        )}
+      </div>
+    </li>
+  );
+};
+
 const Navbar: React.FC = () => {
   const navigate = useNavigate();
   const {logout, user } = useAuth();
@@ -65,6 +105,9 @@ const Navbar: React.FC = () => {
       </Link>
 
       <ul className="navbar-nav align-items-center ms-auto">
+        {/* Role Badge */}
+        <RoleBadge />
+
         {/* Notifications */}
        <NotificationBell/>
 

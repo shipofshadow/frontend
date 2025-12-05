@@ -34,7 +34,7 @@ const Login: React.FC = () => {
 
     useEffect(() => {
         if (isAuthenticated) {
-            if (user?.role === 'admin') navigate('/admin');
+            if (user?.role === 'admin' || user?.role === 'bitress' || user?.role === 'faculty') navigate('/admin');
             else if (user?.role === 'student') navigate('/applicant/home');
             else navigate('/');
         }
@@ -63,7 +63,7 @@ const Login: React.FC = () => {
             else localStorage.removeItem('rememberedUsername');
             login(user, token, refresh_token);
             notyf.success('Login successful!');
-            if (user.role === 'admin') navigate('/admin');
+            if (user.role === 'admin' || user.role === 'bitress' || user.role === 'faculty') navigate('/admin');
             else if (user.role === 'student') navigate('/applicant/home');
             else navigate('/');
         } catch (err) {

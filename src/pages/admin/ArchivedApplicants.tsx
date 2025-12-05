@@ -15,9 +15,9 @@ const ArchivedApplicants = () => {
     const [applicants, setApplicants] = useState<Applicant[]>([]);
     const [selectedApplicant, setSelectedApplicant] = useState<Applicant>();
     const [loading, setLoading] = useState(true);
-    const { token, user } = useAuth();
+    const { token, user, isFaculty, userCampusId } = useAuth();
 
-    const hasAdminAccess = useMemo(() => user?.role === 'admin', [user?.role]);
+    const hasAdminAccess = useMemo(() => user?.role === 'admin' || user?.role === 'bitress' || user?.role === 'faculty', [user?.role]);
 
     const fetchApplicants = async () => {
         try {
@@ -27,7 +27,12 @@ const ArchivedApplicants = () => {
                     Authorization: `Bearer ${token}`
                 }
             });
-            setApplicants(response.data);
+            // Filter by campus for faculty users
+            let data = response.data;
+            if (isFaculty && userCampusId) {
+                data = data.filter(applicant => applicant.campus_id === userCampusId);
+            }
+            setApplicants(data);
         } catch (error) {
             console.error('Error fetching applicants:', error);
             await Swal.fire('Error', 'Failed to load archived applicants.', 'error');

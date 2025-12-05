@@ -17,6 +17,7 @@ interface NotAppliedStudent {
     birth_date: string;
     username: string;
     email: string;
+    campus_id?: number;
 }
 
 const NotApplied = () => {
@@ -27,10 +28,10 @@ const NotApplied = () => {
     const [error, setError] = useState<string | null>(null);
     const [selectedStudent, setSelectedStudent] = useState<NotAppliedStudent | null>(null);
     const [showDetailsModal, setShowDetailsModal] = useState(false);
-    const { token, user } = useAuth();
+    const { token, user, isFaculty, userCampusId } = useAuth();
 
-    // Check admin access
-    const hasAdminAccess = useMemo(() => user?.role === 'admin', [user?.role]);
+    // Check admin access - faculty also has admin-level access
+    const hasAdminAccess = useMemo(() => user?.role === 'admin' || user?.role === 'bitress' || user?.role === 'faculty', [user?.role]);
 
     const fetchStudents = useCallback(async () => {
         if (!hasAdminAccess) return;
@@ -46,7 +47,12 @@ const NotApplied = () => {
                 timeout: 10000
             });
 
-            setStudents(response.data);
+            // Filter by campus for faculty users
+            let data = response.data;
+            if (isFaculty && userCampusId) {
+                data = data.filter(student => student.campus_id === userCampusId);
+            }
+            setStudents(data);
         } catch (error) {
             console.error('Error fetching students:', error);
             const errorMessage = 'Failed to load students';
@@ -61,7 +67,7 @@ const NotApplied = () => {
         } finally {
             setLoading(false);
         }
-    }, [token, hasAdminAccess]);
+    }, [token, hasAdminAccess, isFaculty, userCampusId]);
 
     const handleArchiveStudent = useCallback(async (studentId: number, studentName: string) => {
         const result = await Swal.fire({
