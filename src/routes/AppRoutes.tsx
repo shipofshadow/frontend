@@ -40,6 +40,7 @@ import SubmittedRequirements from "../pages/admin/documents/SubmittedRequirement
 import FuzzyLogic from "../pages/admin/FuzzyLogic.tsx";
 import ManageScholarships from "../pages/admin/scholarships/ManageScholarships.tsx";
 import ScholarshipDashboard from "../pages/admin/scholarships/ScholarshipDashboard.tsx";
+import ScholarshipApplicants from "../pages/admin/scholarships/ScholarshipApplicants.tsx";
 import Prequalify from "../pages/Prequalify.tsx";
 import ResetPassword from "../pages/ResetPassword.tsx";
 import {IndexLayout} from "../layouts/IndexLayout.tsx";
@@ -99,6 +100,7 @@ const AppRoutes: React.FC = () => {
                     <Route path="scholarships">
                         <Route path="manage" element={<ManageScholarships />} />
                         <Route path="dashboard" element={<ScholarshipDashboard/>} />
+                        <Route path="applicants" element={<ScholarshipApplicants/>} />
                         <Route path="scholarship-report" element={<ScholarshipSummaryReport/>}/>
 
                     </Route>
