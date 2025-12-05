@@ -12,11 +12,18 @@ interface IUser {
     first_name: string;
     last_name: string;
     email: string;
-    role: 'bitress' | 'super_admin' | 'admin' | 'student' | 'user';
+    role: 'bitress' | 'super_admin' | 'admin' | 'faculty' | 'student' | 'user';
     is_active: boolean;
     avatar?: string | null;
     created_at: string;
     deleted_at?: string | null;
+    campus_id?: number;
+    campus_name?: string;
+}
+
+interface ICampus {
+    id: number;
+    name: string;
 }
 
 interface IUserFormData {
@@ -25,9 +32,10 @@ interface IUserFormData {
     firstName: string;
     lastName: string;
     email: string;
-    role: 'admin' | 'user';
+    role: 'admin' | 'faculty' | 'user';
     isActive: boolean;
     avatar: string;
+    campusId?: number;
 }
 
 interface IApiResponse<T> {
@@ -46,8 +54,10 @@ const getRoleBadgeInfo = (role: string) => {
             return { icon: '👑', label: 'Super Admin', className: 'bg-purple text-white' };
         case 'admin':
             return { icon: '🔧', label: 'Admin', className: 'bg-primary' };
+        case 'faculty':
+            return { icon: '👨‍🏫', label: 'Faculty', className: 'bg-info' };
         case 'student':
-            return { icon: '🎓', label: 'Student', className: 'bg-info' };
+            return { icon: '🎓', label: 'Student', className: 'bg-success' };
         default:
             return { icon: '👤', label: role, className: 'bg-secondary' };
     }
@@ -70,6 +80,7 @@ const isProtectedUser = (user: IUser, currentUserRole: string | undefined) => {
 const Users = () => {
     const [users, setUsers] = useState<IUser[]>([]);
     const [deletedUsers, setDeletedUsers] = useState<IUser[]>([]);
+    const [campuses, setCampuses] = useState<ICampus[]>([]);
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
     const [showDeletedUsers, setShowDeletedUsers] = useState(false);
@@ -84,12 +95,14 @@ const Users = () => {
         email: '',
         role: 'admin',
         isActive: true,
-        avatar: ''
+        avatar: '',
+        campusId: undefined
     });
     const { token, user: currentUser } = useAuth();
 
     useEffect(() => {
         fetchUsers();
+        fetchCampuses();
     }, []);
 
     const fetchUsers = async () => {
@@ -111,6 +124,15 @@ const Users = () => {
             });
         } finally {
             setLoading(false);
+        }
+    };
+
+    const fetchCampuses = async () => {
+        try {
+            const response = await axios.get<ICampus[]>(`${API_BASE_URL}/api/campus`);
+            setCampuses(response.data);
+        } catch (error) {
+            console.error('Error fetching campuses:', error);
         }
     };
 
@@ -143,7 +165,8 @@ const Users = () => {
             email: '',
             role: 'admin',
             isActive: true,
-            avatar: ''
+            avatar: '',
+            campusId: undefined
         });
         setSelectedUser(null);
         setShowModal(true);
@@ -157,9 +180,10 @@ const Users = () => {
             firstName: user.first_name || '',
             lastName: user.last_name || '',
             email: user.email || '',
-            role: (user.role === 'admin' || user.role === 'user') ? user.role : 'admin',
+            role: (user.role === 'admin' || user.role === 'faculty' || user.role === 'user') ? user.role : 'admin',
             isActive: user.is_active,
-            avatar: user.avatar || ''
+            avatar: user.avatar || '',
+            campusId: user.campus_id
         });
         setSelectedUser(user);
         setShowModal(true);
@@ -168,14 +192,31 @@ const Users = () => {
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const target = e.target as HTMLInputElement;
         const { name, value, type, checked } = target;
-        setFormData(prev => ({
-            ...prev,
-            [name]: type === 'checkbox' ? checked : value
-        }));
+        setFormData(prev => {
+            const newData = {
+                ...prev,
+                [name]: type === 'checkbox' ? checked : value
+            };
+            // Clear campusId if role is changed to non-faculty
+            if (name === 'role' && value !== 'faculty') {
+                newData.campusId = undefined;
+            }
+            return newData;
+        });
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        // Validate campus selection for faculty role
+        if (formData.role === 'faculty' && !formData.campusId) {
+            await Swal.fire({
+                icon: 'warning',
+                title: 'Campus Required',
+                text: 'Please select a campus for the faculty user.'
+            });
+            return;
+        }
 
         try {
             const payload: any = { ...formData };
@@ -526,9 +567,17 @@ const Users = () => {
                                                     {(() => {
                                                         const badgeInfo = getRoleBadgeInfo(user.role);
                                                         return (
-                                                            <span className={`badge ${badgeInfo.className}`}>
-                                                                {badgeInfo.icon} {badgeInfo.label}
-                                                            </span>
+                                                            <div>
+                                                                <span className={`badge ${badgeInfo.className}`}>
+                                                                    {badgeInfo.icon} {badgeInfo.label}
+                                                                </span>
+                                                                {user.role === 'faculty' && user.campus_name && (
+                                                                    <div className="small text-muted mt-1">
+                                                                        <i className="fal fa-map-marker-alt me-1"></i>
+                                                                        {user.campus_name}
+                                                                    </div>
+                                                                )}
+                                                            </div>
                                                         );
                                                     })()}
                                             </td>
@@ -720,20 +769,58 @@ const Users = () => {
                                                     onChange={handleInputChange}
                                                 >
                                                     <option value="admin">Administrator</option>
+                                                    <option value="faculty">Faculty</option>
                                                     <option value="user">User</option>
                                                 </select>
                                             </div>
-                                            <div className="col-md-6">
-                                                <label className="form-label fw-medium">Avatar URL</label>
-                                                <input
-                                                    type="text"
-                                                    className="form-control"
-                                                    name="avatar"
-                                                    value={formData.avatar}
-                                                    onChange={handleInputChange}
-                                                    placeholder="https://example.com/avatar.jpg"
-                                                />
-                                            </div>
+                                            {formData.role === 'faculty' && (
+                                                <div className="col-md-6">
+                                                    <label className="form-label fw-medium">
+                                                        Campus <span className="text-danger">*</span>
+                                                    </label>
+                                                    <select
+                                                        className="form-select"
+                                                        name="campusId"
+                                                        value={formData.campusId || ''}
+                                                        onChange={handleInputChange}
+                                                        required
+                                                    >
+                                                        <option value="">Select Campus</option>
+                                                        {campuses.map(campus => (
+                                                            <option key={campus.id} value={campus.id}>
+                                                                {campus.name}
+                                                            </option>
+                                                        ))}
+                                                    </select>
+                                                    <div className="form-text">Faculty users can only access data from their assigned campus</div>
+                                                </div>
+                                            )}
+                                            {formData.role !== 'faculty' && (
+                                                <div className="col-md-6">
+                                                    <label className="form-label fw-medium">Avatar URL</label>
+                                                    <input
+                                                        type="text"
+                                                        className="form-control"
+                                                        name="avatar"
+                                                        value={formData.avatar}
+                                                        onChange={handleInputChange}
+                                                        placeholder="https://example.com/avatar.jpg"
+                                                    />
+                                                </div>
+                                            )}
+                                            {formData.role === 'faculty' && (
+                                                <div className="col-md-12">
+                                                    <label className="form-label fw-medium">Avatar URL</label>
+                                                    <input
+                                                        type="text"
+                                                        className="form-control"
+                                                        name="avatar"
+                                                        value={formData.avatar}
+                                                        onChange={handleInputChange}
+                                                        placeholder="https://example.com/avatar.jpg"
+                                                    />
+                                                </div>
+                                            )}
                                             <div className="col-12">
                                                 <div className="form-check form-switch">
                                                     <input
