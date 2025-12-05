@@ -5,7 +5,7 @@ export type UserRole = 'bitress' | 'super_admin' | 'admin' | 'student';
 export default interface User {
     id: number;
     is_active: number;
-    role: UserRole | string;
+    role: UserRole;
     username: string;
     profile?: Profile;
     email: string;

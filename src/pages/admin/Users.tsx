@@ -53,9 +53,10 @@ const getRoleBadgeInfo = (role: string) => {
     }
 };
 
-// Check if a user is protected (bitress or super_admin with lower ID can't be modified)
+// Check if a user is protected based on role hierarchy
+// Protected users cannot be modified by users with lower privilege level
 const isProtectedUser = (user: IUser, currentUserRole: string | undefined) => {
-    // Bitress users (ID: -999) are always protected unless current user is also bitress
+    // Bitress users are always protected unless current user is also bitress
     if (user.role === 'bitress') {
         return currentUserRole !== 'bitress';
     }

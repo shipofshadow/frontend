@@ -130,8 +130,8 @@ const SystemReset = () => {
                 showConfirmButton: false,
             });
 
-            // Refresh preview after reset
-            await fetchPreview();
+            // Redirect to login page after reset
+            window.location.href = '/login';
         } catch (err) {
             setError(err instanceof Error ? err.message : 'System reset failed');
             await Swal.fire({
