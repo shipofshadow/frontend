@@ -15,9 +15,9 @@ const ArchivedApplicants = () => {
     const [applicants, setApplicants] = useState<Applicant[]>([]);
     const [selectedApplicant, setSelectedApplicant] = useState<Applicant>();
     const [loading, setLoading] = useState(true);
-    const { token, user } = useAuth();
+    const { token, isAdmin } = useAuth();
 
-    const hasAdminAccess = useMemo(() => user?.role === 'admin', [user?.role]);
+    const hasAdminAccess = isAdmin;
 
     const fetchApplicants = async () => {
         try {

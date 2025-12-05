@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { DataTable } from 'simple-datatables';
 import "simple-datatables/dist/style.css";
 import Swal from 'sweetalert2';
@@ -27,10 +27,10 @@ const NotApplied = () => {
     const [error, setError] = useState<string | null>(null);
     const [selectedStudent, setSelectedStudent] = useState<NotAppliedStudent | null>(null);
     const [showDetailsModal, setShowDetailsModal] = useState(false);
-    const { token, user } = useAuth();
+    const { token, user, isAdmin } = useAuth();
 
     // Check admin access
-    const hasAdminAccess = useMemo(() => user?.role === 'admin', [user?.role]);
+    const hasAdminAccess = isAdmin;
 
     const fetchStudents = useCallback(async () => {
         if (!hasAdminAccess) return;

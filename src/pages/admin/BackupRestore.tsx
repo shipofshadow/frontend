@@ -21,7 +21,7 @@ import {
     CloudUpload,
     CloudDownload,
     FolderUp,
-    X
+    X, Shield
 } from 'lucide-react';
 import Swal from 'sweetalert2';
 import { useAuth } from '../../context/AuthContext.tsx';
@@ -52,7 +52,7 @@ const BackupRestore = () => {
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [showRestoreModal, setShowRestoreModal] = useState(false);
     const [selectedBackup, setSelectedBackup] = useState<any | null>(null);
-    const { token } = useAuth();
+    const { token, isBitress } = useAuth();
 
     // New state for tabs, cloud, and import features
     const [activeTab, setActiveTab] = useState<'local' | 'cloud'>('local');
@@ -624,6 +624,19 @@ const BackupRestore = () => {
     };
 
     const stats = getBackupStats();
+
+    if (!isBitress) {
+        return (
+            <div className="min-vh-100 d-flex align-items-center justify-content-center bg-light">
+                <div className="text-center">
+                    <Shield size={64} className="text-danger mb-3" />
+                    <h3 className="text-danger">Access Denied</h3>
+                    <p className="text-muted">`This feature is only accessible to Bitress administrators.`</p>
+                </div>
+            </div>
+        );
+    }
+
 
     return (
         <div className="min-vh-100 bg-gray-50 text-dark">
