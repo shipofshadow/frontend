@@ -30,21 +30,39 @@ const Sidebar: React.FC = () => {
                 Dashboard
               </NavLink>
 
-              <NavLink
-                  to="/admin/scholarships/dashboard"
-                  className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
-              >
-                <div className="nav-link-icon"><i className="far fa-hand-holding-dollar"></i></div>
-                Scholarship Dashboard
-              </NavLink>
 
-              <NavLink
-                  to="/admin/approved"
-                  className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
-              >
-                <div className="nav-link-icon"><i className="far fa-user-check"></i></div>
-                Approved Applicants
-              </NavLink>
+                {/* Scholarship */}
+                <div className="sidenav-menu-heading">Scholarship</div>
+
+                <NavLink
+                    to="/admin/scholarships/dashboard"
+                    className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
+                >
+                    <div className="nav-link-icon"><i className="far fa-hand-holding-dollar"></i></div>
+                    Scholarship Dashboard
+                </NavLink>
+
+                <NavLink
+                    to="/admin/scholarships/applicants"
+                    className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
+                >
+                    <div className="nav-link-icon"><i className="far fa-user-check"></i></div>Applicants
+                </NavLink>
+
+                <NavLink
+                    to="/admin/scholarships/manage"
+                    className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
+                >
+                    <div className="nav-link-icon"><i className="fas fa-graduation-cap"></i></div>Manage Scholarships
+                </NavLink>
+
+                <NavLink
+                    to="/admin/scholarships/scholarship-report"
+                    className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
+                >
+                    <div className="nav-link-icon"><i className="far fa-medal"></i></div>Scholarship Summary
+                </NavLink>
+
 
               <div className="sidenav-menu-heading">Applicant Management</div>
 
@@ -95,27 +113,7 @@ const Sidebar: React.FC = () => {
                   ]}
               />
 
-              {/* Scholarship Management */}
-              <div className="sidenav-menu-heading">Scholarship Management</div>
 
-              <SidebarCollapse
-                  id="collapseScholarship"
-                  parentId="accordionSidenav"
-                  title="Scholarship Management"
-                  icon="fas fa-graduation-cap"
-                  links={[
-                    {
-                      to: '/admin/scholarships/manage',
-                      label: 'Scholarships',
-                      icon: 'fas fa-hand-holding-usd',
-                    },
-                    {
-                      to: '/admin/scholarships/scholarship-report',
-                      label: 'Scholarship Summary',
-                      icon: 'far fa-medal',
-                    },
-                  ]}
-              />
               {/* Automation */}
               <div className="sidenav-menu-heading">Automation & Rules</div>
 
