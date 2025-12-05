@@ -62,10 +62,7 @@ const PotentialApplicants = () => {
     const [isBulkSending, setIsBulkSending] = useState(false);
     const [bulkProgress, setBulkProgress] = useState({ sent: 0, total: 0 });
     const [statusFilter, setStatusFilter] = useState<'all' | 'sent' | 'not_sent'>('all');
-    const { token, user } = useAuth();
-
-    // Check admin access
-    const hasAdminAccess = useMemo(() => user?.role === 'admin', [user?.role]);
+    const { token, user, isAdmin } = useAuth();
 
     // Computed stats
     const stats = useMemo(() => {
@@ -83,7 +80,7 @@ const PotentialApplicants = () => {
     }, [applicants, statusFilter]);
 
     const fetchApplicants = useCallback(async () => {
-        if (!hasAdminAccess) return;
+        if (!isAdmin) return;
 
         try {
             setLoading(true);
@@ -114,7 +111,7 @@ const PotentialApplicants = () => {
         } finally {
             setLoading(false);
         }
-    }, [token, hasAdminAccess]);
+    }, [token, isAdmin]);
 
     const handleSendReminder = useCallback(async (student: PotentialApplicant) => {
         const result = await Swal.fire({
@@ -264,7 +261,7 @@ const PotentialApplicants = () => {
 
     // Handle access control
     useEffect(() => {
-        if (!hasAdminAccess && user) {
+        if (!isAdmin && user) {
             Swal.fire({
                 title: 'Access Denied',
                 text: 'Admin access required.',
@@ -275,7 +272,7 @@ const PotentialApplicants = () => {
         }
 
         fetchApplicants();
-    }, [hasAdminAccess, user, fetchApplicants]);
+    }, [isAdmin, user, fetchApplicants]);
 
     // Initialize DataTable
     useEffect(() => {
@@ -324,7 +321,7 @@ const PotentialApplicants = () => {
         fetchApplicants();
     }, [fetchApplicants]);
 
-    if (!hasAdminAccess && user) {
+    if (!isAdmin && user) {
         return (
             <div className="container-fluid px-4">
                 <div className="alert alert-danger border-0 shadow-sm" role="alert">
