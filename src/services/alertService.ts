@@ -10,7 +10,9 @@ export const alertService = {
         filters?: { unread_only?: boolean; page?: number; limit?: number }
     ): Promise<AlertsResponse> => {
         const params = new URLSearchParams();
-        if (filters?.unread_only) params.append('unread_only', 'true');
+        if (filters?.unread_only !== undefined) {
+            params.append('unread_only', String(filters.unread_only));
+        }
         if (filters?.page) params.append('page', String(filters.page));
         if (filters?.limit) params.append('limit', String(filters.limit));
         
