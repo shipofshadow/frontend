@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import type { DragEvent, ChangeEvent } from 'react';
 import {
     Download,
@@ -126,16 +126,20 @@ const BackupRestore = () => {
         setLoadingCloud(false);
     }, [token, storageConfig?.s3_enabled]);
 
+    // Fetch storage config and backups on mount
     useEffect(() => {
         fetchBackups();
         fetchStorageConfig();
-    }, [fetchStorageConfig]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
+    // Fetch cloud backups when S3 is enabled
     useEffect(() => {
         if (storageConfig?.s3_enabled) {
             fetchCloudBackups();
         }
-    }, [storageConfig?.s3_enabled, fetchCloudBackups]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [storageConfig?.s3_enabled]);
 
     const showNotification = (message: string, type: 'success' | 'danger' | 'info' = 'success') => {
         setNotification({ message, type });
@@ -574,14 +578,12 @@ const BackupRestore = () => {
         fileInputRef.current?.click();
     };
 
-    // Get cloud backup stats
-    const getCloudBackupStats = () => {
+    // Get cloud backup stats - memoized to avoid recalculation on every render
+    const cloudStats = useMemo(() => {
         const totalSize = cloudBackups.reduce((sum, b) => sum + (b.size || 0), 0);
         const latest = cloudBackups.length > 0 ? cloudBackups[0] : null;
         return { totalSize, latest, count: cloudBackups.length };
-    };
-
-    const cloudStats = getCloudBackupStats();
+    }, [cloudBackups]);
 
     const formatBytes = (bytes: number) => {
         if (!bytes || bytes === 0) return '0 Bytes';
