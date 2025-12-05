@@ -38,28 +38,38 @@ export interface SystemConfig {
 }
 
 // Map API response to frontend config
-export const mapApiResponseToConfig = (apiData: Record<string, string>): SystemConfig => {
+export const mapApiResponseToConfig = (apiData: Record<string, string | boolean | number>): SystemConfig => {
+    const toString = (val: string | number | boolean | undefined): string => {
+        return val?.toString() || '';
+    };
+
+    const toNumber = (val: string | number | boolean | undefined, defaultVal: number): number => {
+        if (typeof val === 'number') return val;
+        const parsed = parseInt(String(val));
+        return isNaN(parsed) ? defaultVal : parsed;
+    };
+
     return {
-        systemName: apiData.systemName || '',
-        organizationName: apiData.organizationName || '',
-        supportEmail: apiData.supportEmail || '',
-        supportPhone: apiData.supportPhone || '',
-        isApplicationOpen: apiData.isApplicationOpen === '1' || apiData.isApplicationOpen === 'true',
+        systemName: toString(apiData.systemName),
+        organizationName: toString(apiData.organizationName),
+        supportEmail: toString(apiData.supportEmail),
+        supportPhone: toString(apiData.supportPhone),
+        isApplicationOpen: apiData.isApplicationOpen === true || apiData.isApplicationOpen === '1' || apiData.isApplicationOpen === 'true',
         allowNewRegistrations: apiData.allowNewRegistrations === '1' || apiData.allowNewRegistrations === 'true',
-        applicationStartDate: apiData.applicationStartDate || '',
-        applicationEndDate: apiData.applicationEndDate || '',
-        enableEmailAlerts: apiData.enableEmailAlerts === '1' || apiData.enableEmailAlerts === 'true',
-        enableInAppNotifications: apiData.enableInAppNotifications === '1' || apiData.enableInAppNotifications === 'true',
-        emailSenderName: apiData.emailSenderName || '',
-        email_activation_enabled: apiData.emailActivationEnabled === '1' || apiData.emailActivationEnabled === 'true',
-        maintenanceMode: apiData.maintenanceMode === '1' || apiData.maintenanceMode === 'true',
-        sessionTimeout: parseInt(apiData.sessionTimeout) || 30,
-        maxLoginAttempts: parseInt(apiData.maxLoginAttempts) || 5,
-        enableNativeLogin: apiData.enableNativeLogin === '1' || apiData.enableNativeLogin === 'true',
-        enableGoogleLogin: apiData.enableGoogleLogin === '1' || apiData.enableGoogleLogin === 'true',
-        minPasswordLength: parseInt(apiData.minPasswordLength) || 8,
-        logRetentionDays: parseInt(apiData.logRetentionDays) || 90,
-        cleanupIntervalHours: parseInt(apiData.cleanupIntervalHours) || 24,
+        applicationStartDate: toString(apiData.applicationStartDate),
+        applicationEndDate: toString(apiData.applicationEndDate),
+        enableEmailAlerts: apiData.enableEmailAlerts === true || apiData.enableEmailAlerts === '1' || apiData.enableEmailAlerts === 'true',
+        enableInAppNotifications: apiData.enableInAppNotifications === true || apiData.enableInAppNotifications === '1' || apiData.enableInAppNotifications === 'true',
+        emailSenderName: toString(apiData.emailSenderName),
+        emailActivationEnabled: apiData.emailActivationEnabled === true || apiData.emailActivationEnabled === '1' || apiData.emailActivationEnabled === 'true',
+        maintenanceMode: apiData.maintenanceMode === true || apiData.maintenanceMode === '1' || apiData.maintenanceMode === 'true',
+        sessionTimeout: toNumber(apiData.sessionTimeout, 30),
+        maxLoginAttempts: toNumber(apiData.maxLoginAttempts, 5),
+        enableNativeLogin: apiData.enableNativeLogin === true || apiData.enableNativeLogin === '1' || apiData.enableNativeLogin === 'true',
+        enableGoogleLogin: apiData.enableGoogleLogin === true || apiData.enableGoogleLogin === '1' || apiData.enableGoogleLogin === 'true',
+        minPasswordLength: toNumber(apiData.minPasswordLength, 8),
+        logRetentionDays: toNumber(apiData.logRetentionDays, 90),
+        cleanupIntervalHours: toNumber(apiData.cleanupIntervalHours, 24),
         storageProvider: (apiData.storageProvider as 'local' | 's3') || 'local'
     };
 };
@@ -78,7 +88,7 @@ export const mapConfigToApiPayload = (config: SystemConfig): Record<string, stri
         enableEmailAlerts: config.enableEmailAlerts ? '1' : '0',
         enableInAppNotifications: config.enableInAppNotifications ? '1' : '0',
         emailSenderName: config.emailSenderName,
-        emailActivationEnabled: config.email_activation_enabled ? '1' : '0',
+        emailActivationEnabled: config.emailActivationEnabled ? '1' : '0',
         maintenanceMode: config.maintenanceMode ? '1' : '0',
         sessionTimeout: config.sessionTimeout.toString(),
         maxLoginAttempts: config.maxLoginAttempts.toString(),
