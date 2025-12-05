@@ -10,8 +10,6 @@ const getRoleDisplayInfo = (role: string | undefined) => {
     switch (role) {
         case 'bitress':
             return { icon: '⚡', label: 'Bitress', color: 'text-warning' };
-        case 'super_admin':
-            return { icon: '👑', label: 'Super Admin', color: 'text-primary' };
         case 'admin':
             return { icon: '🔧', label: 'Admin', color: 'text-info' };
         default:
@@ -22,7 +20,7 @@ const getRoleDisplayInfo = (role: string | undefined) => {
 const Sidebar: React.FC = () => {
   const location = useLocation();
   const { unreadCount } = useNotifications();
-  const { user, isBitress, isSuperAdmin } = useAuth();
+  const { user, isBitress } = useAuth();
   const roleInfo = getRoleDisplayInfo(user?.role);
 
   useEffect(() => {
@@ -191,38 +189,49 @@ const Sidebar: React.FC = () => {
                             </NavLink>
 
 
-                {/* System */}
-              <div className="sidenav-menu-heading">System</div>
-              <NavLink to="/admin/system" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
-                <div className="nav-link-icon"><i data-feather="sliders"></i></div>
-                Configuration
-              </NavLink>
 
-              {/* User Management - visible to super_admin and bitress */}
-              {isSuperAdmin && (
-                <NavLink to="/admin/users" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
-                  <div className="nav-link-icon"><i data-feather="shield"></i></div>
-                  Manage Accounts
-                </NavLink>
-              )}
+                {isBitress && (
+                    <>
+                        <div className="sidenav-menu-heading">System</div>
 
-              {/* Backup & Restore - visible to super_admin and bitress */}
-              {isSuperAdmin && (
-                <NavLink to="/admin/system/backups" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
-                  <div className="nav-link-icon"><i data-feather="database"></i></div>
-                  Backup & Restore
-                </NavLink>
-              )}
+                        {/* Configuration */}
+                        <NavLink
+                            to="/admin/system"
+                            className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
+                        >
+                            <div className="nav-link-icon"><i data-feather="sliders"></i></div>
+                            Configuration
+                        </NavLink>
 
-              {/* System Reset - only visible to bitress */}
-              {isBitress && (
-                <NavLink to="/admin/system/reset" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
-                  <div className="nav-link-icon"><i data-feather="trash-2"></i></div>
-                  System Reset
-                  <span className="badge bg-danger ms-auto">⚡</span>
-                </NavLink>
-              )}
+                        {/* Manage Accounts */}
+                        <NavLink
+                            to="/admin/users"
+                            className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
+                        >
+                            <div className="nav-link-icon"><i data-feather="shield"></i></div>
+                            Manage Accounts
+                        </NavLink>
 
+                        {/* Backup & Restore */}
+                        <NavLink
+                            to="/admin/system/backups"
+                            className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
+                        >
+                            <div className="nav-link-icon"><i data-feather="database"></i></div>
+                            Backup & Restore
+                        </NavLink>
+
+                        {/* System Reset */}
+                        <NavLink
+                            to="/admin/system/reset"
+                            className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
+                        >
+                            <div className="nav-link-icon"><i data-feather="trash-2"></i></div>
+                            System Reset
+                            <span className="badge bg-danger ms-auto">⚡</span>
+                        </NavLink>
+                    </>
+                )}
 
             </div>
           </div>
