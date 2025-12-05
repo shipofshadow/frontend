@@ -80,7 +80,6 @@ const AppRoutes: React.FC = () => {
                     <Route index element={<Dashboard />} />
                     <Route path="dashboard" element={<Dashboard />} />
                     <Route path="users" element={<Users />} />
-                    <Route path="system" element={<SystemSetting />} />
                     <Route path="documents" element={<Document />} />
                     <Route path="activity-logs" element={<ActivityLogs />} />
                     <Route path="reports" element={<Reports />} />
@@ -127,7 +126,8 @@ const AppRoutes: React.FC = () => {
                     </Route>
 
                     <Route path="system">
-                        <Route path="backups" element={<BackupRestore />} />
+                        <Route path="configure" element={<SystemSetting />} />
+                        <Route path="backup-restore" element={<BackupRestore />} />
                         <Route path="reset" element={<SystemReset />} />
                     </Route>
 

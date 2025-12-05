@@ -653,7 +653,6 @@ const BackupRestore = () => {
 
                 body {
                     background-color: var(--bg-page);
-                    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
                 }
                 
                 /* Utils */

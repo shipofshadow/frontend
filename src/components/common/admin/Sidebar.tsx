@@ -203,7 +203,7 @@ const Sidebar: React.FC = () => {
 
                         {/* Configuration */}
                         <NavLink
-                            to="/admin/system"
+                            to="/admin/system/configure"
                             className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
                         >
                             <div className="nav-link-icon"><i data-feather="sliders"></i></div>
@@ -221,7 +221,7 @@ const Sidebar: React.FC = () => {
 
                         {/* Backup & Restore */}
                         <NavLink
-                            to="/admin/system/backups"
+                            to="/admin/system/backup-restore"
                             className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
                         >
                             <div className="nav-link-icon"><i data-feather="database"></i></div>
