@@ -100,7 +100,7 @@ const Navbar: React.FC = () => {
         <i data-feather="menu" />
       </button>
 
-      <Link className="navbar-brand pe-3 ps-4 ps-lg-2" to="/">
+      <Link className="navbar-brand pe-3 ps-4 ps-lg-2" to="/admin">
         ScholarApp
       </Link>
 
