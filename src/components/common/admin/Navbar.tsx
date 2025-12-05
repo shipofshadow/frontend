@@ -142,7 +142,7 @@ const Navbar: React.FC = () => {
               </div>
             </h6>
             <div className="dropdown-divider" />
-            <Link className="dropdown-item" to="/profile">
+            <Link className="dropdown-item" to="/admin/profile">
               <div className="dropdown-item-icon">
                 <i data-feather="settings" />
               </div>

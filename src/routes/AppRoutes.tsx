@@ -16,6 +16,7 @@ import Home from '../pages/applicant/Home.tsx';
 import Register from '../pages/Register';
 import ForgotPassword from '../pages/ForgotPassword.tsx';
 import Settings from '../pages/applicant/Settings';
+import AdminSettings from '../pages/admin/Settings';
 import NotApplied from '../pages/admin/NotApplied';
 import Applicants from '../pages/admin/Applicants';
 import Users from '../pages/admin/Users';
@@ -138,6 +139,7 @@ const AppRoutes: React.FC = () => {
 
                     <Route path="notifications" element={<Notifications/>} />
 
+                    <Route path="profile" element={<AdminSettings />} />
 
                 </Route>
             </Route>
