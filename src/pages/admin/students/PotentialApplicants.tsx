@@ -113,6 +113,7 @@ const PotentialApplicants = () => {
         }
     }, [token, isAdmin]);
 
+
     const handleSendReminder = useCallback(async (student: PotentialApplicant) => {
         const result = await Swal.fire({
             title: 'Send Reminder Email',
@@ -127,6 +128,7 @@ const PotentialApplicants = () => {
             confirmButtonColor: '#0d6efd',
             cancelButtonText: 'Cancel'
         });
+
 
         if (result.isConfirmed) {
             try {
@@ -174,6 +176,24 @@ const PotentialApplicants = () => {
             }
         }
     }, [token]);
+
+
+    useEffect(() => {
+        const clickHandler = (e: any) => {
+            const btn = e.target.closest("[data-reminder-id]");
+            if (!btn) return;
+
+            const id = Number(btn.getAttribute("data-reminder-id"));
+            const student = applicants.find(a => a.user_id === id);
+
+            if (student) {
+                handleSendReminder(student);
+            }
+        };
+
+        document.addEventListener("click", clickHandler);
+        return () => document.removeEventListener("click", clickHandler);
+    }, [applicants, handleSendReminder]);
 
     const handleBulkSend = useCallback(async () => {
         const pendingStudents = applicants.filter(a => !a.reminder_sent);
@@ -620,8 +640,7 @@ const PotentialApplicants = () => {
                                                     {!student.reminder_sent && (
                                                         <button
                                                             className="btn btn-primary btn-sm d-flex align-items-center gap-2"
-                                                            onClick={() => handleSendReminder(student)}
-                                                            disabled={sendingId === student.user_id}
+                                                            data-reminder-id={student.user_id}                                                            disabled={sendingId === student.user_id}
                                                         >
                                                             {sendingId === student.user_id ? (
                                                                 <>
