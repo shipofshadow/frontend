@@ -3,10 +3,27 @@ import feather from 'feather-icons';
 import { NavLink, useLocation } from 'react-router-dom';
 import SidebarCollapse from './SidebarCollapse';
 import {useNotifications} from "../../../context/NotificationContext.tsx";
+import {useAuth} from "../../../context/AuthContext.tsx";
+
+// Helper function to get role display info
+const getRoleDisplayInfo = (role: string | undefined) => {
+    switch (role) {
+        case 'bitress':
+            return { icon: '⚡', label: 'Bitress', color: 'text-warning' };
+        case 'super_admin':
+            return { icon: '👑', label: 'Super Admin', color: 'text-primary' };
+        case 'admin':
+            return { icon: '🔧', label: 'Admin', color: 'text-info' };
+        default:
+            return { icon: '👤', label: 'Admin', color: 'text-secondary' };
+    }
+};
 
 const Sidebar: React.FC = () => {
   const location = useLocation();
   const { unreadCount } = useNotifications();
+  const { user, isBitress, isSuperAdmin } = useAuth();
+  const roleInfo = getRoleDisplayInfo(user?.role);
 
   useEffect(() => {
     feather.replace();
@@ -180,15 +197,31 @@ const Sidebar: React.FC = () => {
                 <div className="nav-link-icon"><i data-feather="sliders"></i></div>
                 Configuration
               </NavLink>
-              <NavLink to="/admin/users" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
-                <div className="nav-link-icon"><i data-feather="shield"></i></div>
-                Manage Accounts
-              </NavLink>
 
-              <NavLink to="/admin/system/backups" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
-                <div className="nav-link-icon"><i data-feather="database"></i></div>
-                Backup & Restore
-              </NavLink>
+              {/* User Management - visible to super_admin and bitress */}
+              {isSuperAdmin && (
+                <NavLink to="/admin/users" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
+                  <div className="nav-link-icon"><i data-feather="shield"></i></div>
+                  Manage Accounts
+                </NavLink>
+              )}
+
+              {/* Backup & Restore - visible to super_admin and bitress */}
+              {isSuperAdmin && (
+                <NavLink to="/admin/system/backups" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
+                  <div className="nav-link-icon"><i data-feather="database"></i></div>
+                  Backup & Restore
+                </NavLink>
+              )}
+
+              {/* System Reset - only visible to bitress */}
+              {isBitress && (
+                <NavLink to="/admin/system/reset" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
+                  <div className="nav-link-icon"><i data-feather="trash-2"></i></div>
+                  System Reset
+                  <span className="badge bg-danger ms-auto">⚡</span>
+                </NavLink>
+              )}
 
 
             </div>
@@ -197,7 +230,9 @@ const Sidebar: React.FC = () => {
           <div className="sidenav-footer">
             <div className="sidenav-footer-content">
               <div className="sidenav-footer-subtitle">Logged in as:</div>
-              <div className="sidenav-footer-title">Admin</div>
+              <div className={`sidenav-footer-title ${roleInfo.color}`}>
+                {roleInfo.icon} {roleInfo.label}
+              </div>
             </div>
           </div>
         </nav>

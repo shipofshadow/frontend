@@ -12,7 +12,7 @@ interface IUser {
     first_name: string;
     last_name: string;
     email: string;
-    role: 'admin' | 'user';
+    role: 'bitress' | 'super_admin' | 'admin' | 'student' | 'user';
     is_active: boolean;
     avatar?: string | null;
     created_at: string;
@@ -37,6 +37,35 @@ interface IApiResponse<T> {
     user?: T;
 }
 
+// Helper function to get role badge info
+const getRoleBadgeInfo = (role: string) => {
+    switch (role) {
+        case 'bitress':
+            return { icon: '⚡', label: 'Bitress', className: 'bg-warning text-dark' };
+        case 'super_admin':
+            return { icon: '👑', label: 'Super Admin', className: 'bg-purple text-white' };
+        case 'admin':
+            return { icon: '🔧', label: 'Admin', className: 'bg-primary' };
+        case 'student':
+            return { icon: '🎓', label: 'Student', className: 'bg-info' };
+        default:
+            return { icon: '👤', label: role, className: 'bg-secondary' };
+    }
+};
+
+// Check if a user is protected (bitress or super_admin with lower ID can't be modified)
+const isProtectedUser = (user: IUser, currentUserRole: string | undefined) => {
+    // Bitress users (ID: -999) are always protected unless current user is also bitress
+    if (user.role === 'bitress') {
+        return currentUserRole !== 'bitress';
+    }
+    // Super admins are protected from non-bitress and non-super_admin users
+    if (user.role === 'super_admin') {
+        return currentUserRole !== 'bitress' && currentUserRole !== 'super_admin';
+    }
+    return false;
+};
+
 const Users = () => {
     const [users, setUsers] = useState<IUser[]>([]);
     const [deletedUsers, setDeletedUsers] = useState<IUser[]>([]);
@@ -56,7 +85,7 @@ const Users = () => {
         isActive: true,
         avatar: ''
     });
-    const { token } = useAuth();
+    const { token, user: currentUser } = useAuth();
 
     useEffect(() => {
         fetchUsers();
@@ -127,7 +156,7 @@ const Users = () => {
             firstName: user.first_name || '',
             lastName: user.last_name || '',
             email: user.email || '',
-            role: user.role,
+            role: (user.role === 'admin' || user.role === 'user') ? user.role : 'admin',
             isActive: user.is_active,
             avatar: user.avatar || ''
         });
@@ -432,9 +461,14 @@ const Users = () => {
                                             </td>
                                             <td className="text-muted">{user.email}</td>
                                             <td>
-                                                    <span className="badge bg-secondary text-uppercase">
-                                                        {user.role}
-                                                    </span>
+                                                    {(() => {
+                                                        const badgeInfo = getRoleBadgeInfo(user.role);
+                                                        return (
+                                                            <span className={`badge ${badgeInfo.className}`}>
+                                                                {badgeInfo.icon} {badgeInfo.label}
+                                                            </span>
+                                                        );
+                                                    })()}
                                             </td>
                                             <td>
                                                     <span className="badge bg-danger">
@@ -488,9 +522,14 @@ const Users = () => {
                                             </td>
                                             <td className="text-muted">{user.email}</td>
                                             <td>
-                                                    <span className={`badge ${user.role === 'admin' ? 'bg-primary' : 'bg-info'} text-uppercase`}>
-                                                        {user.role}
-                                                    </span>
+                                                    {(() => {
+                                                        const badgeInfo = getRoleBadgeInfo(user.role);
+                                                        return (
+                                                            <span className={`badge ${badgeInfo.className}`}>
+                                                                {badgeInfo.icon} {badgeInfo.label}
+                                                            </span>
+                                                        );
+                                                    })()}
                                             </td>
                                             <td>
                                                     <span className={`badge ${user.is_active ? 'bg-success' : 'bg-warning'}`}>
@@ -505,31 +544,37 @@ const Users = () => {
                                                 })}
                                             </td>
                                             <td className="text-end">
-                                                <div className="btn-group btn-group-sm">
-                                                    <button
-                                                        className="btn btn-outline-primary"
-                                                        onClick={() => handleEditUser(user)}
-                                                        title="Edit user"
-                                                    >
-                                                        <i className="fal fa-edit"></i>
-                                                    </button>
-                                                    <button
-                                                        className="btn btn-outline-warning"
-                                                        onClick={() => handleToggleStatus(user.id)}
-                                                        title={`${user.is_active ? 'Deactivate' : 'Activate'} user`}
-                                                        disabled={user.id === -1}
-                                                    >
-                                                        <i className="fal fa-power-off"></i>
-                                                    </button>
-                                                    <button
-                                                        className="btn btn-outline-danger"
-                                                        onClick={() => confirmDeleteUser(user)}
-                                                        title="Delete user"
-                                                        disabled={user.id === -1}
-                                                    >
-                                                        <i className="fal fa-trash-alt"></i>
-                                                    </button>
-                                                </div>
+                                                {isProtectedUser(user, currentUser?.role) ? (
+                                                    <span className="badge bg-secondary">
+                                                        <i className="fal fa-lock me-1"></i>Protected
+                                                    </span>
+                                                ) : (
+                                                    <div className="btn-group btn-group-sm">
+                                                        <button
+                                                            className="btn btn-outline-primary"
+                                                            onClick={() => handleEditUser(user)}
+                                                            title="Edit user"
+                                                        >
+                                                            <i className="fal fa-edit"></i>
+                                                        </button>
+                                                        <button
+                                                            className="btn btn-outline-warning"
+                                                            onClick={() => handleToggleStatus(user.id)}
+                                                            title={`${user.is_active ? 'Deactivate' : 'Activate'} user`}
+                                                            disabled={user.id === -999}
+                                                        >
+                                                            <i className="fal fa-power-off"></i>
+                                                        </button>
+                                                        <button
+                                                            className="btn btn-outline-danger"
+                                                            onClick={() => confirmDeleteUser(user)}
+                                                            title="Delete user"
+                                                            disabled={user.id === -999}
+                                                        >
+                                                            <i className="fal fa-trash-alt"></i>
+                                                        </button>
+                                                    </div>
+                                                )}
                                             </td>
                                         </tr>
                                     ))
@@ -726,6 +771,12 @@ const Users = () => {
                     </div>
                 </div>
             )}
+
+            <style>{`
+                .bg-purple {
+                    background-color: #6f42c1 !important;
+                }
+            `}</style>
         </>
     );
 }

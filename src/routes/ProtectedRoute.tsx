@@ -7,6 +7,22 @@ interface ProtectedRouteProps {
     allowedRoles?: string[];
 }
 
+// Helper function to check if a role has access based on allowed roles
+const hasRoleAccess = (userRole: string | undefined, allowedRoles: string[]): boolean => {
+    if (!userRole) return false;
+    
+    // Direct role match
+    if (allowedRoles.includes(userRole)) return true;
+    
+    // Bitress has access to all admin routes
+    if (userRole === 'bitress' && allowedRoles.includes('admin')) return true;
+    
+    // Super admin has access to all admin routes
+    if (userRole === 'super_admin' && allowedRoles.includes('admin')) return true;
+    
+    return false;
+};
+
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ allowedRoles }) => {
     const { isAuthenticated, isLoading, user } = useAuth();
 
@@ -20,12 +36,14 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ allowedRoles }) => {
     }
 
     if (!isAuthenticated) {
-        return <Navigate to="/login" replace />; // Updated path to /login
+        return <Navigate to="/login" replace />;
     }
 
-    if (allowedRoles && !allowedRoles.includes(user?.role || '')) {
+    if (allowedRoles && !hasRoleAccess(user?.role, allowedRoles)) {
         if (user?.role === "student") return <Navigate to="/applicant/home" replace />;
-        if (user?.role === "admin") return <Navigate to="/admin" replace />;
+        if (user?.role === "admin" || user?.role === "super_admin" || user?.role === "bitress") {
+            return <Navigate to="/admin" replace />;
+        }
         return <Navigate to="/" replace />;
     }
     

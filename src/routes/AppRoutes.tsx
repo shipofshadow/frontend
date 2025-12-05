@@ -20,6 +20,7 @@ import NotApplied from '../pages/admin/NotApplied';
 import Applicants from '../pages/admin/Applicants';
 import Users from '../pages/admin/Users';
 import SystemSetting from '../pages/admin/SystemSetting';
+import SystemReset from '../pages/admin/SystemReset';
 import Document from '../pages/admin/Document';
 import ActivityLogs from '../pages/admin/ActivityLogs';
 import ArchivedApplicants from '../pages/admin/ArchivedApplicants';
@@ -127,6 +128,7 @@ const AppRoutes: React.FC = () => {
 
                     <Route path="system">
                         <Route path="backups" element={<BackupRestore />} />
+                        <Route path="reset" element={<SystemReset />} />
                     </Route>
 
                     <Route path="approved" element={<ApprovedApplication />} />
