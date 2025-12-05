@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Settings } from "lucide-react";
+import {Settings, Shield} from "lucide-react";
 import Swal from 'sweetalert2';
 import { useAuth } from "../../context/AuthContext.tsx";
 import { 
@@ -9,7 +9,7 @@ import {
 } from "../../services/settingsService.ts";
 
 const SystemSetting = () => {
-    const { token } = useAuth();
+    const { token, isBitress } = useAuth();
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [successMsg, setSuccessMsg] = useState('');
@@ -54,11 +54,7 @@ const SystemSetting = () => {
                 setConfig(data);
             } catch (error) {
                 console.error('Failed to fetch settings:', error);
-                await Swal.fire({
-                    icon: 'error',
-                    title: 'Error',
-                    text: 'Failed to load system settings. Please try again later.'
-                });
+
             } finally {
                 setLoading(false);
             }
@@ -122,6 +118,19 @@ const SystemSetting = () => {
             </div>
         </div>
     );
+
+    if (!isBitress) {
+        return (
+            <div className="min-vh-100 d-flex align-items-center justify-content-center bg-light">
+                <div className="text-center">
+                    <Shield size={64} className="text-danger mb-3" />
+                    <h3 className="text-danger">Access Denied</h3>
+                    <p className="text-muted">`This feature is only accessible to Bitress administrators.`</p>
+                </div>
+            </div>
+        );
+    }
+
 
     return (
         <div className="min-vh-100 bg-gray-50 text-dark">

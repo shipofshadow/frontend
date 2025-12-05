@@ -179,7 +179,7 @@ const SystemReset = () => {
                 <div className="text-center">
                     <Shield size={64} className="text-danger mb-3" />
                     <h3 className="text-danger">Access Denied</h3>
-                    <p className="text-muted">This feature is only accessible to Bitress administrators.</p>
+                    <p className="text-muted">`This feature is only accessible to Bitress administrators.`</p>
                 </div>
             </div>
         );

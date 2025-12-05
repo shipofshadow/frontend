@@ -114,6 +114,7 @@ export const getSystemSettings = async (token: string): Promise<SystemConfig> =>
         throw new Error(`Failed to fetch settings: ${response.status}`);
     }
 
+
     const data = await response.json();
     return mapApiResponseToConfig(data);
 };
