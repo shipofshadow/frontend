@@ -64,11 +64,11 @@ export const useScholarshipAlerts = (): UseScholarshipAlertsReturn => {
     const dismissAlert = useCallback(async (alertId: number) => {
         if (!token) return;
         
+        // Find the alert before removing it to check if it was unread
+        const alertToRemove = alerts.find(a => a.id === alertId);
+        const wasUnread = alertToRemove && !alertToRemove.is_read;
+        
         try {
-            // Find the alert before removing it to check if it was unread
-            const alertToRemove = alerts.find(a => a.id === alertId);
-            const wasUnread = alertToRemove && !alertToRemove.is_read;
-            
             await alertService.dismissAlert(token, alertId);
             setAlerts(prev => prev.filter(alert => alert.id !== alertId));
             
@@ -78,6 +78,7 @@ export const useScholarshipAlerts = (): UseScholarshipAlertsReturn => {
             }
         } catch (err) {
             console.error('Error dismissing alert:', err);
+            throw err;
         }
     }, [token, alerts]);
 

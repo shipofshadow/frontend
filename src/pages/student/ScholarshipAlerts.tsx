@@ -91,14 +91,24 @@ const ScholarshipAlerts = () => {
         });
 
         if (result.isConfirmed) {
-            await dismissAlert(alertId);
-            Swal.fire({
-                title: 'Dismissed!',
-                text: 'The alert has been removed.',
-                icon: 'success',
-                timer: 1500,
-                showConfirmButton: false
-            });
+            try {
+                await dismissAlert(alertId);
+                Swal.fire({
+                    title: 'Dismissed!',
+                    text: 'The alert has been removed.',
+                    icon: 'success',
+                    timer: 1500,
+                    showConfirmButton: false
+                });
+            } catch (err) {
+                const errorMessage = err instanceof Error ? err.message : 'Failed to dismiss alert';
+                Swal.fire({
+                    title: 'Cannot Dismiss',
+                    text: errorMessage,
+                    icon: 'warning',
+                    confirmButtonColor: '#667eea'
+                });
+            }
         }
     };
 
