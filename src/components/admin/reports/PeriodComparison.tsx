@@ -14,7 +14,14 @@ interface ComparisonCardProps {
 }
 
 const ComparisonCard = ({ title, current, previous, isPercentage = false, isCurrency = false }: ComparisonCardProps) => {
-    const change = previous !== 0 ? ((current - previous) / previous) * 100 : current > 0 ? 100 : 0;
+    // Calculate percentage change, handling edge cases
+    const calculateChange = (): number => {
+        if (previous === 0 && current === 0) return 0; // No change when both are zero
+        if (previous === 0) return current > 0 ? 100 : 0; // From zero to something is 100% increase
+        return ((current - previous) / previous) * 100;
+    };
+    
+    const change = calculateChange();
     const isPositive = change > 0;
     const isNeutral = change === 0;
 

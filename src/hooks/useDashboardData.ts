@@ -179,8 +179,16 @@ export const useDashboardData = (filters: FilterOptions) => {
                 fetchData('dashboard/income-gwa-bubble', filters),
                 fetchData('dashboard/statistics', filters),
                 fetchData('dashboard/filter-options', {}), // No filters for options
-                fetchData('dashboard/active-period', {}).catch(() => null), // Gracefully handle if endpoint doesn't exist
-                fetchData('dashboard/comparison', filters).catch(() => null) // Gracefully handle if endpoint doesn't exist
+                fetchData('dashboard/active-period', {}).catch((err) => {
+                    // Active period endpoint may not exist yet - gracefully return null
+                    console.debug('Active period endpoint not available:', err instanceof Error ? err.message : 'Unknown error');
+                    return null;
+                }),
+                fetchData('dashboard/comparison', filters).catch((err) => {
+                    // Comparison endpoint may not exist yet - gracefully return null
+                    console.debug('Comparison endpoint not available:', err instanceof Error ? err.message : 'Unknown error');
+                    return null;
+                })
             ]);
 
             setData({

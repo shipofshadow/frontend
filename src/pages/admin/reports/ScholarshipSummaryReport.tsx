@@ -9,6 +9,10 @@ import { useDashboardData, useActivePeriod, type ActivePeriod, type ComparisonDa
 import { ActivePeriodBadge, SummaryCards, PeriodComparison, DashboardSkeleton } from '../../../components/admin/reports';
 import type {ApexOptions} from "apexcharts";
 
+// Default filter values - used as fallback when active period is not available
+const DEFAULT_ACADEMIC_YEAR = '2025-2026';
+const DEFAULT_SEMESTER = '1st Semester';
+
 interface FilterState {
     academicYear: string;
     semester: string;
@@ -40,16 +44,16 @@ const ScholarshipSummaryReport = () => {
         if (activePeriod && !filtersInitialized) {
             setFilters(prev => ({
                 ...prev,
-                academicYear: activePeriod.academicYear || prev.academicYear || '2025-2026',
-                semester: activePeriod.semester || prev.semester || '1st Semester'
+                academicYear: activePeriod.academicYear || prev.academicYear || DEFAULT_ACADEMIC_YEAR,
+                semester: activePeriod.semester || prev.semester || DEFAULT_SEMESTER
             }));
             setFiltersInitialized(true);
         } else if (!activePeriodLoading && !activePeriod && !filtersInitialized) {
             // Fallback to defaults if active period API fails
             setFilters(prev => ({
                 ...prev,
-                academicYear: prev.academicYear || '2025-2026',
-                semester: prev.semester || '1st Semester'
+                academicYear: prev.academicYear || DEFAULT_ACADEMIC_YEAR,
+                semester: prev.semester || DEFAULT_SEMESTER
             }));
             setFiltersInitialized(true);
         }
