@@ -53,6 +53,7 @@ import TermsOfServicePage from "../pages/TermsOfServicePage.tsx";
 import ScholarshipSummaryReport from '../pages/admin/reports/ScholarshipSummaryReport.tsx';
 import About from "../pages/About.tsx";
 import Scholarships from "../pages/Scholarships.tsx";
+import ScholarshipView from "../pages/ScholarshipView.tsx";
 import EditApplication from "../pages/applicant/EditApplication.tsx";
 import BulkAnalysisTool from "../pages/admin/BulkAnalysisTool.tsx";
 import BackupRestore from "../pages/admin/BackupRestore.tsx";

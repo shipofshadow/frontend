@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { API_BASE_URL } from "../config.ts";
-import { Award, TrendingUp, Users, CheckCircle, Target } from 'lucide-react';
+import { Award, TrendingUp, Users, CheckCircle, Target, ArrowRight } from 'lucide-react';
 
 interface Scholarship {
     id: number;
@@ -293,6 +294,14 @@ const Scholarships: React.FC = () => {
                                                     ₱{Number.isFinite(grant) ? grant.toLocaleString() : "—"}
                                                 </div>
                                             </div>
+                                            <Link
+                                                to={`/scholarships/${scholarship.id}`}
+                                                className="btn btn-sm rounded-pill px-3"
+                                                style={{ backgroundColor: '#5e72e4', color: 'white', fontWeight: 600, border: 'none' }}
+                                            >
+                                                View Details
+                                                <ArrowRight size={14} className="ms-1" />
+                                            </Link>
                                         </div>
                                     </div>
                                 </div>
