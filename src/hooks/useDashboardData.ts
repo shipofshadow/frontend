@@ -12,16 +12,78 @@ interface FilterOptions {
     status?: string;
 }
 
+export interface ActivePeriod {
+    academicYear: string;
+    academicYearId: number;
+    semester: string;
+    semesterId: number;
+    startDate: string;
+    endDate: string;
+}
+
+export interface ComparisonData {
+    current: {
+        totalApplications: number;
+        approvedApplications: number;
+        approvalRate: number;
+        avgGWA: number;
+        totalAmountAwarded: number;
+        numberOfScholars: number;
+        pendingApplications: number;
+    };
+    previous: {
+        totalApplications: number;
+        approvedApplications: number;
+        approvalRate: number;
+        avgGWA: number;
+        totalAmountAwarded: number;
+        numberOfScholars: number;
+        pendingApplications: number;
+    };
+    changes: {
+        applications: number;
+        approvalRate: number;
+        avgGWA: number;
+        totalAmount: number;
+    };
+}
+
+interface SummaryMetrics {
+    activeScholarships?: number;
+    totalApplications?: number;
+    approvedApplications?: number;
+    avgGWA?: number;
+    avgIncome?: number;
+    topCampus?: string;
+    topCampusRate?: number;
+}
+
+interface SummaryData {
+    metrics?: SummaryMetrics;
+}
+
+interface FilterOptionsData {
+    academicYears?: string[];
+    semesters?: string[];
+    campuses?: string[];
+    departments?: string[];
+    courses?: string[];
+    scholarships?: string[];
+    statuses?: string[];
+}
+
 interface DashboardData {
-    summary: any;
-    scholarships: any;
-    campuses: any;
-    fuzzy: any;
-    timeseries: any;
-    demographics: any;
-    bubbleData: any;
-    statistics: any;
-    filterOptions: any;
+    summary: SummaryData | null;
+    scholarships: Record<string, unknown> | null;
+    campuses: Record<string, unknown> | null;
+    fuzzy: Record<string, unknown> | null;
+    timeseries: Record<string, unknown> | null;
+    demographics: Record<string, unknown> | null;
+    bubbleData: Record<string, unknown> | null;
+    statistics: Record<string, unknown> | null;
+    filterOptions: FilterOptionsData | null;
+    activePeriod: ActivePeriod | null;
+    comparison: ComparisonData | null;
 }
 
 /**
@@ -40,7 +102,9 @@ export const useDashboardData = (filters: FilterOptions) => {
         demographics: null,
         bubbleData: null,
         statistics: null,
-        filterOptions: null
+        filterOptions: null,
+        activePeriod: null,
+        comparison: null
     });
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -102,7 +166,9 @@ export const useDashboardData = (filters: FilterOptions) => {
                 demographicsData,
                 bubbleData,
                 statisticsData,
-                filterOptionsData
+                filterOptionsData,
+                activePeriodData,
+                comparisonData
             ] = await Promise.all([
                 fetchData('dashboard/summary', filters),
                 fetchData('dashboard/scholarships', filters),
@@ -112,7 +178,9 @@ export const useDashboardData = (filters: FilterOptions) => {
                 fetchData('dashboard/demographics', filters),
                 fetchData('dashboard/income-gwa-bubble', filters),
                 fetchData('dashboard/statistics', filters),
-                fetchData('dashboard/filter-options', {}) // No filters for options
+                fetchData('dashboard/filter-options', {}), // No filters for options
+                fetchData('dashboard/active-period', {}).catch(() => null), // Gracefully handle if endpoint doesn't exist
+                fetchData('dashboard/comparison', filters).catch(() => null) // Gracefully handle if endpoint doesn't exist
             ]);
 
             setData({
@@ -124,7 +192,9 @@ export const useDashboardData = (filters: FilterOptions) => {
                 demographics: demographicsData,
                 bubbleData: bubbleData,
                 statistics: statisticsData,
-                filterOptions: filterOptionsData
+                filterOptions: filterOptionsData,
+                activePeriod: activePeriodData,
+                comparison: comparisonData
             });
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
@@ -178,13 +248,13 @@ export const useDashboardData = (filters: FilterOptions) => {
     /**
      * Convert JSON to CSV
      */
-    const convertToCSV = (data: any[]) => {
+    const convertToCSV = (data: Record<string, unknown>[]) => {
         if (!data || data.length === 0) return '';
 
         const headers = Object.keys(data[0]);
         const csvRows = [
             headers.join(','),
-            ...data.map((row: any) =>
+            ...data.map((row: Record<string, unknown>) =>
                 headers.map(header => {
                     const value = row[header];
                     return typeof value === 'string' && value.includes(',')
@@ -216,7 +286,7 @@ export const useDashboardData = (filters: FilterOptions) => {
  */
 export const useDashboardSection = (section: string, filters: FilterOptions) => {
     const { token } = useAuth();
-    const [data, setData] = useState<any>(null);
+    const [data, setData] = useState<Record<string, unknown> | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -262,6 +332,51 @@ export const useDashboardSection = (section: string, filters: FilterOptions) => 
     }, [fetchSectionData]);
 
     return { data, loading, error, refetch: fetchSectionData };
+};
+
+/**
+ * Hook for fetching active period
+ */
+export const useActivePeriod = () => {
+    const { token } = useAuth();
+    const [activePeriod, setActivePeriod] = useState<ActivePeriod | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+
+    const fetchActivePeriod = useCallback(async () => {
+        setLoading(true);
+        setError(null);
+
+        try {
+            const url = `${API_BASE_URL}/api/reports/dashboard/active-period`;
+
+            const response = await fetch(url, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const result = await response.json();
+            setActivePeriod(result);
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
+            setError(errorMessage);
+            console.error('Error fetching active period:', err);
+        } finally {
+            setLoading(false);
+        }
+    }, [token]);
+
+    useEffect(() => {
+        fetchActivePeriod();
+    }, [fetchActivePeriod]);
+
+    return { activePeriod, loading, error, refetch: fetchActivePeriod };
 };
 
 // Export default

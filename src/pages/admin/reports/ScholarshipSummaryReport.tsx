@@ -1,11 +1,12 @@
 // pages/admin/reports/ScholarshipSummary.tsx
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import ReactApexChart from 'react-apexcharts';
 import {
     Award, Users, CheckCircle, TrendingUp, DollarSign, Building,
-    Filter, Download, RefreshCw, ChevronDown, AlertCircle, type LucideIcon
+    Filter, Download, RefreshCw, ChevronDown, AlertCircle, Printer, RotateCcw, Calendar, type LucideIcon
 } from 'lucide-react';
-import { useDashboardData } from '../../../hooks/useDashboardData';
+import { useDashboardData, useActivePeriod, type ActivePeriod, type ComparisonData } from '../../../hooks/useDashboardData';
+import { ActivePeriodBadge, SummaryCards, PeriodComparison, DashboardSkeleton } from '../../../components/admin/reports';
 import type {ApexOptions} from "apexcharts";
 
 interface FilterState {
@@ -22,9 +23,11 @@ interface FilterState {
 // MAIN DASHBOARD COMPONENT
 // ============================================================================
 const ScholarshipSummaryReport = () => {
+    const { activePeriod, loading: activePeriodLoading } = useActivePeriod();
+    const [filtersInitialized, setFiltersInitialized] = useState(false);
     const [filters, setFilters] = useState<FilterState>({
-        academicYear: '2025-2026',
-        semester: '1st Semester',
+        academicYear: '',
+        semester: '',
         campus: 'All',
         department: 'All',
         course: 'All',
@@ -32,28 +35,70 @@ const ScholarshipSummaryReport = () => {
         status: 'All'
     });
 
+    // Initialize filters with active period once loaded
+    useEffect(() => {
+        if (activePeriod && !filtersInitialized) {
+            setFilters(prev => ({
+                ...prev,
+                academicYear: activePeriod.academicYear || prev.academicYear || '2025-2026',
+                semester: activePeriod.semester || prev.semester || '1st Semester'
+            }));
+            setFiltersInitialized(true);
+        } else if (!activePeriodLoading && !activePeriod && !filtersInitialized) {
+            // Fallback to defaults if active period API fails
+            setFilters(prev => ({
+                ...prev,
+                academicYear: prev.academicYear || '2025-2026',
+                semester: prev.semester || '1st Semester'
+            }));
+            setFiltersInitialized(true);
+        }
+    }, [activePeriod, activePeriodLoading, filtersInitialized]);
+
     const { data, loading, error, refetch, exportData } = useDashboardData(filters);
+    const [lastUpdated] = useState(new Date());
+
+    // Check if viewing current period
+    const isViewingCurrentPeriod = useCallback((activePeriod: ActivePeriod | null, filters: FilterState): boolean => {
+        if (!activePeriod) return false;
+        return filters.academicYear === activePeriod.academicYear && 
+               filters.semester === activePeriod.semester;
+    }, []);
+
+    const isCurrentPeriod = isViewingCurrentPeriod(activePeriod, filters);
 
     const handleFilterChange = (filterName: keyof FilterState, value: string) => {
         setFilters(prev => ({ ...prev, [filterName]: value }));
     };
 
+    const handleResetToCurrentPeriod = () => {
+        if (activePeriod) {
+            setFilters(prev => ({
+                ...prev,
+                academicYear: activePeriod.academicYear,
+                semester: activePeriod.semester
+            }));
+        }
+    };
+
     const handleExport = async () => {
         try {
             await exportData();
-        } catch (err) {
+        } catch {
             alert('Failed to export data. Please try again.');
         }
     };
 
-    if (loading) {
+    const handlePrint = () => {
+        window.print();
+    };
+
+    // Show skeleton loading while waiting for initial data
+    if ((loading && !filtersInitialized) || activePeriodLoading) {
         return (
             <div className="dashboard-container">
                 <style>{dashboardStyles}</style>
-                <div className="loading-container">
-                    <div className="spinner-modern"></div>
-                    <p className="loading-text">Loading dashboard data...</p>
-                </div>
+                <DashboardSkeleton />
             </div>
         );
     }
@@ -81,39 +126,93 @@ const ScholarshipSummaryReport = () => {
         <div className="dashboard-container">
             <style>{dashboardStyles}</style>
 
+            {/* ================ PRINT HEADER (Only visible when printing) ================ */}
+            <div className="print-header print-only">
+                <h1>Scholarship Analytics Report</h1>
+                <p>Generated on: {new Date().toLocaleDateString('en-PH', { 
+                    year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' 
+                })}</p>
+                <p>Period: {filters.semester} - {filters.academicYear}</p>
+                {filters.campus !== 'All' && <p>Campus: {filters.campus}</p>}
+                {filters.department !== 'All' && <p>Department: {filters.department}</p>}
+            </div>
+
             {/* ================ HEADER ================ */}
-            <header className="dashboard-header">
+            <header className="dashboard-header no-print">
                 <div className="header-content">
                     <div className="header-left">
                         <div className="header-icon-wrapper">
                             <Award className="header-icon" />
                         </div>
                         <div className="header-text">
-                            <h1 className="header-title">Scholarship Analytics</h1>
-                            <p className="header-subtitle">Comprehensive scholarship performance overview</p>
+                            <div className="header-title-row">
+                                <h1 className="header-title">Scholarship Analytics</h1>
+                                <ActivePeriodBadge isActive={isCurrentPeriod} />
+                            </div>
+                            <p className="header-subtitle">
+                                {activePeriod ? (
+                                    <>
+                                        <Calendar size={14} className="header-subtitle-icon" />
+                                        <span>Active Period: {activePeriod.semester} - {activePeriod.academicYear}</span>
+                                        <span className="header-divider">|</span>
+                                        <span>Last updated: {lastUpdated.toLocaleTimeString('en-PH', { hour: '2-digit', minute: '2-digit' })}</span>
+                                    </>
+                                ) : (
+                                    'Comprehensive scholarship performance overview'
+                                )}
+                            </p>
+                        </div>
+                    </div>
+                    <div className="header-stats no-print">
+                        <div className="header-stat">
+                            <span className="header-stat__value">{data.summary?.metrics?.totalApplications || 0}</span>
+                            <span className="header-stat__label">Total Apps</span>
+                        </div>
+                        <div className="header-stat">
+                            <span className="header-stat__value">{data.summary?.metrics?.approvedApplications || 0}</span>
+                            <span className="header-stat__label">Approved</span>
+                        </div>
+                        <div className="header-stat">
+                            <span className="header-stat__value">{data.comparison?.current?.pendingApplications || 0}</span>
+                            <span className="header-stat__label">Pending</span>
                         </div>
                     </div>
                     <div className="header-actions">
-                        <button className="btn-secondary" onClick={refetch}>
+                        <button className="btn-secondary" onClick={refetch} title="Refresh data">
                             <RefreshCw size={18} />
                             <span>Refresh</span>
                         </button>
-                        <button className="btn-primary" onClick={handleExport}>
+                        <button className="btn-secondary" onClick={handlePrint} title="Print report">
+                            <Printer size={18} />
+                            <span>Print</span>
+                        </button>
+                        <button className="btn-primary" onClick={handleExport} title="Export to CSV">
                             <Download size={18} />
-                            <span>Export Report</span>
+                            <span>Export</span>
                         </button>
                     </div>
                 </div>
             </header>
 
             {/* ================ FILTERS ================ */}
-            <div className="filters-section">
+            <div className="filters-section no-print">
                 <div className="filters-container">
                     <div className="filters-header">
                         <div className="filters-title-wrapper">
                             <Filter size={20} />
                             <h2 className="filters-title">Filters</h2>
+                            {!isCurrentPeriod && activePeriod && (
+                                <span className="filters-warning">
+                                    Viewing historical data
+                                </span>
+                            )}
                         </div>
+                        {!isCurrentPeriod && activePeriod && (
+                            <button className="btn-reset" onClick={handleResetToCurrentPeriod}>
+                                <RotateCcw size={14} />
+                                <span>Reset to Current Period</span>
+                            </button>
+                        )}
                     </div>
                     <div className="filters-grid">
                         <FilterDropdown
@@ -164,6 +263,12 @@ const ScholarshipSummaryReport = () => {
 
             {/* ================ MAIN CONTENT ================ */}
             <main className="dashboard-main">
+                {/* Summary Cards - Quick Stats */}
+                <SummaryCards data={data.comparison as ComparisonData | null} />
+                
+                {/* Period Comparison */}
+                <PeriodComparison data={data.comparison as ComparisonData | null} />
+                
                 <KeyMetricsSection data={data.summary?.metrics} />
                 <ScholarshipOverview data={data.scholarships} timeseriesData={data.timeseries} />
                 <ScholarshipPerformance data={data.scholarships} />
@@ -1055,6 +1160,52 @@ const dashboardStyles = `
     font-size: var(--font-size-sm);
     color: var(--color-slate-600);
     font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+}
+
+.header-subtitle-icon {
+    flex-shrink: 0;
+}
+
+.header-divider {
+    color: var(--color-slate-400);
+}
+
+.header-title-row {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+}
+
+.header-stats {
+    display: flex;
+    gap: var(--spacing-xl);
+    padding: 0 var(--spacing-xl);
+    border-left: 1px solid var(--border-color);
+    border-right: 1px solid var(--border-color);
+}
+
+.header-stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.125rem;
+}
+
+.header-stat__value {
+    font-size: var(--font-size-xl);
+    font-weight: 800;
+    color: var(--color-slate-900);
+}
+
+.header-stat__label {
+    font-size: var(--font-size-xs);
+    color: var(--color-slate-600);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
 }
 
 .header-actions {
@@ -1115,6 +1266,26 @@ const dashboardStyles = `
     background: var(--color-slate-200);
 }
 
+.btn-reset {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    padding: 0.5rem 1rem;
+    border-radius: var(--border-radius-xs);
+    font-size: var(--font-size-xs);
+    font-weight: 600;
+    border: 1.5px solid var(--color-orange);
+    background: rgba(249, 115, 22, 0.1);
+    color: var(--color-orange);
+    cursor: pointer;
+    transition: all var(--transition-base);
+}
+
+.btn-reset:hover {
+    background: var(--color-orange);
+    color: white;
+}
+
 /* ============================================================================
    FILTERS SECTION
    ============================================================================ */
@@ -1131,6 +1302,10 @@ const dashboardStyles = `
 
 .filters-header {
     margin-bottom: var(--spacing-lg);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--spacing-md);
 }
 
 .filters-title-wrapper {
@@ -1143,6 +1318,16 @@ const dashboardStyles = `
     font-size: var(--font-size-lg);
     font-weight: 700;
     color: var(--color-slate-900);
+}
+
+.filters-warning {
+    font-size: var(--font-size-xs);
+    font-weight: 600;
+    color: var(--color-orange);
+    background: rgba(249, 115, 22, 0.1);
+    padding: 0.375rem 0.75rem;
+    border-radius: var(--border-radius-xs);
+    border: 1px solid rgba(249, 115, 22, 0.2);
 }
 
 .filters-grid {
@@ -1697,12 +1882,315 @@ const dashboardStyles = `
 }
 
 /* ============================================================================
+   ACTIVE PERIOD BADGE
+   ============================================================================ */
+.active-period-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.375rem 0.875rem;
+    border-radius: var(--border-radius-xs);
+    font-size: var(--font-size-xs);
+    font-weight: 700;
+    letter-spacing: 0.025em;
+}
+
+.active-period-badge--current {
+    background: rgba(16, 185, 129, 0.12);
+    color: #047857;
+    border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.active-period-badge--historical {
+    background: rgba(100, 116, 139, 0.12);
+    color: #475569;
+    border: 1px solid rgba(100, 116, 139, 0.2);
+}
+
+/* ============================================================================
+   SUMMARY CARDS
+   ============================================================================ */
+.summary-cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: var(--spacing-lg);
+}
+
+.summary-card {
+    background: var(--bg-primary);
+    border-radius: var(--border-radius-md);
+    border: 1px solid var(--border-color);
+    padding: var(--spacing-xl);
+    display: flex;
+    align-items: flex-start;
+    gap: var(--spacing-lg);
+    transition: all var(--transition-base);
+}
+
+.summary-card:hover {
+    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
+}
+
+.summary-card__icon {
+    width: 48px;
+    height: 48px;
+    border-radius: var(--border-radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.summary-card--green .summary-card__icon {
+    background: rgba(16, 185, 129, 0.12);
+    color: var(--color-green);
+}
+
+.summary-card--blue .summary-card__icon {
+    background: rgba(37, 99, 235, 0.12);
+    color: var(--color-primary);
+}
+
+.summary-card--purple .summary-card__icon {
+    background: rgba(139, 92, 246, 0.12);
+    color: var(--color-purple);
+}
+
+.summary-card--orange .summary-card__icon {
+    background: rgba(249, 115, 22, 0.12);
+    color: var(--color-orange);
+}
+
+.summary-card__content {
+    flex: 1;
+}
+
+.summary-card__title {
+    font-size: var(--font-size-xs);
+    font-weight: 700;
+    color: var(--color-slate-600);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.25rem;
+}
+
+.summary-card__value {
+    font-size: var(--font-size-2xl);
+    font-weight: 800;
+    color: var(--color-slate-900);
+    line-height: 1.2;
+    margin-bottom: 0.25rem;
+}
+
+.summary-card__subtitle {
+    font-size: var(--font-size-xs);
+    color: var(--color-slate-500);
+    font-weight: 600;
+}
+
+/* ============================================================================
+   PERIOD COMPARISON
+   ============================================================================ */
+.comparison-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: var(--spacing-lg);
+}
+
+.comparison-card {
+    background: var(--bg-tertiary);
+    border-radius: var(--border-radius-sm);
+    padding: var(--spacing-lg);
+    border: 1px solid var(--border-color);
+}
+
+.comparison-card__title {
+    font-size: var(--font-size-sm);
+    font-weight: 700;
+    color: var(--color-slate-800);
+    margin-bottom: var(--spacing-md);
+}
+
+.comparison-card__values {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-md);
+}
+
+.comparison-card__current,
+.comparison-card__previous {
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+}
+
+.comparison-card__label {
+    font-size: var(--font-size-xs);
+    color: var(--color-slate-500);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.comparison-card__value {
+    font-size: var(--font-size-lg);
+    font-weight: 700;
+    color: var(--color-slate-800);
+}
+
+.comparison-card__trend {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.375rem 0.75rem;
+    border-radius: var(--border-radius-xs);
+    font-size: var(--font-size-xs);
+    font-weight: 700;
+}
+
+.comparison-card__trend--positive {
+    background: rgba(16, 185, 129, 0.12);
+    color: #047857;
+}
+
+.comparison-card__trend--negative {
+    background: rgba(220, 38, 38, 0.12);
+    color: #991b1b;
+}
+
+.comparison-card__trend--neutral {
+    background: rgba(100, 116, 139, 0.12);
+    color: #475569;
+}
+
+/* ============================================================================
+   SKELETON LOADERS
+   ============================================================================ */
+.dashboard-skeleton {
+    padding: var(--spacing-2xl);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-2xl);
+}
+
+.skeleton-pulse {
+    background: linear-gradient(
+        90deg,
+        var(--color-slate-200) 0%,
+        var(--color-slate-100) 50%,
+        var(--color-slate-200) 100%
+    );
+    background-size: 200% 100%;
+    animation: skeleton-shimmer 1.5s ease-in-out infinite;
+    border-radius: var(--border-radius-xs);
+}
+
+@keyframes skeleton-shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+.skeleton-card {
+    opacity: 0.7;
+}
+
+.skeleton-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: var(--border-radius-sm);
+}
+
+.skeleton-icon--large {
+    width: 56px;
+    height: 56px;
+}
+
+.skeleton-text {
+    height: 16px;
+}
+
+.skeleton-text--short {
+    width: 60%;
+}
+
+.skeleton-text--medium {
+    width: 80%;
+}
+
+.skeleton-text--large {
+    height: 32px;
+    width: 50%;
+}
+
+.skeleton-chart {
+    height: 300px;
+    border-radius: var(--border-radius-sm);
+}
+
+.skeleton-table {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+}
+
+.skeleton-table__header,
+.skeleton-table__row {
+    display: flex;
+    gap: var(--spacing-md);
+    padding: var(--spacing-md);
+}
+
+.skeleton-table__header {
+    border-bottom: 2px solid var(--border-color);
+}
+
+/* ============================================================================
+   PRINT HEADER & UTILITIES
+   ============================================================================ */
+.print-header {
+    text-align: center;
+    padding: var(--spacing-xl);
+    border-bottom: 2px solid var(--color-slate-900);
+    margin-bottom: var(--spacing-xl);
+}
+
+.print-header h1 {
+    font-size: var(--font-size-2xl);
+    font-weight: 800;
+    color: var(--color-slate-900);
+    margin-bottom: var(--spacing-sm);
+}
+
+.print-header p {
+    font-size: var(--font-size-sm);
+    color: var(--color-slate-700);
+    margin-bottom: 0.25rem;
+}
+
+.print-only {
+    display: none !important;
+}
+
+.no-print {
+    display: flex;
+}
+
+/* ============================================================================
    PRINT STYLES
    ============================================================================ */
 @media print {
-    .dashboard-header,
-    .filters-section {
-        display: none;
+    .no-print {
+        display: none !important;
+    }
+
+    .print-only {
+        display: block !important;
+    }
+
+    .dashboard-container {
+        background: white;
     }
 
     .card {
@@ -1710,10 +2198,32 @@ const dashboardStyles = `
         page-break-inside: avoid;
         box-shadow: none;
         margin-bottom: var(--spacing-lg);
+        border: 1px solid #ccc;
+    }
+
+    .card-header {
+        background: #f5f5f5 !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
     }
     
     .dashboard-main {
         padding: 0;
+    }
+
+    .summary-cards-grid,
+    .comparison-grid,
+    .metrics-grid {
+        break-inside: avoid;
+        page-break-inside: avoid;
+    }
+
+    .summary-card,
+    .comparison-card,
+    .metric-card {
+        break-inside: avoid;
+        box-shadow: none;
+        border: 1px solid #ccc;
     }
 }
 
