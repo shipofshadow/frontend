@@ -78,6 +78,11 @@ const Sidebar: React.FC = () => {
                       icon: 'far fa-user-check',
                     },
                     {
+                      to: '/admin/students/potential-applicants',
+                      label: 'Potential Applicants',
+                      icon: 'far fa-user-plus',
+                    },
+                    {
                       to: '/admin/applicants/not-applied',
                       label: 'Not Applied',
                       icon: 'far fa-user-slash',
