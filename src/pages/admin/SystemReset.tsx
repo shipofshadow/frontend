@@ -131,7 +131,7 @@ const SystemReset = () => {
                     Authorization: `Bearer ${token}`,
                 },
                 body: JSON.stringify({
-                    confirmation: 'RESET_SYSTEM_CONFIRM'
+                    confirmation: 'RESET'
                 }),
             });
 
