@@ -276,7 +276,7 @@ const ScholarshipAlerts = () => {
                             <div className="col-md-8">
                                 <div className="d-flex align-items-center gap-3">
                                     <div className="bg-white bg-opacity-20 rounded-3 p-3">
-                                        <Bell size={32} />
+                                        <Bell size={32} className="text-dark" />
                                     </div>
                                     <div>
                                         <h2 className="mb-1 fw-bold">Scholarship Alerts</h2>
@@ -289,8 +289,8 @@ const ScholarshipAlerts = () => {
                             <div className="col-md-4 text-md-end mt-3 mt-md-0">
                                 <div className="d-flex gap-2 justify-content-md-end">
                                     <div className="bg-white bg-opacity-15 rounded-3 px-4 py-2">
-                                        <div className="d-flex align-items-center gap-2">
-                                            <AlertCircle size={18} />
+                                        <div className="d-flex align-items-center gap-2 text-dark">
+                                            <AlertCircle size={18} className="" />
                                             <span className="fw-bold">{unreadAlertCount}</span>
                                             <span className="small opacity-90">Unread</span>
                                         </div>
