@@ -505,7 +505,8 @@ const BackupRestore = () => {
         setDeletingFromS3(key);
 
         try {
-            const res = await fetch(`${API_BASE_URL}/api/backup/s3/delete/${encodeURIComponent(key)}`, {
+                const filename = key.split('/').pop();
+                const res = await fetch(`${API_BASE_URL}/api/backup/s3/delete/${filename}`, {
                 method: 'DELETE',
                 headers: {
                     Authorization: `Bearer ${token}`,
