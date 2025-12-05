@@ -30,10 +30,14 @@ const SummaryCards = ({ data }: SummaryCardsProps) => {
     if (!data?.current) return null;
 
     const current = data.current;
-    
+
+    console.log(current)
+
     const formatCurrency = (amount: number) => {
-        return `₱${amount.toLocaleString('en-PH', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+        if (isNaN(amount)) return "₱0";
+        return `₱${Math.round(amount).toLocaleString("en-PH")}`;
     };
+
 
     const avgAwardAmount = current.numberOfScholars > 0 
         ? current.totalAmountAwarded / current.numberOfScholars 

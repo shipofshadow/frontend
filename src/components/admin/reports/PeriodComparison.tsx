@@ -26,14 +26,22 @@ const ComparisonCard = ({ title, current, previous, isPercentage = false, isCurr
     const isNeutral = change === 0;
 
     const formatValue = (value: number) => {
+        if (typeof value !== "number" || isNaN(value)) return "";
+
         if (isCurrency) {
-            return `₱${value.toLocaleString('en-PH', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+            return `₱${value.toLocaleString("en-PH", {
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0,
+            })}`;
         }
+
         if (isPercentage) {
             return `${value.toFixed(1)}%`;
         }
-        return value.toLocaleString();
+
+        return value.toLocaleString("en-PH");
     };
+
 
     const getTrendIcon = () => {
         if (isNeutral) return <Minus size={16} />;

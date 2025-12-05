@@ -6,7 +6,7 @@ import Guard from "./components/Guard.tsx";
 import {store} from "./store/slices";
 import {Provider} from "react-redux";
 import {NotificationProvider} from "./context/NotificationContext.tsx";
-
+import './index.css'
 const App: React.FC = () => {
     return (
         <Provider store={store}>
