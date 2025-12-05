@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import type { DragEvent, ChangeEvent } from 'react';
 import {
     Download,
     Upload,
@@ -15,14 +16,34 @@ import {
     Plus,
     Search,
     Server,
-    ShieldAlert
+    ShieldAlert,
+    Cloud,
+    CloudUpload,
+    CloudDownload,
+    FolderUp,
+    X
 } from 'lucide-react';
 import Swal from 'sweetalert2';
 import { useAuth } from '../../context/AuthContext.tsx';
 import { API_BASE_URL } from '../../config.ts';
 
+// Interfaces for S3 and Import features
+interface CloudBackup {
+    key: string;
+    filename: string;
+    size: number;
+    last_modified: string;
+}
+
+interface StorageConfig {
+    s3_enabled: boolean;
+    s3_bucket: string;
+    s3_region: string;
+    local_storage: boolean;
+}
+
 const BackupRestore = () => {
-    // --- State & Logic (Unchanged) ---
+    // --- State & Logic ---
     const [backups, setBackups] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
     const [creating, setCreating] = useState(false);
@@ -33,10 +54,30 @@ const BackupRestore = () => {
     const [selectedBackup, setSelectedBackup] = useState<any | null>(null);
     const { token } = useAuth();
 
+    // New state for tabs, cloud, and import features
+    const [activeTab, setActiveTab] = useState<'local' | 'cloud'>('local');
+    const [cloudBackups, setCloudBackups] = useState<CloudBackup[]>([]);
+    const [loadingCloud, setLoadingCloud] = useState(false);
+    const [storageConfig, setStorageConfig] = useState<StorageConfig | null>(null);
+
+    // Import state
+    const [showImportModal, setShowImportModal] = useState(false);
+    const [importing, setImporting] = useState(false);
+    const [importProgress, setImportProgress] = useState(0);
+    const [selectedFile, setSelectedFile] = useState<File | null>(null);
+    const [isDragging, setIsDragging] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    // S3 upload/download state
+    const [uploadingToS3, setUploadingToS3] = useState<string | null>(null);
+    const [downloadingFromS3, setDownloadingFromS3] = useState<string | null>(null);
+    const [deletingFromS3, setDeletingFromS3] = useState<string | null>(null);
+
     const [createForm, setCreateForm] = useState({
         name: '',
         description: '',
         includeFiles: true,
+        uploadToS3: false,
     });
 
     const [restoreForm, setRestoreForm] = useState({
@@ -48,9 +89,53 @@ const BackupRestore = () => {
         type: 'success' | 'danger' | 'info';
     } | null>(null);
 
+    // Fetch storage config on mount
+    const fetchStorageConfig = useCallback(async () => {
+        try {
+            const res = await fetch(`${API_BASE_URL}/api/backup/storage-config`, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            const data = await res.json();
+            if (data.success !== false) {
+                setStorageConfig(data);
+            }
+        } catch (err) {
+            console.error('Error fetching storage config:', err);
+        }
+    }, [token]);
+
+    // Fetch cloud backups
+    const fetchCloudBackups = useCallback(async () => {
+        if (!storageConfig?.s3_enabled) return;
+        
+        setLoadingCloud(true);
+        try {
+            const res = await fetch(`${API_BASE_URL}/api/backup/s3/list`, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            const data = await res.json();
+            if (data.success) {
+                setCloudBackups(data.backups || []);
+            } else {
+                showNotification(data.error || 'Failed to fetch cloud backups', 'danger');
+            }
+        } catch (err) {
+            console.error('Error fetching cloud backups:', err);
+            showNotification('Error connecting to cloud storage', 'danger');
+        }
+        setLoadingCloud(false);
+    }, [token, storageConfig?.s3_enabled]);
+
     useEffect(() => {
         fetchBackups();
-    }, []);
+        fetchStorageConfig();
+    }, [fetchStorageConfig]);
+
+    useEffect(() => {
+        if (storageConfig?.s3_enabled) {
+            fetchCloudBackups();
+        }
+    }, [storageConfig?.s3_enabled, fetchCloudBackups]);
 
     const showNotification = (message: string, type: 'success' | 'danger' | 'info' = 'success') => {
         setNotification({ message, type });
@@ -107,6 +192,7 @@ const BackupRestore = () => {
                     name: backupName,
                     description: createForm.description,
                     include_files: createForm.includeFiles,
+                    upload_to_s3: createForm.uploadToS3,
                 }),
             });
 
@@ -115,8 +201,11 @@ const BackupRestore = () => {
             if (data.success) {
                 showNotification('Backup created successfully!', 'success');
                 setShowCreateModal(false);
-                setCreateForm({ name: '', description: '', includeFiles: true });
+                setCreateForm({ name: '', description: '', includeFiles: true, uploadToS3: false });
                 fetchBackups();
+                if (createForm.uploadToS3 && storageConfig?.s3_enabled) {
+                    fetchCloudBackups();
+                }
             } else {
                 showNotification(`Error: ${data.error}`, 'danger');
             }
@@ -284,6 +373,216 @@ const BackupRestore = () => {
         }
     };
 
+    // Import backup from file
+    const handleImportBackup = async () => {
+        if (!selectedFile) return;
+
+        setImporting(true);
+        setImportProgress(0);
+
+        try {
+            const formData = new FormData();
+            formData.append('file', selectedFile);
+
+            const res = await fetch(`${API_BASE_URL}/api/backup/import`, {
+                method: 'POST',
+                headers: { Authorization: `Bearer ${token}` },
+                body: formData,
+            });
+
+            const data = await res.json();
+
+            if (data.success) {
+                showNotification('Backup imported successfully!', 'success');
+                setShowImportModal(false);
+                setSelectedFile(null);
+                setImportProgress(0);
+                fetchBackups();
+            } else {
+                showNotification(`Import failed: ${data.error}`, 'danger');
+            }
+        } catch (err: any) {
+            showNotification(`Error importing backup: ${err.message}`, 'danger');
+        } finally {
+            setImporting(false);
+            setImportProgress(0);
+        }
+    };
+
+    // Upload to S3
+    const handleUploadToS3 = async (filename: string) => {
+        setUploadingToS3(filename);
+
+        try {
+            const res = await fetch(`${API_BASE_URL}/api/backup/upload-to-s3/${filename}`, {
+                method: 'POST',
+                headers: { Authorization: `Bearer ${token}` },
+            });
+
+            const data = await res.json();
+
+            if (data.success) {
+                showNotification('Backup uploaded to cloud successfully!', 'success');
+                fetchCloudBackups();
+            } else {
+                showNotification(`Upload failed: ${data.error}`, 'danger');
+            }
+        } catch (err: any) {
+            showNotification(`Error uploading to cloud: ${err.message}`, 'danger');
+        } finally {
+            setUploadingToS3(null);
+        }
+    };
+
+    // Download from S3 to local
+    const handleDownloadFromS3 = async (filename: string) => {
+        setDownloadingFromS3(filename);
+
+        try {
+            const res = await fetch(`${API_BASE_URL}/api/backup/s3/download/${filename}`, {
+                method: 'POST',
+                headers: { Authorization: `Bearer ${token}` },
+            });
+
+            const data = await res.json();
+
+            if (data.success) {
+                showNotification('Backup downloaded to local storage!', 'success');
+                fetchBackups();
+            } else {
+                showNotification(`Download failed: ${data.error}`, 'danger');
+            }
+        } catch (err: any) {
+            showNotification(`Error downloading from cloud: ${err.message}`, 'danger');
+        } finally {
+            setDownloadingFromS3(null);
+        }
+    };
+
+    // Direct download from S3 (get presigned URL)
+    const handleDirectDownloadFromS3 = async (key: string) => {
+        try {
+            showNotification('Preparing download...', 'info');
+
+            const res = await fetch(`${API_BASE_URL}/api/backup/s3/presigned-url/${encodeURIComponent(key)}`, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+
+            const data = await res.json();
+
+            if (data.success && data.url) {
+                // Open presigned URL in new tab for direct download
+                window.open(data.url, '_blank');
+                showNotification('Download started!', 'success');
+            } else {
+                showNotification(`Failed to get download link: ${data.error}`, 'danger');
+            }
+        } catch (err: any) {
+            showNotification(`Error getting download link: ${err.message}`, 'danger');
+        }
+    };
+
+    // Delete from S3
+    const handleDeleteFromS3 = async (key: string, filename: string) => {
+        const result = await Swal.fire({
+            title: 'Delete Cloud Backup',
+            html:
+                `Are you sure you want to delete "<b>${filename}</b>" from cloud storage?<br/><br/>` +
+                'This action cannot be undone.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Delete',
+            cancelButtonText: 'Cancel',
+            confirmButtonColor: '#dc3545',
+        });
+
+        if (!result.isConfirmed) return;
+
+        setDeletingFromS3(key);
+
+        try {
+            const res = await fetch(`${API_BASE_URL}/api/backup/s3/delete/${encodeURIComponent(key)}`, {
+                method: 'DELETE',
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            const data = await res.json();
+
+            if (res.ok && data.success) {
+                showNotification('Cloud backup deleted successfully', 'success');
+                fetchCloudBackups();
+            } else {
+                showNotification(`Error: ${data.error || 'Failed to delete cloud backup'}`, 'danger');
+            }
+        } catch (err: any) {
+            showNotification(`Error deleting cloud backup: ${err.message}`, 'danger');
+        } finally {
+            setDeletingFromS3(null);
+        }
+    };
+
+    // Drag and drop handlers for import
+    const handleDragEnter = (e: DragEvent<HTMLDivElement>) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(true);
+    };
+
+    const handleDragLeave = (e: DragEvent<HTMLDivElement>) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(false);
+    };
+
+    const handleDragOver = (e: DragEvent<HTMLDivElement>) => {
+        e.preventDefault();
+        e.stopPropagation();
+    };
+
+    const handleDrop = (e: DragEvent<HTMLDivElement>) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(false);
+
+        const files = e.dataTransfer.files;
+        if (files && files.length > 0) {
+            const file = files[0];
+            if (file.name.endsWith('.zip')) {
+                setSelectedFile(file);
+            } else {
+                showNotification('Please select a .zip file', 'danger');
+            }
+        }
+    };
+
+    const handleFileSelect = (e: ChangeEvent<HTMLInputElement>) => {
+        const files = e.target.files;
+        if (files && files.length > 0) {
+            const file = files[0];
+            if (file.name.endsWith('.zip')) {
+                setSelectedFile(file);
+            } else {
+                showNotification('Please select a .zip file', 'danger');
+            }
+        }
+    };
+
+    const openFileDialog = () => {
+        fileInputRef.current?.click();
+    };
+
+    // Get cloud backup stats
+    const getCloudBackupStats = () => {
+        const totalSize = cloudBackups.reduce((sum, b) => sum + (b.size || 0), 0);
+        const latest = cloudBackups.length > 0 ? cloudBackups[0] : null;
+        return { totalSize, latest, count: cloudBackups.length };
+    };
+
+    const cloudStats = getCloudBackupStats();
+
     const formatBytes = (bytes: number) => {
         if (!bytes || bytes === 0) return '0 Bytes';
         const k = 1024;
@@ -442,6 +741,14 @@ const BackupRestore = () => {
                                 <span className="d-none d-sm-inline">Refresh</span>
                             </button>
                             <button
+                                className="btn btn-outline-primary d-flex align-items-center gap-2 btn-sm px-3"
+                                onClick={() => setShowImportModal(true)}
+                                disabled={importing}
+                            >
+                                <FolderUp size={16} />
+                                <span className="d-none d-sm-inline">Import Backup</span>
+                            </button>
+                            <button
                                 className="btn btn-primary d-flex align-items-center gap-2 btn-sm px-3 shadow-sm"
                                 onClick={() => setShowCreateModal(true)}
                                 disabled={creating}
@@ -455,74 +762,153 @@ const BackupRestore = () => {
             </header>
 
             <main className="container-fluid px-4 py-4">
-                {/* Stats Dashboard */}
-                <div className="row g-4 mb-4">
-                    <div className="col-md-3">
-                        <div className="custom-card p-3 h-100 fade-in-up" style={{ animationDelay: '0ms' }}>
-                            <div className="d-flex align-items-center gap-3">
-                                <div className="bg-blue-50 p-3 rounded-3 text-primary">
-                                    <Package size={24} />
+                {/* Stats Dashboard - Conditional based on active tab */}
+                {activeTab === 'local' ? (
+                    <div className="row g-4 mb-4">
+                        <div className="col-md-3">
+                            <div className="custom-card p-3 h-100 fade-in-up" style={{ animationDelay: '0ms' }}>
+                                <div className="d-flex align-items-center gap-3">
+                                    <div className="bg-blue-50 p-3 rounded-3 text-primary">
+                                        <Package size={24} />
+                                    </div>
+                                    <div>
+                                        <h3 className="fw-bold mb-0 text-dark">{backups.length}</h3>
+                                        <div className="text-secondary-custom small">Local Snapshots</div>
+                                    </div>
                                 </div>
-                                <div>
-                                    <h3 className="fw-bold mb-0 text-dark">{backups.length}</h3>
-                                    <div className="text-secondary-custom small">Total Snapshots</div>
+                            </div>
+                        </div>
+                        <div className="col-md-3">
+                            <div className="custom-card p-3 h-100 fade-in-up" style={{ animationDelay: '50ms' }}>
+                                <div className="d-flex align-items-center gap-3">
+                                    <div className="bg-green-50 p-3 rounded-3 text-success">
+                                        <HardDrive size={24} />
+                                    </div>
+                                    <div>
+                                        <h3 className="fw-bold mb-0 text-dark">{formatBytes(stats.totalSize)}</h3>
+                                        <div className="text-secondary-custom small">Local Storage Used</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="col-md-3">
+                            <div className="custom-card p-3 h-100 fade-in-up" style={{ animationDelay: '100ms' }}>
+                                <div className="d-flex align-items-center gap-3">
+                                    <div className="bg-purple-50 p-3 rounded-3 text-info">
+                                        <FileText size={24} />
+                                    </div>
+                                    <div>
+                                        <h3 className="fw-bold mb-0 text-dark">{stats.withFiles}</h3>
+                                        <div className="text-secondary-custom small">Include Files</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="col-md-3">
+                            <div className="custom-card p-3 h-100 fade-in-up" style={{ animationDelay: '150ms' }}>
+                                <div className="d-flex align-items-center gap-3">
+                                    <div className="bg-orange-50 p-3 rounded-3 text-warning">
+                                        <Clock size={24} />
+                                    </div>
+                                    <div>
+                                        <h3 className="fw-bold mb-0 text-dark" style={{fontSize: '1.1rem'}}>
+                                            {stats.latest ? formatDate(stats.latest.created_at) : 'N/A'}
+                                        </h3>
+                                        <div className="text-secondary-custom small">Last Backup</div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                    <div className="col-md-3">
-                        <div className="custom-card p-3 h-100 fade-in-up" style={{ animationDelay: '50ms' }}>
-                            <div className="d-flex align-items-center gap-3">
-                                <div className="bg-green-50 p-3 rounded-3 text-success">
-                                    <HardDrive size={24} />
+                ) : (
+                    <div className="row g-4 mb-4">
+                        <div className="col-md-4">
+                            <div className="custom-card p-3 h-100 fade-in-up" style={{ animationDelay: '0ms' }}>
+                                <div className="d-flex align-items-center gap-3">
+                                    <div className="bg-blue-50 p-3 rounded-3 text-primary">
+                                        <Cloud size={24} />
+                                    </div>
+                                    <div>
+                                        <h3 className="fw-bold mb-0 text-dark">{cloudStats.count}</h3>
+                                        <div className="text-secondary-custom small">Cloud Backups</div>
+                                    </div>
                                 </div>
-                                <div>
-                                    <h3 className="fw-bold mb-0 text-dark">{formatBytes(stats.totalSize)}</h3>
-                                    <div className="text-secondary-custom small">Storage Used</div>
+                            </div>
+                        </div>
+                        <div className="col-md-4">
+                            <div className="custom-card p-3 h-100 fade-in-up" style={{ animationDelay: '50ms' }}>
+                                <div className="d-flex align-items-center gap-3">
+                                    <div className="bg-green-50 p-3 rounded-3 text-success">
+                                        <HardDrive size={24} />
+                                    </div>
+                                    <div>
+                                        <h3 className="fw-bold mb-0 text-dark">{formatBytes(cloudStats.totalSize)}</h3>
+                                        <div className="text-secondary-custom small">Cloud Storage Used</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="col-md-4">
+                            <div className="custom-card p-3 h-100 fade-in-up" style={{ animationDelay: '100ms' }}>
+                                <div className="d-flex align-items-center gap-3">
+                                    <div className="bg-orange-50 p-3 rounded-3 text-warning">
+                                        <Clock size={24} />
+                                    </div>
+                                    <div>
+                                        <h3 className="fw-bold mb-0 text-dark" style={{fontSize: '1.1rem'}}>
+                                            {cloudStats.latest ? formatDate(cloudStats.latest.last_modified) : 'N/A'}
+                                        </h3>
+                                        <div className="text-secondary-custom small">Last Cloud Backup</div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                    <div className="col-md-3">
-                        <div className="custom-card p-3 h-100 fade-in-up" style={{ animationDelay: '100ms' }}>
-                            <div className="d-flex align-items-center gap-3">
-                                <div className="bg-purple-50 p-3 rounded-3 text-info">
-                                    <FileText size={24} />
-                                </div>
-                                <div>
-                                    <h3 className="fw-bold mb-0 text-dark">{stats.withFiles}</h3>
-                                    <div className="text-secondary-custom small">Include Files</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div className="col-md-3">
-                        <div className="custom-card p-3 h-100 fade-in-up" style={{ animationDelay: '150ms' }}>
-                            <div className="d-flex align-items-center gap-3">
-                                <div className="bg-orange-50 p-3 rounded-3 text-warning">
-                                    <Clock size={24} />
-                                </div>
-                                <div>
-                                    <h3 className="fw-bold mb-0 text-dark" style={{fontSize: '1.1rem'}}>
-                                        {stats.latest ? formatDate(stats.latest.created_at) : 'N/A'}
-                                    </h3>
-                                    <div className="text-secondary-custom small">Last Backup</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                )}
+
+                {/* Storage Tabs */}
+                <div className="storage-tabs mb-4">
+                    <ul className="nav nav-pills">
+                        <li className="nav-item">
+                            <button
+                                className={`nav-link d-flex align-items-center gap-2 ${activeTab === 'local' ? 'active' : ''}`}
+                                onClick={() => setActiveTab('local')}
+                            >
+                                <HardDrive size={16} />
+                                Local Backups
+                                <span className={`badge ${activeTab === 'local' ? 'bg-white text-primary' : 'bg-primary'} ms-2`}>
+                                    {backups.length}
+                                </span>
+                            </button>
+                        </li>
+                        {storageConfig?.s3_enabled && (
+                            <li className="nav-item ms-2">
+                                <button
+                                    className={`nav-link d-flex align-items-center gap-2 ${activeTab === 'cloud' ? 'active' : ''}`}
+                                    onClick={() => setActiveTab('cloud')}
+                                >
+                                    <Cloud size={16} />
+                                    Cloud Backups
+                                    <span className={`badge ${activeTab === 'cloud' ? 'bg-white text-primary' : 'bg-info'} ms-2`}>
+                                        {cloudBackups.length}
+                                    </span>
+                                </button>
+                            </li>
+                        )}
+                    </ul>
                 </div>
 
                 {/* Main Content Area */}
                 <div className="row g-4">
                     <div className="col-lg-12">
 
-                        {/* Backups Table */}
+                        {/* Local Backups Table */}
+                        {activeTab === 'local' && (
                         <div className="custom-card overflow-hidden fade-in-up" style={{ animationDelay: '200ms' }}>
                             <div className="card-header bg-white py-3 border-bottom d-flex align-items-center justify-content-between p-2">
                                 <h5 className="card-title mb-0 fw-bold d-flex align-items-center gap-2">
                                     <Database size={18} className="text-primary" />
-                                    Available Backups
+                                    Local Backups
                                 </h5>
                                 <div className="text-secondary-custom small">
                                     {backups.length} items
@@ -623,6 +1009,20 @@ const BackupRestore = () => {
                                                         >
                                                             <Upload size={16} />
                                                         </button>
+                                                        {storageConfig?.s3_enabled && (
+                                                            <button
+                                                                className="btn btn-sm btn-white border shadow-sm text-secondary-custom hover-text-info"
+                                                                onClick={() => handleUploadToS3(backup.filename)}
+                                                                disabled={uploadingToS3 === backup.filename}
+                                                                title="Upload to Cloud"
+                                                            >
+                                                                {uploadingToS3 === backup.filename ? (
+                                                                    <span className="spinner-border spinner-border-sm" style={{width: '1rem', height: '1rem'}}></span>
+                                                                ) : (
+                                                                    <CloudUpload size={16} />
+                                                                )}
+                                                            </button>
+                                                        )}
                                                         <button
                                                             className="btn btn-sm btn-white border shadow-sm text-secondary-custom hover-text-danger"
                                                             onClick={() => handleDelete(backup.filename, backup.name)}
@@ -644,6 +1044,130 @@ const BackupRestore = () => {
                                 </table>
                             </div>
                         </div>
+                        )}
+
+                        {/* Cloud Backups Table */}
+                        {activeTab === 'cloud' && storageConfig?.s3_enabled && (
+                        <div className="custom-card overflow-hidden fade-in-up" style={{ animationDelay: '200ms' }}>
+                            <div className="card-header bg-white py-3 border-bottom d-flex align-items-center justify-content-between p-2">
+                                <h5 className="card-title mb-0 fw-bold d-flex align-items-center gap-2">
+                                    <Cloud size={18} className="text-info" />
+                                    Cloud Backups (S3)
+                                </h5>
+                                <div className="d-flex align-items-center gap-3">
+                                    <span className="text-secondary-custom small">
+                                        Bucket: <strong>{storageConfig.s3_bucket}</strong> ({storageConfig.s3_region})
+                                    </span>
+                                    <span className="text-secondary-custom small">
+                                        {cloudBackups.length} items
+                                    </span>
+                                    <button
+                                        className="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1"
+                                        onClick={fetchCloudBackups}
+                                        disabled={loadingCloud}
+                                    >
+                                        <RefreshCw size={14} className={loadingCloud ? 'spin' : ''} />
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div className="table-responsive custom-scrollbar" style={{ maxHeight: '600px' }}>
+                                <table className="table mb-0 custom-table w-100">
+                                    <thead>
+                                    <tr>
+                                        <th>Filename</th>
+                                        <th>Last Modified</th>
+                                        <th>Size</th>
+                                        <th className="text-center">Actions</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    {loadingCloud ? (
+                                        <tr>
+                                            <td colSpan={4} className="text-center py-5">
+                                                <div className="spinner-border text-info mb-3" role="status"></div>
+                                                <p className="text-muted small">Loading cloud backups...</p>
+                                            </td>
+                                        </tr>
+                                    ) : cloudBackups.length === 0 ? (
+                                        <tr>
+                                            <td colSpan={4} className="text-center py-5">
+                                                <div className="bg-light p-4 rounded-circle d-inline-block mb-3">
+                                                    <Cloud size={32} className="text-secondary-custom opacity-50" />
+                                                </div>
+                                                <h6 className="fw-bold">No Cloud Backups Found</h6>
+                                                <p className="text-secondary-custom small mb-3">Upload local backups to cloud storage for off-site protection.</p>
+                                            </td>
+                                        </tr>
+                                    ) : (
+                                        cloudBackups.map((backup, index) => (
+                                            <tr key={backup.key}>
+                                                <td>
+                                                    <div className="d-flex flex-column">
+                                                        <span className="fw-semibold text-dark d-flex align-items-center gap-2">
+                                                            {backup.filename}
+                                                            {index === 0 && (
+                                                                <span className="badge bg-info bg-opacity-10 text-info border border-info border-opacity-25 rounded-pill" style={{fontSize: '0.65rem'}}>Latest</span>
+                                                            )}
+                                                        </span>
+                                                        <span className="small text-secondary-custom font-monospace">{backup.key}</span>
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <div className="d-flex align-items-center text-dark small fw-medium">
+                                                        <Calendar size={14} className="me-2 text-secondary-custom" />
+                                                        {formatDate(backup.last_modified)}
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <span className="badge bg-light text-dark border fw-normal">
+                                                        {formatBytes(backup.size)}
+                                                    </span>
+                                                </td>
+                                                <td className="text-center">
+                                                    <div className="d-flex justify-content-center gap-2">
+                                                        <button
+                                                            className="btn btn-sm btn-white border shadow-sm text-secondary-custom hover-text-success"
+                                                            onClick={() => handleDownloadFromS3(backup.filename)}
+                                                            disabled={downloadingFromS3 === backup.filename}
+                                                            title="Download to Local"
+                                                        >
+                                                            {downloadingFromS3 === backup.filename ? (
+                                                                <span className="spinner-border spinner-border-sm" style={{width: '1rem', height: '1rem'}}></span>
+                                                            ) : (
+                                                                <CloudDownload size={16} />
+                                                            )}
+                                                        </button>
+                                                        <button
+                                                            className="btn btn-sm btn-white border shadow-sm text-secondary-custom hover-text-primary"
+                                                            onClick={() => handleDirectDownloadFromS3(backup.key)}
+                                                            title="Direct Download"
+                                                        >
+                                                            <Download size={16} />
+                                                        </button>
+                                                        <button
+                                                            className="btn btn-sm btn-white border shadow-sm text-secondary-custom hover-text-danger"
+                                                            onClick={() => handleDeleteFromS3(backup.key, backup.filename)}
+                                                            disabled={deletingFromS3 === backup.key}
+                                                            title="Delete from Cloud"
+                                                        >
+                                                            {deletingFromS3 === backup.key ? (
+                                                                <span className="spinner-border spinner-border-sm" style={{width: '1rem', height: '1rem'}}></span>
+                                                            ) : (
+                                                                <Trash2 size={16} />
+                                                            )}
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        ))
+                                    )}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        )}
+
                     </div>
                 </div>
             </main>
@@ -706,6 +1230,26 @@ const BackupRestore = () => {
                                                 <span className="d-block small text-secondary-custom">Backs up ITRs, grades, and documents.</span>
                                             </label>
                                         </div>
+
+                                        {storageConfig?.s3_enabled && (
+                                            <div className="form-check custom-card p-3 d-flex align-items-start gap-2 m-0 mt-3 cursor-pointer">
+                                                <input
+                                                    type="checkbox"
+                                                    className="form-check-input mt-1"
+                                                    id="uploadToS3"
+                                                    checked={createForm.uploadToS3}
+                                                    onChange={(e) => setCreateForm({ ...createForm, uploadToS3: e.target.checked })}
+                                                    disabled={creating}
+                                                />
+                                                <label className="form-check-label w-100 cursor-pointer" htmlFor="uploadToS3">
+                                                    <span className="d-block fw-bold text-dark d-flex align-items-center gap-2">
+                                                        <Cloud size={16} className="text-info" />
+                                                        Also Upload to Cloud Storage
+                                                    </span>
+                                                    <span className="d-block small text-secondary-custom">Automatically upload backup to S3 after creation.</span>
+                                                </label>
+                                            </div>
+                                        )}
 
                                         {!createForm.includeFiles && (
                                             <div className="mt-3 text-warning small d-flex align-items-center gap-2">
@@ -793,6 +1337,135 @@ const BackupRestore = () => {
                                                 Confirm Restore
                                             </>
                                         )}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </>
+            )}
+
+            {/* Import Backup Modal */}
+            {showImportModal && (
+                <>
+                    <div className="modal-backdrop fade show"></div>
+                    <div className="modal fade show d-block" tabIndex={-1}>
+                        <div className="modal-dialog modal-dialog-centered">
+                            <div className="modal-content">
+                                <div className="modal-header bg-white">
+                                    <h5 className="modal-title fw-bold d-flex align-items-center gap-2">
+                                        <div className="bg-primary bg-opacity-10 text-primary p-2 rounded-circle">
+                                            <FolderUp size={20} />
+                                        </div>
+                                        Import Backup
+                                    </h5>
+                                    <button 
+                                        type="button" 
+                                        className="btn-close" 
+                                        onClick={() => {
+                                            setShowImportModal(false);
+                                            setSelectedFile(null);
+                                            setImportProgress(0);
+                                        }} 
+                                        disabled={importing}
+                                    ></button>
+                                </div>
+                                <div className="modal-body bg-gray-50">
+                                    <div className="custom-card p-4">
+                                        {/* Hidden file input */}
+                                        <input
+                                            type="file"
+                                            ref={fileInputRef}
+                                            onChange={handleFileSelect}
+                                            accept=".zip"
+                                            style={{ display: 'none' }}
+                                        />
+
+                                        {/* Drag and drop zone */}
+                                        <div
+                                            className={`border-2 border-dashed rounded-3 p-5 text-center cursor-pointer ${
+                                                isDragging ? 'border-primary bg-primary bg-opacity-10' : 'border-secondary'
+                                            }`}
+                                            onDragEnter={handleDragEnter}
+                                            onDragLeave={handleDragLeave}
+                                            onDragOver={handleDragOver}
+                                            onDrop={handleDrop}
+                                            onClick={openFileDialog}
+                                            style={{ borderStyle: 'dashed' }}
+                                        >
+                                            <div className="mb-3">
+                                                <FolderUp size={48} className={isDragging ? 'text-primary' : 'text-secondary-custom'} />
+                                            </div>
+                                            <p className="mb-1 fw-semibold text-dark">
+                                                {isDragging ? 'Drop your backup file here' : 'Drag and drop your backup file here'}
+                                            </p>
+                                            <p className="small text-secondary-custom mb-0">
+                                                or <span className="text-primary">click to browse</span>
+                                            </p>
+                                            <p className="small text-muted mt-2 mb-0">Only .zip files are accepted</p>
+                                        </div>
+
+                                        {/* Selected file info */}
+                                        {selectedFile && (
+                                            <div className="mt-3 p-3 bg-light rounded-3 d-flex align-items-center justify-content-between">
+                                                <div className="d-flex align-items-center gap-2">
+                                                    <FileText size={20} className="text-primary" />
+                                                    <div>
+                                                        <div className="fw-semibold text-dark">{selectedFile.name}</div>
+                                                        <div className="small text-secondary-custom">{formatBytes(selectedFile.size)}</div>
+                                                    </div>
+                                                </div>
+                                                <button
+                                                    className="btn btn-sm btn-outline-danger"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setSelectedFile(null);
+                                                    }}
+                                                    disabled={importing}
+                                                >
+                                                    <X size={16} />
+                                                </button>
+                                            </div>
+                                        )}
+
+                                        {/* Import progress */}
+                                        {importing && (
+                                            <div className="mt-3">
+                                                <div className="d-flex align-items-center justify-content-between mb-2">
+                                                    <span className="small text-secondary-custom">Importing backup...</span>
+                                                    <span className="small fw-semibold">{importProgress}%</span>
+                                                </div>
+                                                <div className="progress" style={{ height: '8px' }}>
+                                                    <div 
+                                                        className="progress-bar progress-bar-striped progress-bar-animated" 
+                                                        style={{ width: `${importProgress}%` }}
+                                                    ></div>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                                <div className="modal-footer bg-white">
+                                    <button 
+                                        type="button" 
+                                        className="btn btn-light" 
+                                        onClick={() => {
+                                            setShowImportModal(false);
+                                            setSelectedFile(null);
+                                            setImportProgress(0);
+                                        }} 
+                                        disabled={importing}
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button 
+                                        type="button" 
+                                        className="btn btn-primary d-flex align-items-center gap-2" 
+                                        onClick={handleImportBackup} 
+                                        disabled={!selectedFile || importing}
+                                    >
+                                        {importing && <span className="spinner-border spinner-border-sm"></span>}
+                                        {importing ? 'Importing...' : 'Import Backup'}
                                     </button>
                                 </div>
                             </div>
