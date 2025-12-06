@@ -135,6 +135,10 @@ const Settings: React.FC = () => {
                     text: 'Profile photo updated successfully'
                 });
                 await refreshUser();
+                // Revoke object URL to prevent memory leak
+                if (avatarPreview) {
+                    URL.revokeObjectURL(avatarPreview);
+                }
                 setAvatarFile(null);
                 setAvatarPreview(null);
             } else {
@@ -154,6 +158,10 @@ const Settings: React.FC = () => {
 
     // Cancel upload handler
     const handleCancelUpload = () => {
+        // Revoke object URL to prevent memory leak
+        if (avatarPreview) {
+            URL.revokeObjectURL(avatarPreview);
+        }
         setAvatarFile(null);
         setAvatarPreview(null);
         if (fileInputRef.current) {
