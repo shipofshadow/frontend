@@ -571,82 +571,7 @@ const Settings: React.FC = () => {
                                                 )}
                                             </div>
 
-                                            {/* Emergency Contact */}
-                                            <div className="col-12">
-                                                <h5 className="fw-bold text-danger border-bottom pb-2 mb-3 mt-4">
-                                                    <i className="far fa-person-exclamation me-2"></i>
-                                                    Emergency Contact Information
-                                                </h5>
-                                            </div>
 
-                                            <div className="col-md-6">
-                                                <label className="form-label fw-medium">
-                                                    <i className="far fa-person me-1 text-danger"></i>
-                                                    Emergency Contact Name
-                                                </label>
-                                                <input
-                                                    type="text"
-                                                    className={`form-control form-control-lg ${validationErrors.emergencyContact ? 'is-invalid' : ''}`}
-                                                    value={formData.emergencyContact}
-                                                    onChange={(e) => handleInputChange('emergencyContact', e.target.value)}
-                                                    placeholder="Full name of emergency contact"
-                                                />
-                                                {validationErrors.emergencyContact && (
-                                                    <div className="invalid-feedback">{validationErrors.emergencyContact}</div>
-                                                )}
-                                            </div>
-
-                                            <div className="col-md-6">
-                                                <label className="form-label fw-medium">
-                                                    <i className="far fa-telephone-forward me-1 text-danger"></i>
-                                                    Emergency Contact Number
-                                                </label>
-                                                <input
-                                                    type="tel"
-                                                    className={`form-control form-control-lg ${validationErrors.emergencyPhone ? 'is-invalid' : ''}`}
-                                                    value={formData.emergencyPhone}
-                                                    onChange={(e) => handleInputChange('emergencyPhone', e.target.value)}
-                                                    placeholder="+63 9xx xxx xxxx"
-                                                />
-                                                {validationErrors.emergencyPhone ? (
-                                                    <div className="invalid-feedback">{validationErrors.emergencyPhone}</div>
-                                                ) : (
-                                                    <div className="form-text">
-                                                        <i className="far fa-exclamation-triangle me-1"></i>
-                                                        Person to contact in case of emergency
-                                                    </div>
-                                                )}
-                                            </div>
-
-                                            {/* Profile Summary */}
-                                            <div className="col-12">
-                                                <div className="card bg-light border-0 mt-4">
-                                                    <div className="card-body">
-                                                        <h6 className="card-title mb-3">
-                                                            <i className="far fa-person-badge me-1"></i>
-                                                            Profile Summary
-                                                        </h6>
-                                                        <div className="row g-3 text-sm">
-                                                            <div className="col-md-3">
-                                                                <strong>Student ID:</strong><br />
-                                                                <span className="text-muted">{profile?.student_id}</span>
-                                                            </div>
-                                                            <div className="col-md-3">
-                                                                <strong>Civil Status:</strong><br />
-                                                                <span className="text-muted">{profile?.civil_status}</span>
-                                                            </div>
-                                                            <div className="col-md-3">
-                                                                <strong>Citizenship:</strong><br />
-                                                                <span className="text-muted">{profile?.citizenship}</span>
-                                                            </div>
-                                                            <div className="col-md-3">
-                                                                <strong>Address:</strong><br />
-                                                                <span className="text-muted">{profile?.municipality_name}, {profile?.province_name}</span>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
                                         </div>
 
                                         <hr className="my-5" />
@@ -1223,38 +1148,6 @@ const Settings: React.FC = () => {
                                     </form>
                                 </div>
                             )}
-                        </div>
-                    </div>
-
-                    {/* Footer Information */}
-                    <div className="row mt-4">
-                        <div className="col-12">
-                            <div className="card border-0 bg-light">
-                                <div className="card-body p-4 text-center">
-                                    <div className="row g-4 text-muted">
-                                        <div className="col-md-3">
-                                            <i className="far fa-shield-lock-fill fs-4 text-success d-block mb-2"></i>
-                                            <strong>Secure</strong><br />
-                                            <small>256-bit SSL encryption</small>
-                                        </div>
-                                        <div className="col-md-3">
-                                            <i className="far fa-clock-history fs-4 text-info d-block mb-2"></i>
-                                            <strong>Auto-Save</strong><br />
-                                            <small>Changes saved automatically</small>
-                                        </div>
-                                        <div className="col-md-3">
-                                            <i className="far fa-database-check fs-4 text-warning d-block mb-2"></i>
-                                            <strong>Backed Up</strong><br />
-                                            <small>Data backed up daily</small>
-                                        </div>
-                                        <div className="col-md-3">
-                                            <i className="far fa-headset fs-4 text-primary d-block mb-2"></i>
-                                            <strong>Support</strong><br />
-                                            <small>24/7 technical support</small>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
                         </div>
                     </div>
                 </div>

@@ -1,6 +1,7 @@
 import { useAuth } from "../../context/AuthContext";
 import { API_BASE_URL } from "../../config";
 import type { Profile as ProfileType } from "../../interfaces/profile";
+import {Link} from "react-router-dom";
 
 const UserProfile = () => {
     const { user } = useAuth();
@@ -42,14 +43,7 @@ const UserProfile = () => {
                         className="rounded-4  p-4 shadow-sm position-relative overflow-hidden"
                         style={{ background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)" }}
                     >
-                        <div
-                            className="position-absolute top-0 end-0 opacity-10"
-                            style={{
-                                backgroundImage: "url('data:image/svg+xml,%3Csvg width=\"60\" height=\"60\" viewBox=\"0 0 60 60\" xmlns=\"http://www.w3.org/2000/svg\"%3E%3Cg fill=\"none\" fill-rule=\"evenodd\"%3E%3Cg fill=\"%23ffffff\" fill-opacity=\"0.1\"%3E%3Ccircle cx=\"30\" cy=\"30\" r=\"4\"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')",
-                                width: "100%",
-                                height: "100%"
-                            }}
-                        />
+
 
                         <div className="row align-items-center">
                             <div className="col-lg-8">
@@ -86,10 +80,7 @@ const UserProfile = () => {
                                         <i className="fal fa-address-card me-2"></i>
                                         <strong>{profile?.student_id || "ID not provided"}</strong>
                                     </span>
-                                    <span className="bg-white bg-opacity-20 rounded-pill px-3 py-2">
-                                        <i className="fal fa-check-circle me-2"></i>
-                                        Active Student
-                                    </span>
+
                                     </div>
                                 </div>
                                 </div>
@@ -97,14 +88,11 @@ const UserProfile = () => {
 
                             <div className="col-lg-4 text-end">
                                 <div className="d-flex gap-2 justify-content-end">
-                                    <button className="btn btn-light btn-sm d-flex align-items-center gap-2 rounded-pill">
-                                        <i className="fal fa-download"></i>
-                                        Download
-                                    </button>
-                                    <button className="btn btn-warning btn-sm d-flex align-items-center gap-2 rounded-pill">
+
+                                    <Link to="/applicant/profile/edit" className="btn btn-warning btn-sm d-flex align-items-center gap-2 rounded-pill">
                                         <i className="fal fa-pencil"></i>
                                         Edit Profile
-                                    </button>
+                                    </Link>
                                 </div>
                             </div>
                         </div>

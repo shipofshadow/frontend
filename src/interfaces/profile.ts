@@ -10,6 +10,7 @@ export interface Profile {
     contact_number: string;
     birth_date: string;
     civil_status: string;
+    gender: string;
 
     street: string;
     region_code: string;
