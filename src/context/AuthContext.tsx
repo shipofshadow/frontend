@@ -151,6 +151,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                     Authorization: `Bearer ${accessToken}`,
                     "Content-Type": "application/json",
                 },
+
             });
             if (res.status === 401) throw new Error("401");
             if (!res.ok) throw new Error(`HTTP ${res.status}`);

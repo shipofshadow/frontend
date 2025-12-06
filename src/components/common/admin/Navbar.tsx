@@ -4,6 +4,7 @@ import feather from 'feather-icons';
 import {useAuth} from "../../../context/AuthContext.tsx";
 import {NotificationBell} from "./NotificationBell.tsx";
 import {API_BASE_URL} from "../../../config.ts";
+import {useSettings} from "../../../context/SettingsContext.tsx";
 
 // Role badge component for displaying user role and campus scope
 const RoleBadge: React.FC = () => {
@@ -48,13 +49,13 @@ const RoleBadge: React.FC = () => {
 const Navbar: React.FC = () => {
   const navigate = useNavigate();
   const {logout, user } = useAuth();
-
+  const {settings} = useSettings();
 
     const avatar = user?.profile?.avatar;
     const path = avatar
         ? `${API_BASE_URL}/api/profile/avatar/${encodeURIComponent(avatar.split("/").pop()!)}`
         : "/default.png";  // served from public folder
-
+    console.log(user)
 
 
     useEffect(() => {
@@ -101,7 +102,7 @@ const Navbar: React.FC = () => {
       </button>
 
       <Link className="navbar-brand pe-3 ps-4 ps-lg-2" to="/admin">
-        ScholarApp
+          {settings.systemName}
       </Link>
 
       <ul className="navbar-nav align-items-center ms-auto">
