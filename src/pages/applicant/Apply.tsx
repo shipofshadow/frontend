@@ -10,12 +10,19 @@ import CampusSelect from "../../components/selects/CampusSelect.tsx";
 import CourseSelect from "../../components/selects/CourseSelect.tsx";
 import { useAcademicTerm } from "../../hooks/useAcademicTerm.ts";
 import type {ApplicationForm} from "../../interfaces/ApplicationForm.ts";
+import {useSettings} from "../../context/SettingsContext.tsx";
+import ApplicationClosed from "../../components/common/applicant/ApplicationClosed.tsx";
 
 const Apply = () => {
     const [step, setStep] = useState("step1");
     const { term } = useAcademicTerm();
     const { user, token } = useAuth();
+    const {settings} = useSettings();
     const navigate = useNavigate();
+
+    if (!settings.isApplicationOpen) {
+        return <ApplicationClosed />;
+    }
 
     interface Region {
         reg_code: string;

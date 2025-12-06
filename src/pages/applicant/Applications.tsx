@@ -3,12 +3,13 @@ import { useAuth } from "../../context/AuthContext.tsx";
 import { Eye, FileText, Calendar, Award, TrendingUp, Pencil, Filter, Plus, Search } from 'lucide-react';
 import { Link } from "react-router-dom";
 import type {ApplicationData} from "../../interfaces/scholarship_summary.ts";
+import {useSettings} from "../../context/SettingsContext.tsx";
 
 const Applications: React.FC = () => {
     const { applications: scholarshipData, isLoading } = useAuth();
     const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'approved' | 'denied'>('all');
     const [q, setQ] = useState('');
-
+    const {settings} = useSettings();
     const applications = scholarshipData?.applications || [];
     const summaryStats = scholarshipData?.summary_statistics;
 
@@ -97,11 +98,21 @@ const Applications: React.FC = () => {
                         <p className="text-muted mb-0">Track scholarship submissions, statuses, and eligibility results</p>
                     </div>
                     <div className="d-flex gap-2">
-                        <Link to="/applicant/apply" className="btn btn-primary">
-                            <Plus size={18} className="me-2" />
-                            New Application
-                        </Link>
-
+                        {settings.isApplicationOpen ? (
+                            <Link to='/applicant/apply' className="btn btn-primary btn-lg px-4 d-inline-flex align-items-center">
+                                <Plus size={20} className="me-2" />
+                                Start Application
+                            </Link>
+                        ) : (
+                            <button
+                                className="btn btn-secondary btn-lg px-4 d-inline-flex align-items-center"
+                                disabled
+                                title="Applications are currently closed"
+                            >
+                                <Plus size={20} className="me-2" />
+                                Application Closed
+                            </button>
+                        )}
                     </div>
                 </div>
             </div>

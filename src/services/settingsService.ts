@@ -156,3 +156,18 @@ export const uploadAvatar = async (file: File, token: string): Promise<{ path: s
 
     return response.json();
 };
+
+export const getPublicSettings = async (): Promise<Partial<SystemConfig>> => {
+    const response = await fetch(`${API_BASE_URL}/api/settings/public`, {
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    });
+
+    if (!response.ok) {
+        throw new Error(`Failed to fetch public settings: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return mapApiResponseToConfig(data);
+};

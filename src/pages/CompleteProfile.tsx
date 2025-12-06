@@ -117,13 +117,17 @@ const CompleteProfile: React.FC = () => {
                     navigate("/applicant/dashboard");
                 }, 1500);
             }
-        } catch {
-            setError("Something went wrong. Please try again.");
+        } catch (err: any) {
+            // Check if the server sent a specific error message
+            if (err.response && err.response.data && err.response.data.error) {
+                setError(err.response.data.error);
+            } else {
+                setError("Something went wrong. Please try again.");
+            }
         } finally {
             setLoading(false);
         }
     };
-
     return (
         <>
             <div className="min-vh-100 d-flex align-items-center py-5" style={{ backgroundColor: '#f8f9fe' }}>

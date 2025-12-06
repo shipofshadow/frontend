@@ -28,6 +28,7 @@ import { fetchSemester } from "../../store/slices/semesterSlice.ts";
 import type { AppDispatch, RootState } from "../../store/slices";
 import {Link} from "react-router-dom";
 import {API_BASE_URL} from "../../config.ts";
+import {useSettings} from "../../context/SettingsContext.tsx";
 
 interface Announcement {
     id: number;
@@ -44,7 +45,7 @@ const Home = () => {
     const [isLoading, setIsLoading] = useState(true);
     const dispatch = useDispatch<AppDispatch>();
     const { current } = useSelector((state: RootState) => state.semester);
-
+    const { settings } = useSettings();
     const applicant = applications?.applications?.[0] ?? null;
 
 
@@ -156,10 +157,21 @@ const Home = () => {
                 </div>
 
                 <div className="d-flex gap-3 justify-content-center flex-wrap">
-                    <Link to='/applicant/apply' className="btn btn-primary btn-lg px-4">
-                        <Plus size={20} className="me-2" />
-                        Start Application
-                    </Link>
+                    {settings.isApplicationOpen ? (
+                        <Link to='/applicant/apply' className="btn btn-primary btn-lg px-4 d-inline-flex align-items-center">
+                            <Plus size={20} className="me-2" />
+                            Start Application
+                        </Link>
+                    ) : (
+                        <button
+                            className="btn btn-secondary btn-lg px-4 d-inline-flex align-items-center"
+                            disabled
+                            title="Applications are currently closed"
+                        >
+                            <Plus size={20} className="me-2" />
+                            Application Closed
+                        </button>
+                    )}
                     <button className="btn btn-outline-secondary">
                         <Eye size={18} className="me-2" />
                         View Available Scholarships
@@ -539,14 +551,30 @@ const Home = () => {
                             </div>
                             <div className="card-body d-grid gap-3">
                                 {!applicationInfo?.has_applied ? (
-                                    <Link to="/applicant/apply" className="btn btn-primary d-flex align-items-center justify-content-between rounded-3 py-3">
-                                        <div className="d-flex align-items-center">
-                                            <Plus size={20} className="me-3" />
-                                            <span className="fw-semibold">New Application</span>
-                                        </div>
-                                        <ArrowRight size={18} />
-                                    </Link>
+                                    // CASE 1: User hasn't applied yet. Check if portal is OPEN.
+                                    settings.isApplicationOpen ? (
+                                        <Link to="/applicant/apply" className="btn btn-primary d-flex align-items-center justify-content-between rounded-3 py-3">
+                                            <div className="d-flex align-items-center">
+                                                <Plus size={20} className="me-3" />
+                                                <span className="fw-semibold">New Application</span>
+                                            </div>
+                                            <ArrowRight size={18} />
+                                        </Link>
+                                    ) : (
+                                        // CASE 2: User hasn't applied, but portal is CLOSED.
+                                        <button
+                                            className="btn btn-secondary d-flex align-items-center justify-content-between rounded-3 py-3 w-100"
+                                            disabled
+                                            title="The application period is currently closed."
+                                        >
+                                            <div className="d-flex align-items-center">
+                                                <Plus size={20} className="me-3" />
+                                                <span className="fw-semibold">Application Closed</span>
+                                            </div>
+                                        </button>
+                                    )
                                 ) : (
+                                    // CASE 3: User has already applied.
                                     <Link to="/applicant/status" className="btn btn-outline-primary d-flex align-items-center justify-content-between rounded-3 py-3">
                                         <div className="d-flex align-items-center">
                                             <Eye size={20} className="me-3" />
@@ -555,7 +583,7 @@ const Home = () => {
                                         <ArrowRight size={18} />
                                     </Link>
                                 )}
-                                <Link to="/applicant/profile" className="btn btn-outline-secondary d-flex align-items-center justify-content-between rounded-3 py-3">
+                                <Link to="/applicant/profile/edit" className="btn btn-outline-secondary d-flex align-items-center justify-content-between rounded-3 py-3">
                                     <div className="d-flex align-items-center">
                                         <User size={20} className="me-3" />
                                         <span className="fw-semibold">Update Profile</span>
