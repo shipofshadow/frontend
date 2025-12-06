@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {useAuth} from "../../context/AuthContext.tsx";
 import { API_BASE_URL } from '../../config.ts';
 import Swal from 'sweetalert2';
@@ -46,8 +46,22 @@ const Settings: React.FC = () => {
         feedback: [],
         isValid: false
     });
-    const { user, token } = useAuth();
+    const { user, token, refreshUser } = useAuth();
     const profile = user?.profile;
+    
+    // Avatar upload state
+    const [avatarFile, setAvatarFile] = useState<File | null>(null);
+    const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+    const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    // Avatar URL computation
+    const currentAvatarUrl = useMemo(() => {
+        const avatar = profile?.avatar;
+        if (!avatar) return null;
+        if (avatar.startsWith('http')) return avatar;
+        return `${API_BASE_URL}/api/profile/avatar/${encodeURIComponent(avatar.replace(/^.*[\\/]/, ''))}`;
+    }, [profile?.avatar]);
 
 
     const [formData, setFormData] = useState<FormData>({
@@ -268,6 +282,88 @@ const Settings: React.FC = () => {
         }
     };
 
+    // File selection handler with validation
+    const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        
+        // Validate file type
+        const allowedTypes = ['image/png', 'image/jpeg', 'image/gif'];
+        if (!allowedTypes.includes(file.type)) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Invalid File Type',
+                text: 'Please select a PNG, JPG, or GIF image'
+            });
+            return;
+        }
+        
+        // Validate file size (max 5MB)
+        if (file.size > 5 * 1024 * 1024) {
+            Swal.fire({
+                icon: 'error',
+                title: 'File Too Large',
+                text: 'Please select an image smaller than 5MB'
+            });
+            return;
+        }
+        
+        setAvatarFile(file);
+        setAvatarPreview(URL.createObjectURL(file));
+    };
+
+    // Avatar upload handler
+    const handleAvatarUpload = async () => {
+        if (!avatarFile) return;
+        
+        setIsUploadingAvatar(true);
+        const formDataUpload = new FormData();
+        formDataUpload.append('avatar', avatarFile);
+        
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/profile/upload-avatar`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                },
+                body: formDataUpload
+            });
+            
+            const data = await response.json();
+            
+            if (response.ok) {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Success!',
+                    text: 'Profile photo updated successfully'
+                });
+                await refreshUser();
+                setAvatarFile(null);
+                setAvatarPreview(null);
+            } else {
+                throw new Error(data.error || 'Upload failed');
+            }
+        } catch (error: unknown) {
+            const errorMessage = error instanceof Error ? error.message : 'Failed to upload avatar';
+            Swal.fire({
+                icon: 'error',
+                title: 'Upload Failed',
+                text: errorMessage
+            });
+        } finally {
+            setIsUploadingAvatar(false);
+        }
+    };
+
+    // Cancel upload handler
+    const handleCancelUpload = () => {
+        setAvatarFile(null);
+        setAvatarPreview(null);
+        if (fileInputRef.current) {
+            fileInputRef.current.value = '';
+        }
+    };
+
     const togglePasswordVisibility = (field: 'current' | 'new' | 'confirm') => {
         setShowPassword(prev => ({ ...prev, [field]: !prev[field] }));
     };
@@ -340,6 +436,85 @@ const Settings: React.FC = () => {
                                             <h3 className="mb-1 fw-bold">Account Information</h3>
                                             <p className="text-muted mb-0">Update your personal details and contact information</p>
                                         </div>
+                                    </div>
+
+                                    {/* Profile Photo Section */}
+                                    <div className="text-center mb-4 pb-4 border-bottom">
+                                        <div className="position-relative d-inline-block mb-3">
+                                            <div
+                                                className="rounded-circle overflow-hidden border border-3 border-primary"
+                                                style={{ width: '120px', height: '120px' }}
+                                            >
+                                                <img
+                                                    src={avatarPreview || currentAvatarUrl || '/default.png'}
+                                                    alt="Profile"
+                                                    className="w-100 h-100"
+                                                    style={{ objectFit: 'cover' }}
+                                                />
+                                            </div>
+                                            {isUploadingAvatar && (
+                                                <div
+                                                    className="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center rounded-circle"
+                                                    style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}
+                                                >
+                                                    <span className="spinner-border spinner-border-sm text-white" role="status"></span>
+                                                </div>
+                                            )}
+                                        </div>
+                                        
+                                        <input
+                                            type="file"
+                                            ref={fileInputRef}
+                                            className="d-none"
+                                            accept="image/png,image/jpeg,image/gif"
+                                            onChange={handleFileSelect}
+                                        />
+                                        
+                                        {!avatarPreview ? (
+                                            <div>
+                                                <button
+                                                    type="button"
+                                                    className="btn btn-outline-primary btn-sm"
+                                                    onClick={() => fileInputRef.current?.click()}
+                                                >
+                                                    <i className="far fa-camera me-2"></i>
+                                                    Change Photo
+                                                </button>
+                                                <div className="form-text mt-2">
+                                                    PNG, JPG or GIF (max 5MB)
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <div className="d-flex justify-content-center gap-2">
+                                                <button
+                                                    type="button"
+                                                    className="btn btn-primary btn-sm"
+                                                    onClick={handleAvatarUpload}
+                                                    disabled={isUploadingAvatar}
+                                                >
+                                                    {isUploadingAvatar ? (
+                                                        <>
+                                                            <span className="spinner-border spinner-border-sm me-2" role="status"></span>
+                                                            Uploading...
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <i className="far fa-upload me-2"></i>
+                                                            Upload
+                                                        </>
+                                                    )}
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    className="btn btn-outline-secondary btn-sm"
+                                                    onClick={handleCancelUpload}
+                                                    disabled={isUploadingAvatar}
+                                                >
+                                                    <i className="far fa-times me-2"></i>
+                                                    Cancel
+                                                </button>
+                                            </div>
+                                        )}
                                     </div>
 
                                     <form onSubmit={handleSubmit}>
