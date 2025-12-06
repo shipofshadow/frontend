@@ -1,9 +1,11 @@
-import { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import Swal from 'sweetalert2';
-import { API_BASE_URL } from "../../config.ts";
-import { useAuth } from "../../context/AuthContext.tsx";
-import { sha256 } from "js-sha256";
+import { sha256 } from 'js-sha256';
+import { API_BASE_URL } from "../../config";
+import { useAuth } from "../../context/AuthContext";
+
+// --- Interfaces ---
 interface IUser {
     id: number;
     username: string;
@@ -44,10 +46,10 @@ interface IApiResponse<T> {
 }
 
 const Users = () => {
+    // --- State ---
     const [users, setUsers] = useState<IUser[]>([]);
     const [deletedUsers, setDeletedUsers] = useState<IUser[]>([]);
     const [campuses, setCampuses] = useState<ICampus[]>([]);
-    const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
     const [showDeletedUsers, setShowDeletedUsers] = useState(false);
     const [modalMode, setModalMode] = useState<'create' | 'edit'>('create');
@@ -72,17 +74,18 @@ const Users = () => {
     const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
-    const { token, user: currentUser } = useAuth();
+    const { token } = useAuth(); // Removed unused 'user' alias
 
+    // --- Effects ---
     useEffect(() => {
         fetchUsers();
         fetchCampuses();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    // ... [Keep fetchUsers, fetchCampuses, fetchDeletedUsers as they were] ...
+    // --- API Fetchers ---
     const fetchUsers = async () => {
         try {
-            setLoading(true);
             const response = await axios.get<IApiResponse<IUser>>(
                 `${API_BASE_URL}/api/users/`,
                 { headers: { Authorization: `Bearer ${token}` } }
@@ -90,10 +93,9 @@ const Users = () => {
             if (response.data.success && response.data.users) {
                 setUsers(response.data.users);
             }
-        } catch {
+        } catch (error) {
+            console.error(error);
             await Swal.fire({ icon: 'error', title: 'Error', text: 'Error fetching users' });
-        } finally {
-            setLoading(false);
         }
     };
 
@@ -115,13 +117,13 @@ const Users = () => {
             if (response.data.success && response.data.users) {
                 setDeletedUsers(response.data.users);
             }
-        } catch {
+        } catch (error) {
+            console.error(error);
             await Swal.fire({ icon: 'error', title: 'Error', text: 'Error fetching deleted users' });
         }
     };
 
-    // ... [Handlers] ...
-
+    // --- Handlers ---
     const handleCreateUser = () => {
         setModalMode('create');
         setFormData({
@@ -142,7 +144,8 @@ const Users = () => {
             firstName: user.first_name || '',
             lastName: user.last_name || '',
             email: user.email || '',
-            role: (['admin', 'faculty', 'user'].includes(user.role) ? user.role : 'admin') as any,
+            // Safe cast: ensure database role maps to form role, default to admin if mismatch
+            role: (['admin', 'faculty', 'user'].includes(user.role) ? user.role : 'admin') as IUserFormData['role'],
             isActive: user.is_active,
             avatar: user.avatar || '',
             campusId: user.campus_id
@@ -159,14 +162,22 @@ const Users = () => {
         setShowModal(true);
     };
 
+    // FIXED: Properly handle different input types (checkbox vs text/select)
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-        const target = e.target as HTMLInputElement;
-        const { name, value, type, checked } = target;
+        const target = e.target;
+        const name = target.name;
+
+        // Checkboxes only exist on input elements, not select
+        const value = (target.type === 'checkbox' && target instanceof HTMLInputElement)
+            ? target.checked
+            : target.value;
+
         setFormData(prev => {
             const newData = {
                 ...prev,
-                [name]: type === 'checkbox' ? checked : value
+                [name]: value
             };
+            // Clear campus ID if role changes to non-faculty
             if (name === 'role' && value !== 'faculty') {
                 newData.campusId = undefined;
             }
@@ -199,11 +210,12 @@ const Users = () => {
         submitData.append('role', formData.role);
         submitData.append('isActive', String(formData.isActive));
 
-        if (formData.campusId) submitData.append('campusId', String(formData.campusId));
+        if (formData.campusId) {
+            submitData.append('campusId', String(formData.campusId));
+        }
 
         // 2. Handle Password with SHA-256 Hashing
         if (formData.password) {
-            // Hash before sending
             submitData.append('password', sha256(formData.password));
         }
 
@@ -223,10 +235,11 @@ const Users = () => {
                 }
             };
 
+            // Use generic to type the response
             if (modalMode === 'create') {
-                response = await axios.post(`${API_BASE_URL}/api/users/`, submitData, config);
+                response = await axios.post<IApiResponse<IUser>>(`${API_BASE_URL}/api/users/`, submitData, config);
             } else {
-                response = await axios.put(`${API_BASE_URL}/api/users/${selectedUser?.id}/`, submitData, config);
+                response = await axios.put<IApiResponse<IUser>>(`${API_BASE_URL}/api/users/${selectedUser?.id}/`, submitData, config);
             }
 
             if (response.data.success) {
@@ -240,11 +253,11 @@ const Users = () => {
                 await fetchUsers();
                 setShowModal(false);
             }
-        } catch (error) {
+        } catch (error: any) {
+            console.error(error);
             await Swal.fire({ icon: 'error', title: 'Error', text: 'Error saving user' });
         }
     };
-
 
     const handleDeleteUser = async (userId: number) => {
         try {
@@ -256,7 +269,8 @@ const Users = () => {
                 await Swal.fire({ icon: 'success', title: 'Deleted!', text: 'User deleted successfully', timer: 1500, showConfirmButton: false });
                 await fetchUsers();
             }
-        } catch {
+        } catch (error: any) {
+            console.error(error);
             await Swal.fire({ icon: 'error', title: 'Error', text: 'Error deleting user' });
         }
     };
@@ -275,22 +289,59 @@ const Users = () => {
 
     const handleRestoreUser = async (userId: number) => {
         try {
-            const response = await axios.put(`${API_BASE_URL}/api/users/${userId}/restore/`, {}, { headers: { Authorization: `Bearer ${token}` } });
+            const response = await axios.put<IApiResponse<IUser>>(
+                `${API_BASE_URL}/api/users/${userId}/restore/`,
+                {},
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
             if (response.data.success) {
                 Swal.fire({ icon: 'success', title: 'Restored!', timer: 1500, showConfirmButton: false });
-                fetchDeletedUsers(); fetchUsers();
+                fetchDeletedUsers();
+                fetchUsers();
             }
-        } catch { Swal.fire({ icon: 'error', title: 'Error', text: 'Error restoring user' }); }
+        } catch (error: any) {
+            console.error(error);
+            Swal.fire({ icon: 'error', title: 'Error', text: 'Error restoring user' });
+        }
     };
 
     const handleToggleStatus = async (userId: number) => {
         try {
-            const response = await axios.put(`${API_BASE_URL}/api/users/${userId}/toggle-status/`, {}, { headers: { Authorization: `Bearer ${token}` } });
+            const response = await axios.put<IApiResponse<IUser>>(
+                `${API_BASE_URL}/api/users/${userId}/toggle-status/`,
+                {},
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
+                }
+            );
+
             if (response.data.success) {
-                Swal.fire({ icon: 'success', title: 'Success!', text: response.data.message, timer: 1500, showConfirmButton: false });
-                fetchUsers();
+                await Swal.fire({
+                    icon: 'success',
+                    title: 'Success!',
+                    text: response.data.message,
+                    timer: 1500,
+                    showConfirmButton: false
+                });
+                await fetchUsers();
+            } else {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: response.data.message || 'Failed to toggle status'
+                });
             }
-        } catch { Swal.fire({ icon: 'error', title: 'Error', text: 'Error toggling status' }); }
+        } catch (error: any) {
+            // Safe access using optional chaining on 'any' typed error
+            const errorMessage = error.response?.data?.message || 'Error toggling status';
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: errorMessage
+            });
+        }
     };
 
     const toggleDeletedUsersView = () => {
