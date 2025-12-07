@@ -10,7 +10,7 @@ import {
     AlertCircle,
     Eye,
     FileText,
-    XCircle
+    XCircle, RotateCcw
 } from "lucide-react";
 import {API_BASE_URL} from "../../../config.ts";
 import axios from "axios";
@@ -551,6 +551,41 @@ const ScholarshipDashboard = () => {
             }
         }
     }
+
+    async function handleReturn(applicationId: number) {
+        if (!applicationId) return;
+
+        const { value: reason } = await Swal.fire({
+            title: 'Return Application',
+            text: 'Request changes from the applicant:',
+            input: 'textarea',
+            inputPlaceholder: 'Enter reason (e.g., blurry documents)...',
+            showCancelButton: true,
+            confirmButtonText: 'Return Application',
+            confirmButtonColor: '#fd7e14',
+            cancelButtonText: 'Cancel',
+            inputValidator: (value) => {
+                if (!value) return 'Please provide a reason';
+            }
+        });
+
+        if (reason) {
+            try {
+                await axios.post(`${API_BASE_URL}/api/applicants/${applicationId}/return`,
+                    { reason },
+                    { headers: { Authorization: `Bearer ${token}` } }
+                );
+
+                setApplications(prev => prev.map(a =>
+                    a.id === applicationId ? { ...a, status: 'returned' } : a
+                ));
+
+                await Swal.fire('Returned', 'Application returned to student.', 'success');
+            } catch (error) {
+                await Swal.fire('Error', 'Failed to return application.', 'error');
+            }
+        }
+    }
     return (
         <>
             <div className="min-vh-100 bg-light">
@@ -848,6 +883,16 @@ const ScholarshipDashboard = () => {
                                                                         <Eye size={16} />
                                                                         <span>View Details</span>
                                                                     </button>
+
+                                                                    {!hasBeenApproved && app.status !== 'denied' && (
+                                                                        <button
+                                                                            className="btn btn-outline-secondary btn-sm d-flex align-items-center justify-content-center gap-2 py-2"
+                                                                            onClick={() => handleReturn(app.id)}
+                                                                        >
+                                                                            <RotateCcw size={16} />
+                                                                            <span>Return / Request Change</span>
+                                                                        </button>
+                                                                    )}
 
                                                                     {/* Evaluate Button */}
                                                                     {!hasBeenApproved && (

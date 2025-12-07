@@ -32,15 +32,50 @@ type AuthData = {
 
 const AuthContext = createContext<AuthData | undefined>(undefined);
 
+// Storage helper with error handling
+const storage = {
+    get: (key: string): string | null => {
+        try {
+            return localStorage.getItem(key);
+        } catch {
+            console.error(`Failed to read ${key} from localStorage`);
+            return null;
+        }
+    },
+    set: (key: string, value: string): boolean => {
+        try {
+            localStorage.setItem(key, value);
+            return true;
+        } catch (err) {
+            console.error(`Failed to write ${key} to localStorage:`, err);
+            return false;
+        }
+    },
+    remove: (key: string): boolean => {
+        try {
+            localStorage.removeItem(key);
+            return true;
+        } catch (err) {
+            console.error(`Failed to remove ${key} from localStorage:`, err);
+            return false;
+        }
+    }
+};
+
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const [user, setUser] = useState<User | null>(null);
     const [applications, setApplications] = useState<ScholarshipSummaryResponse | null>(null);
-    const [token, setToken] = useState<string | null>(() => localStorage.getItem("token"));
+    const [token, setToken] = useState<string | null>(() => storage.get("token"));
     const [isLoading, setIsLoading] = useState<boolean>(true);
     const [sessionExpired, setSessionExpired] = useState<boolean>(false);
 
+    // Track in-flight operations to prevent duplicates
     const refreshInFlight = useRef<Promise<string | null> | null>(null);
+    const scholarshipFetchInFlight = useRef<Promise<void> | null>(null);
+    const refreshTimerRef = useRef<NodeJS.Timeout | null>(null);
+    const isMountedRef = useRef(true);
 
+    // Computed properties
     const isAdmin = user?.role === "admin" || user?.role === "bitress" || user?.role === "faculty";
     const isStudent = user?.role === "student";
     const isBitress = user?.role === "bitress";
@@ -48,33 +83,54 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const userCampusId = user?.campus_id;
     const userCampusName = user?.campus_name;
 
-    const logout = useCallback(() => {
+    // Cleanup on unmount
+    useEffect(() => {
+        isMountedRef.current = true;
+        return () => {
+            isMountedRef.current = false;
+            if (refreshTimerRef.current) {
+                clearInterval(refreshTimerRef.current);
+            }
+        };
+    }, []);
+
+    const logout = useCallback((expired = false) => {
+        if (!isMountedRef.current) return;
+
         setUser(null);
         setApplications(null);
         setToken(null);
         setIsLoading(false);
-        setSessionExpired(false);
-        try {
-            localStorage.removeItem("token");
-            localStorage.removeItem("refresh_token");
-        } catch { /* no-op */ }
+
+        if (expired) {
+            setSessionExpired(true);
+        }
+
+        storage.remove("token");
+        storage.remove("refresh_token");
+
+        // Clear in-flight operations
+        refreshInFlight.current = null;
+        scholarshipFetchInFlight.current = null;
     }, []);
 
-    const persistTokens = (accessToken: string, refreshToken: string) => {
+    const persistTokens = useCallback((accessToken: string, refreshToken: string): boolean => {
         setToken(accessToken);
-        try {
-            localStorage.setItem("token", accessToken);
-            localStorage.setItem("refresh_token", refreshToken);
-        } catch (err) {
-            console.error("Error storing tokens:", err);
-        }
-    };
+        const tokenStored = storage.set("token", accessToken);
+        const refreshStored = storage.set("refresh_token", refreshToken);
+        return tokenStored && refreshStored;
+    }, []);
 
     const refreshAccessToken = useCallback(async (): Promise<string | null> => {
-        if (refreshInFlight.current) return refreshInFlight.current;
+        // Return existing in-flight refresh
+        if (refreshInFlight.current) {
+            return refreshInFlight.current;
+        }
 
-        const refreshToken = localStorage.getItem("refresh_token");
-        if (!refreshToken) return null;
+        const refreshToken = storage.get("refresh_token");
+        if (!refreshToken) {
+            return null;
+        }
 
         const promise = (async () => {
             try {
@@ -85,19 +141,32 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                         "Content-Type": "application/json",
                     },
                 });
-                if (!res.ok) throw new Error(`Refresh failed: ${res.status}`);
+
+                if (!res.ok) {
+                    throw new Error(`Refresh failed: ${res.status}`);
+                }
+
                 const data = await res.json();
                 const newToken = data.token;
-                if (newToken) {
-                    setToken(newToken);
-                    localStorage.setItem("token", newToken);
-                    return newToken;
+
+                if (!newToken) {
+                    throw new Error("Refresh returned no token");
                 }
-                throw new Error("Refresh returned no token");
+
+                if (isMountedRef.current) {
+                    setToken(newToken);
+                    storage.set("token", newToken);
+                }
+
+                return newToken;
             } catch (err) {
                 console.error("Token refresh failed:", err);
-                setSessionExpired(true);
-                logout();
+
+                if (isMountedRef.current) {
+                    setSessionExpired(true);
+                    logout(true);
+                }
+
                 return null;
             } finally {
                 refreshInFlight.current = null;
@@ -108,121 +177,171 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         return promise;
     }, [logout]);
 
-    const fetchScholarshipSummary = useCallback(async () => {
-        if (!token) return;
-        const doFetch = async (accessToken: string) => {
+    const fetchWithRetry = useCallback(async <T,>(
+        fetchFn: (accessToken: string) => Promise<T>,
+        activeToken: string
+    ): Promise<T | null> => {
+        try {
+            return await fetchFn(activeToken);
+        } catch (err: any) {
+            // Only retry on 401
+            if (err?.message === "401") {
+                const newToken = await refreshAccessToken();
+                if (newToken && isMountedRef.current) {
+                    try {
+                        return await fetchFn(newToken);
+                    } catch (retryErr) {
+                        console.error("Retry after refresh failed:", retryErr);
+                        if (isMountedRef.current) {
+                            setSessionExpired(true);
+                            logout(true);
+                        }
+                    }
+                }
+            } else {
+                console.error("Fetch error (non-auth):", err);
+            }
+            return null;
+        }
+    }, [refreshAccessToken, logout]);
+
+    const fetchScholarshipSummary = useCallback(async (tokenOverride?: string) => {
+        // Return existing in-flight fetch
+        if (scholarshipFetchInFlight.current) {
+            return scholarshipFetchInFlight.current;
+        }
+
+        const activeToken = tokenOverride || token;
+        if (!activeToken || !isMountedRef.current) {
+            return;
+        }
+
+        const doFetch = async (accessToken: string): Promise<ScholarshipSummaryResponse> => {
             const response = await fetch(
                 `${API_BASE_URL}/api/profile/scholarship/summary?active_only=false`,
-                { headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" } }
+                {
+                    headers: {
+                        Authorization: `Bearer ${accessToken}`,
+                        "Content-Type": "application/json"
+                    }
+                }
             );
+
             if (response.status === 401) throw new Error("401");
             if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
             return response.json() as Promise<ScholarshipSummaryResponse>;
         };
 
-        try {
-            const data = await doFetch(token);
-            setApplications(data);
-        } catch (err: any) {
-            if (err?.message === "401") {
-                const newToken = await refreshAccessToken();
-                if (newToken) {
-                    try {
-                        const data = await doFetch(newToken);
-                        setApplications(data);
-                        return;
-                    } catch (err2) {
-                        console.error("Retry failed:", err2);
-                    }
-                }
-                setSessionExpired(true);
-                logout();
-            } else {
-                // Non-auth errors: keep session, just log
-                console.error("Error fetching scholarship summary:", err);
+        const promise = (async () => {
+            const data = await fetchWithRetry(doFetch, activeToken);
+            if (data && isMountedRef.current) {
+                setApplications(data);
             }
-        }
-    }, [token, logout, refreshAccessToken]);
+        })();
+
+        scholarshipFetchInFlight.current = promise;
+        promise.finally(() => {
+            scholarshipFetchInFlight.current = null;
+        });
+
+        return promise;
+    }, [token, fetchWithRetry]);
 
     const fetchUser = useCallback(async () => {
-        const doFetch = async (accessToken: string) => {
+        const doFetch = async (accessToken: string): Promise<User> => {
             const res = await fetch(`${API_BASE_URL}/api/profile/me`, {
                 headers: {
                     Authorization: `Bearer ${accessToken}`,
                     "Content-Type": "application/json",
                 },
-
             });
+
             if (res.status === 401) throw new Error("401");
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
             return res.json() as Promise<User>;
         };
 
         try {
-            if (!token || token.split(".").length !== 3) {
-                // try refresh-based rehydrate
-                const refreshed = await refreshAccessToken();
-                if (!refreshed) throw new Error("No valid token");
-                const userData = await doFetch(refreshed);
-                setUser(userData);
-                if (userData.role === "student") await fetchScholarshipSummary();
-                return;
-            }
+            let activeToken = token;
 
-            const userData = await doFetch(token);
-            setUser(userData);
-            if (userData.role === "student") await fetchScholarshipSummary();
-        } catch (err: any) {
-            if (err?.message === "401") {
-                const newToken = await refreshAccessToken();
-                if (newToken) {
-                    try {
-                        const userData = await doFetch(newToken);
-                        setUser(userData);
-                        if (userData.role === "student") await fetchScholarshipSummary();
-                        return;
-                    } catch (err2) {
-                        console.error("Retry after refresh failed:", err2);
-                    }
+            // If no valid token, try refresh
+            if (!activeToken || activeToken.split(".").length !== 3) {
+                activeToken = await refreshAccessToken();
+                if (!activeToken) {
+                    throw new Error("No valid token");
                 }
-                setSessionExpired(true);
-                logout();
-            } else {
-                console.error("Error fetching user:", err);
-                // Do not logout on transient/network failures
             }
-        } finally {
-            setIsLoading(false);
-        }
-    }, [token, logout, refreshAccessToken, fetchScholarshipSummary]);
 
-    // Initial load / rehydrate
+            const userData = await fetchWithRetry(doFetch, activeToken);
+
+            if (userData && isMountedRef.current) {
+                setUser(userData);
+
+                // Fetch scholarship data for students
+                if (userData.role === "student") {
+                    await fetchScholarshipSummary(activeToken);
+                }
+            }
+        } catch (err) {
+            console.error("Error fetching user:", err);
+            // Silent failure for transient errors
+        } finally {
+            if (isMountedRef.current) {
+                setIsLoading(false);
+            }
+        }
+    }, [token, refreshAccessToken, fetchWithRetry, fetchScholarshipSummary]);
+
+    // Initial load on mount
     useEffect(() => {
         fetchUser();
     }, [fetchUser]);
 
-    // Background token refresh (single-flight, only when expiring soon)
+    // Background token refresh with single-flight guarantee
     useEffect(() => {
         if (!token) return;
-        const interval = setInterval(() => {
-            if (isTokenExpiredSoon(token, 60)) {
-                refreshAccessToken().catch(() => {/* handled in helper */});
+
+        // Clear any existing timer
+        if (refreshTimerRef.current) {
+            clearInterval(refreshTimerRef.current);
+        }
+
+        refreshTimerRef.current = setInterval(() => {
+            if (isMountedRef.current && isTokenExpiredSoon(token, 60)) {
+                refreshAccessToken().catch(err => {
+                    console.error("Background refresh error:", err);
+                });
             }
         }, 30000);
-        return () => clearInterval(interval);
+
+        return () => {
+            if (refreshTimerRef.current) {
+                clearInterval(refreshTimerRef.current);
+                refreshTimerRef.current = null;
+            }
+        };
     }, [token, refreshAccessToken]);
 
     const login = useCallback(
         (userData: User, accessToken: string, refreshToken: string, applicationData?: ScholarshipSummaryResponse) => {
+            if (!isMountedRef.current) return;
+
             setUser(userData);
-            if (applicationData) setApplications(applicationData);
+            if (applicationData) {
+                setApplications(applicationData);
+            }
             persistTokens(accessToken, refreshToken);
+            setSessionExpired(false);
         },
-        []
+        [persistTokens]
     );
 
     const refreshUser = useCallback(async () => {
-        await fetchUser();
+        if (isMountedRef.current) {
+            await fetchUser();
+        }
     }, [fetchUser]);
 
     const value: AuthData = {
@@ -253,6 +372,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
 export const useAuth = () => {
     const context = useContext(AuthContext);
-    if (!context) throw new Error("useAuth must be used within an AuthProvider");
+    if (!context) {
+        throw new Error("useAuth must be used within an AuthProvider");
+    }
     return context;
 };

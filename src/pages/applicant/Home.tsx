@@ -100,6 +100,8 @@ const Home = () => {
                 return { class: 'bg-warning text-dark', icon: Clock, text: 'Under Review' };
             case 'evaluated':
                 return { class: 'bg-secondary text-white', icon: Clock, text: 'Evaluated' };
+            case 'returned':
+                return { class: 'bg-warning text-dark', icon: Clock, text: 'Returned' };
             case 'denied':
                 return { class: 'bg-danger', icon: XCircle, text: 'Not Approved' };
             default:
@@ -252,6 +254,7 @@ const Home = () => {
                                     {applicationInfo?.status === 'pending' && 'Processing your application'}
                                     {applicationInfo?.status === 'evaluated' && 'Processing your application!'}
                                     {applicationInfo?.status === 'approved' && 'Congratulations!'}
+                                    {applicationInfo?.status === 'returned' && 'Please review your application!'}
                                     {applicationInfo?.status === 'denied' && 'Please review requirements'}
                                 </small>
                             </div>
@@ -276,6 +279,8 @@ const Home = () => {
                             </div>
                         </div>
                     )}
+
+
 
 
                     {applicationInfo?.status === 'approved' && (

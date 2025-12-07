@@ -122,7 +122,7 @@ export function NotificationBell() {
                 )}
 
                 <Link
-                    to="/applicant/notifications"
+                    to="/admin/notifications"
                     className="dropdown-item dropdown-notifications-footer"
                 >
                     View All Alerts

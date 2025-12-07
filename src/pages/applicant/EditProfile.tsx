@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from "react";
-import {Link, useNavigate} from "react-router-dom";
+import {useNavigate} from "react-router-dom";
 import axios from "axios";
 import Swal from "sweetalert2";
 import { useAuth } from "../../context/AuthContext";
 import { API_BASE_URL } from "../../config";
 import type {Profile} from "../../interfaces/profile";
-// Import the PSGC library same as Apply.tsx
 import psgc from "@dropdowns/psgc";
 
 const EditProfile = () => {
@@ -262,7 +261,7 @@ const EditProfile = () => {
             }
         } catch (error: any) {
             console.error(error);
-            Swal.fire({
+            await Swal.fire({
                 icon: 'error',
                 title: 'Update Failed',
                 text: error.response?.data?.message || 'An error occurred while updating your profile.'
@@ -274,17 +273,7 @@ const EditProfile = () => {
 
     return (
         <main className="min-vh-100 bg-light">
-            <div className="bg-white shadow-sm border-bottom">
-                <div className="container py-3">
-                    <nav aria-label="breadcrumb">
-                        <ol className="breadcrumb mb-0">
-                            <li className="breadcrumb-item"><Link to="/applicant/dashboard" className="text-decoration-none">Dashboard</Link></li>
-                            <li className="breadcrumb-item"><Link to="/applicant/profile" className="text-decoration-none">Profile</Link></li>
-                            <li className="breadcrumb-item active">Edit</li>
-                        </ol>
-                    </nav>
-                </div>
-            </div>
+
 
             <div className="container py-4">
                 <div className="row justify-content-center">
@@ -352,14 +341,7 @@ const EditProfile = () => {
                                                 <label className="form-label small fw-bold text-muted">Citizenship</label>
                                                 <input type="text" className="form-control" name="citizenship" value={formData.citizenship} onChange={handleChange} required />
                                             </div>
-                                            <div className="col-md-6">
-                                                <label className="form-label small fw-bold text-muted">Email Address</label>
-                                                <input type="email" className="form-control" name="email" value={formData.email} onChange={handleChange} readOnly />
-                                            </div>
-                                            <div className="col-md-6">
-                                                <label className="form-label small fw-bold text-muted">Mobile Number</label>
-                                                <input type="text" className="form-control" name="contact_number" value={formData.contact_number} onChange={handleChange} required />
-                                            </div>
+
                                         </div>
 
                                         <h5 className="text-info mb-3 border-top pt-3"><i className="fal fa-map-marked-alt me-2"></i>Address Information</h5>

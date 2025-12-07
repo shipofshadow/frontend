@@ -12,7 +12,7 @@ import {
     FileText,
     XCircle,
     Filter,
-    ChevronDown
+    ChevronDown, RotateCcw
 } from "lucide-react";
 import { API_BASE_URL } from "../../../config.ts";
 import axios from "axios";
@@ -582,6 +582,41 @@ const ScholarshipApplicants: React.FC = () => {
         denied: applications.filter(app => app.status === 'denied').length
     };
 
+    const handleReturn = async (app: ApplicantData) => {
+        const { value: reason } = await Swal.fire({
+            title: 'Return Application',
+            text: 'Request changes from the applicant. They will be notified to update their application.',
+            input: 'textarea',
+            inputLabel: 'Reason for Return',
+            inputPlaceholder: 'E.g., Missing grade slip, unclear ITR...',
+            showCancelButton: true,
+            confirmButtonText: 'Return Application',
+            confirmButtonColor: '#fd7e14', // Orange
+            cancelButtonText: 'Cancel',
+            inputValidator: (value) => {
+                if (!value) return 'You need to write a reason!';
+            }
+        });
+
+        if (reason) {
+            try {
+                await axios.post(`${API_BASE_URL}/api/applicants/${app.id}/return`,
+                    { reason },
+                    { headers: { Authorization: `Bearer ${token}` } }
+                );
+
+                setApplications(prev => prev.map(a =>
+                    a.id === app.id ? { ...a, status: 'returned' } : a
+                ));
+
+                await Swal.fire('Returned', 'Application returned to student.', 'success');
+            } catch (error) {
+                console.error(error);
+                await Swal.fire('Error', 'Failed to return application.', 'error');
+            }
+        }
+    };
+
     return (
         <>
             {/* Header */}
@@ -813,11 +848,20 @@ const ScholarshipApplicants: React.FC = () => {
                                                             >
                                                                 <Eye size={14} />
                                                             </button>
+                                                            {app.status !== 'approved' && app.status !== 'denied' && app.status !== 'returned' && (
+                                                                <button
+                                                                    className="btn btn-sm btn-outline-secondary"
+                                                                    title="Return / Request Changes"
+                                                                    onClick={() => handleReturn(app)}
+                                                                >
+                                                                    <RotateCcw size={14} />
+                                                                </button>
+                                                            )}
                                                             <button
                                                                 className="btn btn-sm btn-outline-warning"
                                                                 title="Evaluate"
                                                                 onClick={() => handleOpenEvaluation(app)}
-                                                                disabled={app.status === 'approved' || app.status === 'denied'}
+                                                                disabled={app.status === 'approved' || app.status === 'denied' || app.status === 'returned'}
                                                             >
                                                                 <Star size={14} />
                                                             </button>

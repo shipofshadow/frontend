@@ -306,7 +306,7 @@ const Applications: React.FC = () => {
                                                     >
                                                         <Eye size={16} />
                                                     </Link>
-                                                    {app.status === 'pending' && (
+                                                    {app.status === 'pending' || app.status == 'returned' && (
                                                         <Link
                                                             className="btn btn-outline-secondary"
                                                             title="Edit Details"
