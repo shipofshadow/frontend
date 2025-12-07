@@ -76,4 +76,5 @@ export interface ApplicationForm {
     itr: File | null;
     grades: File | null;
     gradesList: { subject: string; grade: string }[];
+    formatted?: string | null;
 }

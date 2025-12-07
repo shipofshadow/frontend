@@ -1,19 +1,21 @@
 import React, { useState, useRef, useMemo, useEffect } from 'react';
+import { useAuth } from '../../context/AuthContext';
+import { API_BASE_URL } from '../../config';
 import Swal from 'sweetalert2';
 import { sha256 } from 'js-sha256';
-import { useAuth } from "../../context/AuthContext";
-import { API_BASE_URL } from '../../config';
 
 // --- Interfaces ---
+interface ProfileFormData {
+    first_name: string;
+    last_name: string;
+    email: string;
+    contact_number: string;
+}
+
 interface PasswordFormData {
     currentPassword: string;
     newPassword: string;
     confirmPassword: string;
-}
-
-interface ProfileFormData {
-    email: string;
-    phone: string;
 }
 
 interface PasswordStrength {
@@ -22,43 +24,46 @@ interface PasswordStrength {
 }
 
 const Settings: React.FC = () => {
-    const [isLoading, setIsLoading] = useState(false);
-    const [isSavingProfile, setIsSavingProfile] = useState(false);
-    const [activeTab, setActiveTab] = useState<'contact' | 'security'>('contact');
-    const [showAvatarModal, setShowAvatarModal] = useState(false);
-
-    // Auth & Profile Data
     const { user, token, refreshUser } = useAuth();
     const profile = user?.profile;
 
-    // --- State: Avatar ---
-    const [avatarFile, setAvatarFile] = useState<File | null>(null);
-    const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
-    const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
-    const fileInputRef = useRef<HTMLInputElement>(null);
+    // --- States ---
+    const [activeTab, setActiveTab] = useState<'general' | 'security'>('general');
+    const [isLoading, setIsLoading] = useState(false);
+    const [isSaving, setIsSaving] = useState(false);
 
-    // --- State: Profile Form ---
+    // Form Data
     const [profileData, setProfileData] = useState<ProfileFormData>({
+        first_name: '',
+        last_name: '',
         email: '',
-        phone: ''
+        contact_number: ''
     });
 
-    // --- State: Password ---
     const [passwordData, setPasswordData] = useState<PasswordFormData>({
         currentPassword: '',
         newPassword: '',
         confirmPassword: ''
     });
 
+    // Password UI
     const [showPassword, setShowPassword] = useState({ current: false, new: false, confirm: false });
     const [passwordStrength, setPasswordStrength] = useState<PasswordStrength>({ score: 0, isValid: false });
 
-    // Initialize Profile Data
+    // Avatar Upload
+    const [avatarFile, setAvatarFile] = useState<File | null>(null);
+    const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+    const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    // --- Initialization ---
     useEffect(() => {
         if (profile) {
             setProfileData({
+                first_name: profile.first_name || '',
+                last_name: profile.last_name || '',
                 email: profile.email || '',
-                phone: profile.contact_number || ''
+                contact_number: profile.contact_number || ''
             });
         }
     }, [profile]);
@@ -76,29 +81,18 @@ const Settings: React.FC = () => {
         const file = e.target.files?.[0];
         if (!file) return;
 
-        const allowedTypes = ['image/png', 'image/jpeg', 'image/gif', 'image/webp'];
-        if (!allowedTypes.includes(file.type)) {
-            Swal.fire({
-                icon: 'error',
-                title: 'Invalid File',
-                text: 'Please select a PNG, JPG, GIF, or WebP image',
-                confirmButtonColor: '#4f46e5'
-            });
+        if (!['image/png', 'image/jpeg', 'image/gif'].includes(file.type)) {
+            Swal.fire({ icon: 'error', title: 'Invalid File', text: 'Please upload a PNG, JPG, or GIF.' });
             return;
         }
+
         if (file.size > 5 * 1024 * 1024) {
-            Swal.fire({
-                icon: 'error',
-                title: 'File Too Large',
-                text: 'Max file size is 5MB',
-                confirmButtonColor: '#4f46e5'
-            });
+            Swal.fire({ icon: 'error', title: 'File Too Large', text: 'Max file size is 5MB.' });
             return;
         }
 
         setAvatarFile(file);
         setAvatarPreview(URL.createObjectURL(file));
-        setShowAvatarModal(true);
     };
 
     const handleAvatarUpload = async () => {
@@ -108,34 +102,21 @@ const Settings: React.FC = () => {
         formData.append('avatar', avatarFile);
 
         try {
-            const response = await fetch(`${API_BASE_URL}/api/profile/upload-avatar`, {
+            const res = await fetch(`${API_BASE_URL}/api/profile/upload-avatar`, {
                 method: 'POST',
                 headers: { 'Authorization': `Bearer ${token}` },
                 body: formData
             });
-            const data = await response.json();
 
-            if (response.ok) {
-                await Swal.fire({
-                    icon: 'success',
-                    title: 'Success!',
-                    text: 'Profile photo updated',
-                    timer: 1500,
-                    showConfirmButton: false
-                });
+            if (res.ok) {
+                Swal.fire({ icon: 'success', title: 'Updated!', text: 'Profile photo updated.', timer: 1500, showConfirmButton: false });
                 await refreshUser();
-                setAvatarFile(null);
-                setAvatarPreview(null);
-                setShowAvatarModal(false);
+                handleCancelUpload();
             } else {
-                throw new Error(data.error || 'Upload failed');
+                throw new Error('Upload failed');
             }
-        } catch (error: any) {
-            Swal.fire({
-                icon: 'error',
-                title: 'Upload Failed',
-                text: error.message || 'Error uploading'
-            });
+        } catch (error) {
+            Swal.fire({ icon: 'error', title: 'Error', text: 'Failed to upload photo.' });
         } finally {
             setIsUploadingAvatar(false);
         }
@@ -144,460 +125,356 @@ const Settings: React.FC = () => {
     const handleCancelUpload = () => {
         setAvatarFile(null);
         setAvatarPreview(null);
-        setShowAvatarModal(false);
         if (fileInputRef.current) fileInputRef.current.value = '';
     };
 
     // --- Handlers: Profile Update ---
-    const handleProfileUpdate = async (e: React.FormEvent) => {
+    const handleProfileSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        setIsSavingProfile(true);
-
+        setIsSaving(true);
         try {
+            // Mapping to the specific student endpoint structure
             const payload = {
                 email: profileData.email,
-                phone: profileData.phone,
+                phone: profileData.contact_number,
+                // Pass existing values to prevent overwriting with null if the backend requires them
                 emergencyContact: profile?.emergency_contact_name || '',
                 emergencyPhone: profile?.emergency_contact_number || '',
                 civil_status: profile?.civil_status || '',
                 citizenship: profile?.citizenship || ''
             };
 
-            const response = await fetch(`${API_BASE_URL}/api/profile/details`, {
+            const res = await fetch(`${API_BASE_URL}/api/profile/details`, {
                 method: 'PUT',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
                 body: JSON.stringify(payload)
             });
 
-            const data = await response.json();
-            if (!response.ok) throw new Error(data.error || 'Failed to update profile');
-
-            await Swal.fire({
-                icon: 'success',
-                title: 'Profile Updated',
-                text: 'Your contact information has been saved.',
-                timer: 1500,
-                showConfirmButton: false
-            });
-            await refreshUser();
-
+            const data = await res.json();
+            if (res.ok) {
+                Swal.fire({ icon: 'success', title: 'Saved', text: 'Profile information updated.', timer: 1500, showConfirmButton: false });
+                await refreshUser();
+            } else {
+                throw new Error(data.error);
+            }
         } catch (error: any) {
-            Swal.fire({
-                icon: 'error',
-                title: 'Error',
-                text: error.message || 'Error updating profile'
-            });
+            Swal.fire({ icon: 'error', title: 'Error', text: error.message || 'Update failed' });
         } finally {
-            setIsSavingProfile(false);
+            setIsSaving(false);
         }
     };
 
-    // --- Handlers: Password Change ---
-    const handlePasswordChange = async (e: React.FormEvent) => {
+    // --- Handlers: Password ---
+    const checkStrength = (pass: string) => {
+        let score = 0;
+        if (pass.length >= 8) score++;
+        if (/[A-Z]/.test(pass)) score++;
+        if (/[a-z]/.test(pass)) score++;
+        if (/\d/.test(pass)) score++;
+        if (/[^A-Za-z0-9]/.test(pass)) score++;
+        setPasswordStrength({ score, isValid: score >= 3 });
+    };
+
+    const handlePasswordChange = (field: keyof PasswordFormData, value: string) => {
+        setPasswordData(prev => ({ ...prev, [field]: value }));
+        if (field === 'newPassword') checkStrength(value);
+    };
+
+    const handlePasswordSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (passwordData.newPassword !== passwordData.confirmPassword) {
-            Swal.fire({ icon: 'warning', title: 'Mismatch', text: 'New passwords do not match' });
+        if (!passwordStrength.isValid) {
+            Swal.fire({ icon: 'warning', title: 'Weak Password', text: 'Please create a stronger password.' });
             return;
         }
+        if (passwordData.newPassword !== passwordData.confirmPassword) {
+            Swal.fire({ icon: 'error', title: 'Mismatch', text: 'Passwords do not match.' });
+            return;
+        }
+
         setIsLoading(true);
         try {
-            const body = {
-                old_password: sha256(passwordData.currentPassword),
-                new_password: sha256(passwordData.newPassword),
-                confirm_password: sha256(passwordData.confirmPassword)
-            };
-
-            const response = await fetch(`${API_BASE_URL}/api/profile/change-password`, {
+            const res = await fetch(`${API_BASE_URL}/api/profile/change-password`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                body: JSON.stringify(body)
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    old_password: sha256(passwordData.currentPassword),
+                    new_password: sha256(passwordData.newPassword),
+                    confirm_password: sha256(passwordData.confirmPassword)
+                })
             });
 
-            const data = await response.json();
-            if (!response.ok) throw new Error(data.error);
-
-            Swal.fire({
-                icon: 'success',
-                title: 'Password Updated',
-                text: 'Your account is now more secure.',
-                confirmButtonColor: '#4f46e5'
-            });
-            setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
-            setPasswordStrength({ score: 0, isValid: false });
+            const data = await res.json();
+            if (res.ok) {
+                Swal.fire({ icon: 'success', title: 'Updated', text: 'Password changed successfully.', timer: 1500, showConfirmButton: false });
+                setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+                setPasswordStrength({ score: 0, isValid: false });
+            } else {
+                throw new Error(data.error);
+            }
         } catch (error: any) {
-            Swal.fire({
-                icon: 'error',
-                title: 'Error',
-                text: error.message || 'Error changing password'
-            });
+            Swal.fire({ icon: 'error', title: 'Error', text: error.message || 'Failed to change password.' });
         } finally {
             setIsLoading(false);
         }
     };
 
-    // Helper: Password Strength
-    const checkStrength = (pass: string) => {
-        let s = 0;
-        if (pass.length >= 8) s++;
-        if (/[A-Z]/.test(pass)) s++;
-        if (/[a-z]/.test(pass)) s++;
-        if (/\d/.test(pass)) s++;
-        if (/[^A-Za-z0-9]/.test(pass)) s++;
-        setPasswordStrength({ score: s, isValid: s >= 3 });
-    };
-
-    const getStrengthLabel = (score: number) => {
-        if (score < 2) return { text: 'Weak', color: 'danger', bgColor: '#fee2e2' };
-        if (score < 4) return { text: 'Medium', color: 'warning', bgColor: '#fef3c7' };
-        return { text: 'Strong', color: 'success', bgColor: '#d1fae5' };
-    };
-
-    const strengthInfo = getStrengthLabel(passwordStrength.score);
-
     return (
-        <div className="min-vh-100 py-4 py-lg-5" style={{ backgroundColor: '#f8f9fa' }}>
-            <div className="container">
-                {/* Page Header */}
-                <div className="row mb-4">
-                    <div className="col-12">
-                        <div className="d-flex align-items-center gap-3 mb-2">
-                            <div className="bg-primary bg-opacity-10 rounded-3 p-3">
-                                <i className="fas fa-cog text-primary fs-4"></i>
-                            </div>
-                            <div>
-                                <h3 className="fw-bold mb-0">Account Settings</h3>
-                                <p className="text-muted mb-0 small">Manage your profile and security preferences</p>
-                            </div>
+        <div className="min-vh-100 bg-light">
+            {/* Header */}
+            <div className="bg-white border-bottom shadow-sm">
+                <div className="container-fluid px-4 py-4">
+                    <div className="d-flex align-items-center gap-3">
+                        <div className="bg-primary bg-opacity-10 p-3 rounded-circle text-primary">
+                            <i className="fas fa-cog fa-2x"></i>
+                        </div>
+                        <div>
+                            <h1 className="h3 fw-bold mb-0 text-dark">Account Settings</h1>
+                            <p className="text-muted mb-0 small">Manage your profile details and security preferences</p>
                         </div>
                     </div>
                 </div>
+            </div>
 
+            <div className="container-fluid px-4 py-4">
                 <div className="row g-4">
-                    {/* --- SIDEBAR --- */}
+
+                    {/* LEFT COLUMN: Profile Card */}
                     <div className="col-lg-4 col-xl-3">
-                        <div className="card border-0 shadow-sm rounded-4 " style={{ top: '20px' }}>
-                            <div className="card-body p-4">
-                                {/* Profile Section */}
-                                <div className="text-center mb-4 pb-4 border-bottom">
-                                    <div className="position-relative d-inline-block mb-3">
-                                        <div
-                                            className="rounded-circle overflow-hidden border border-3 shadow-sm position-relative"
-                                            style={{ width: '100px', height: '100px', borderColor: '#e5e7eb' }}
-                                        >
-                                            <img
-                                                src={avatarPreview || currentAvatarUrl || '/default.png'}
-                                                alt="Profile"
-                                                className="w-100 h-100"
-                                                style={{ objectFit: 'cover' }}
-                                            />
-                                        </div>
-                                        <button
-                                            className="btn btn-primary btn-sm rounded-circle shadow position-absolute"
-                                            style={{
-                                                width: '32px',
-                                                height: '32px',
-                                                padding: 0,
-                                                bottom: '0',
-                                                right: '0'
-                                            }}
-                                            onClick={() => fileInputRef.current?.click()}
-                                            disabled={isUploadingAvatar}
-                                        >
-                                            <i className="fas fa-camera" style={{ fontSize: '0.75rem' }}></i>
-                                        </button>
-                                        <input
-                                            type="file"
-                                            ref={fileInputRef}
-                                            className="d-none"
-                                            accept="image/*"
-                                            onChange={handleFileSelect}
-                                            disabled={isUploadingAvatar}
+                        <div className="card border-0 shadow-sm rounded-4 h-100">
+                            <div className="card-body text-center p-5">
+                                {/* Avatar Section */}
+                                <div className="position-relative d-inline-block mb-4">
+                                    <div className="rounded-circle p-1 border border-2 border-light shadow-sm">
+                                        <img
+                                            src={avatarPreview || currentAvatarUrl || '/default.png'}
+                                            alt="Profile"
+                                            className="rounded-circle"
+                                            style={{ width: '140px', height: '140px', objectFit: 'cover' }}
                                         />
                                     </div>
-                                    <h6 className="fw-bold mb-1">{user?.first_name} {user?.last_name}</h6>
-                                    <p className="text-muted small mb-0">{user?.email}</p>
+                                    <button
+                                        className="btn btn-sm btn-primary position-absolute bottom-0 end-0 rounded-circle shadow-sm"
+                                        style={{ width: '35px', height: '35px' }}
+                                        onClick={() => fileInputRef.current?.click()}
+                                        title="Change Photo"
+                                    >
+                                        <i className="fas fa-camera"></i>
+                                    </button>
                                 </div>
+                                <input
+                                    type="file"
+                                    ref={fileInputRef}
+                                    className="d-none"
+                                    accept="image/*"
+                                    onChange={handleFileSelect}
+                                />
 
-                                {/* Navigation */}
-                                <nav className="nav flex-column gap-2">
-                                    <button
-                                        onClick={() => setActiveTab('contact')}
-                                        className={`btn text-start rounded-3 d-flex align-items-center gap-3 ${
-                                            activeTab === 'contact'
-                                                ? 'btn-primary shadow-sm'
-                                                : 'btn-light border-0'
-                                        }`}
-                                        style={{ padding: '0.75rem 1rem' }}
-                                    >
-                                        <i className="fas fa-address-card" style={{ width: '18px' }}></i>
-                                        <span className="fw-semibold">Contact Info</span>
-                                    </button>
-                                    <button
-                                        onClick={() => setActiveTab('security')}
-                                        className={`btn text-start rounded-3 d-flex align-items-center gap-3 ${
-                                            activeTab === 'security'
-                                                ? 'btn-primary shadow-sm'
-                                                : 'btn-light border-0'
-                                        }`}
-                                        style={{ padding: '0.75rem 1rem' }}
-                                    >
-                                        <i className="fas fa-shield-alt" style={{ width: '18px' }}></i>
-                                        <span className="fw-semibold">Security</span>
-                                    </button>
-                                </nav>
-
-                                {/* Info Box */}
-                                <div className="mt-4 p-3 rounded-3" style={{ backgroundColor: '#f3f4f6' }}>
-                                    <div className="d-flex gap-2">
-                                        <i className="fas fa-info-circle text-primary mt-1" style={{ fontSize: '0.875rem' }}></i>
-                                        <small className="text-muted">
-                                            Keep your information up to date to ensure account security and proper communication.
-                                        </small>
+                                {avatarFile && (
+                                    <div className="d-flex justify-content-center gap-2 mb-3 animate__animated animate__fadeIn">
+                                        <button className="btn btn-sm btn-success rounded-pill px-3" onClick={handleAvatarUpload} disabled={isUploadingAvatar}>
+                                            {isUploadingAvatar ? 'Uploading...' : 'Save Photo'}
+                                        </button>
+                                        <button className="btn btn-sm btn-outline-secondary rounded-pill px-3" onClick={handleCancelUpload}>Cancel</button>
                                     </div>
+                                )}
+
+                                <h4 className="fw-bold text-dark mb-1">{profile?.first_name} {profile?.last_name}</h4>
+                                <p className="text-muted mb-3">{profile?.email}</p>
+                                <span className="badge rounded-pill px-3 py-2 fw-normal bg-primary bg-opacity-10 text-primary">
+                                    {user?.role ? user.role.toUpperCase() : 'STUDENT'}
+                                </span>
+                            </div>
+
+                            {/* Navigation Buttons */}
+                            <div className="card-footer bg-light border-0 p-3">
+                                <div className="d-grid gap-2">
+                                    <button
+                                        className={`btn border-0 text-start d-flex align-items-center gap-3 p-3 rounded-3 ${activeTab === 'general' ? 'bg-white shadow-sm fw-semibold text-primary' : 'text-muted hover-bg-white'}`}
+                                        onClick={() => setActiveTab('general')}
+                                    >
+                                        <i className="fas fa-user-circle fa-lg" style={{width: '24px'}}></i> General Information
+                                    </button>
+                                    <button
+                                        className={`btn border-0 text-start d-flex align-items-center gap-3 p-3 rounded-3 ${activeTab === 'security' ? 'bg-white shadow-sm fw-semibold text-danger' : 'text-muted hover-bg-white'}`}
+                                        onClick={() => setActiveTab('security')}
+                                    >
+                                        <i className="fas fa-shield-alt fa-lg" style={{width: '24px'}}></i> Security & Password
+                                    </button>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    {/* --- MAIN CONTENT --- */}
+                    {/* RIGHT COLUMN: Forms */}
                     <div className="col-lg-8 col-xl-9">
-                        <div className="card border-0 shadow-sm rounded-4">
-                            <div className="card-body p-4 p-md-5">
-                                {/* --- TAB: CONTACT INFO --- */}
-                                {activeTab === 'contact' && (
-                                    <div className="animate__animated animate__fadeIn">
-                                        <div className="d-flex align-items-center gap-3 mb-4 pb-3 border-bottom">
-                                            <div className="bg-primary bg-opacity-10 rounded-3 p-2">
-                                                <i className="fas fa-address-card text-primary"></i>
-                                            </div>
-                                            <div>
-                                                <h5 className="fw-bold mb-0">Contact Information</h5>
-                                                <p className="text-muted small mb-0">Update your email and phone number</p>
-                                            </div>
-                                        </div>
+                        <div className="card border-0 shadow-sm rounded-4 h-100">
+                            <div className="card-header bg-white border-bottom-0 pt-4 px-4">
+                                <h5 className="fw-bold mb-0 text-dark">
+                                    {activeTab === 'general' ? 'General Information' : 'Security Settings'}
+                                </h5>
+                            </div>
 
-                                        <form onSubmit={handleProfileUpdate}>
-                                            <div className="row g-4">
-                                                <div className="col-12">
-                                                    <label className="form-label fw-semibold mb-2">
-                                                        <i className="fas fa-envelope text-muted me-2"></i>
-                                                        Email Address
-                                                    </label>
+                            <div className="card-body p-4">
+
+                                {/* GENERAL TAB */}
+                                {activeTab === 'general' && (
+                                    <form onSubmit={handleProfileSubmit} className="animate__animated animate__fadeIn">
+                                        <div className="row g-4">
+                                            {/* Name Fields (Read Only for Students) */}
+                                            <div className="col-md-6">
+                                                <label className="form-label small text-muted fw-bold">First Name</label>
+                                                <div className="input-group">
+                                                    <span className="input-group-text bg-light border-end-0 text-muted"><i className="fas fa-user"></i></span>
+                                                    <input
+                                                        type="text"
+                                                        className="form-control border-start-0 ps-0 bg-light text-muted"
+                                                        value={profileData.first_name}
+                                                        readOnly
+                                                        disabled
+                                                    />
+                                                </div>
+                                            </div>
+                                            <div className="col-md-6">
+                                                <label className="form-label small text-muted fw-bold">Last Name</label>
+                                                <div className="input-group">
+                                                    <span className="input-group-text bg-light border-end-0 text-muted"><i className="fas fa-user"></i></span>
+                                                    <input
+                                                        type="text"
+                                                        className="form-control border-start-0 ps-0 bg-light text-muted"
+                                                        value={profileData.last_name}
+                                                        readOnly
+                                                        disabled
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            {/* Editable Fields */}
+                                            <div className="col-12">
+                                                <label className="form-label small text-muted fw-bold">Email Address</label>
+                                                <div className="input-group">
+                                                    <span className="input-group-text bg-white border-end-0 text-muted"><i className="fas fa-envelope"></i></span>
                                                     <input
                                                         type="email"
-                                                        className="form-control form-control-lg rounded-3"
-                                                        style={{ backgroundColor: '#f9fafb' }}
+                                                        className="form-control border-start-0 ps-0"
                                                         value={profileData.email}
-                                                        onChange={e => setProfileData(p => ({...p, email: e.target.value}))}
+                                                        onChange={(e) => setProfileData({...profileData, email: e.target.value})}
                                                         required
-                                                        placeholder="your.email@example.com"
                                                     />
                                                 </div>
+                                            </div>
 
-                                                <div className="col-12">
-                                                    <label className="form-label fw-semibold mb-2">
-                                                        <i className="fas fa-phone text-muted me-2"></i>
-                                                        Phone Number
-                                                    </label>
+                                            <div className="col-12">
+                                                <label className="form-label small text-muted fw-bold">Contact Number</label>
+                                                <div className="input-group">
+                                                    <span className="input-group-text bg-white border-end-0 text-muted"><i className="fas fa-phone"></i></span>
                                                     <input
                                                         type="tel"
-                                                        className="form-control form-control-lg rounded-3"
-                                                        style={{ backgroundColor: '#f9fafb' }}
-                                                        value={profileData.phone}
-                                                        onChange={e => setProfileData(p => ({...p, phone: e.target.value}))}
+                                                        className="form-control border-start-0 ps-0"
+                                                        value={profileData.contact_number}
+                                                        onChange={(e) => setProfileData({...profileData, contact_number: e.target.value})}
                                                         required
-                                                        placeholder="+63 XXX XXX XXXX"
                                                     />
                                                 </div>
-
-                                                <div className="col-12 pt-3">
-                                                    <button
-                                                        type="submit"
-                                                        className="btn btn-primary btn-lg px-5 rounded-3"
-                                                        disabled={isSavingProfile}
-                                                    >
-                                                        {isSavingProfile ? (
-                                                            <>
-                                                                <span className="spinner-border spinner-border-sm me-2"></span>
-                                                                Saving Changes...
-                                                            </>
-                                                        ) : (
-                                                            <>
-                                                                <i className="fas fa-check-circle me-2"></i>
-                                                                Save Changes
-                                                            </>
-                                                        )}
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        </form>
-                                    </div>
-                                )}
-
-                                {/* --- TAB: SECURITY --- */}
-                                {activeTab === 'security' && (
-                                    <div className="animate__animated animate__fadeIn">
-                                        <div className="d-flex align-items-center gap-3 mb-4 pb-3 border-bottom">
-                                            <div className="bg-danger bg-opacity-10 rounded-3 p-2">
-                                                <i className="fas fa-shield-alt text-danger"></i>
-                                            </div>
-                                            <div>
-                                                <h5 className="fw-bold mb-0">Security Settings</h5>
-                                                <p className="text-muted small mb-0">Update your password to keep your account secure</p>
                                             </div>
                                         </div>
 
-                                        <form onSubmit={handlePasswordChange}>
-                                            <div className="row g-4">
-                                                {/* Current Password */}
-                                                <div className="col-12">
-                                                    <label className="form-label fw-semibold mb-2">
-                                                        <i className="fas fa-key text-muted me-2"></i>
-                                                        Current Password
-                                                    </label>
-                                                    <div className="input-group input-group-lg">
-                                                        <input
-                                                            type={showPassword.current ? "text" : "password"}
-                                                            className="form-control rounded-start-3 border-end-0"
-                                                            style={{ backgroundColor: '#f9fafb' }}
-                                                            value={passwordData.currentPassword}
-                                                            onChange={e => setPasswordData(p => ({...p, currentPassword: e.target.value}))}
-                                                            required
-                                                        />
-                                                        <button
-                                                            className="btn border rounded-end-3 border-start-0"
-                                                            type="button"
-                                                            style={{ backgroundColor: '#f9fafb' }}
-                                                            onClick={() => setShowPassword(p => ({...p, current: !p.current}))}
-                                                        >
-                                                            <i className={`fas fa-eye${showPassword.current ? '-slash' : ''} text-muted`}></i>
-                                                        </button>
+                                        <div className="mt-5 pt-3 border-top text-end">
+                                            <button type="submit" className="btn btn-primary px-4 rounded-pill fw-semibold shadow-sm" disabled={isSaving}>
+                                                {isSaving ? (
+                                                    <>
+                                                        <span className="spinner-border spinner-border-sm me-2"></span>
+                                                        Saving...
+                                                    </>
+                                                ) : (
+                                                    'Save Changes'
+                                                )}
+                                            </button>
+                                        </div>
+                                    </form>
+                                )}
+
+                                {/* SECURITY TAB */}
+                                {activeTab === 'security' && (
+                                    <form onSubmit={handlePasswordSubmit} className="animate__animated animate__fadeIn">
+                                        <div className="row g-4">
+                                            <div className="col-12">
+                                                <div className="alert alert-light border d-flex gap-3 align-items-center">
+                                                    <div className="bg-warning bg-opacity-10 text-warning rounded-circle p-2">
+                                                        <i className="fas fa-lock fa-lg"></i>
+                                                    </div>
+                                                    <div>
+                                                        <h6 className="fw-bold mb-1">Password Requirements</h6>
+                                                        <p className="mb-0 small text-muted">Minimum 8 chars, mixed case, number & special char.</p>
                                                     </div>
                                                 </div>
+                                            </div>
 
-                                                {/* New Password */}
-                                                <div className="col-12">
-                                                    <label className="form-label fw-semibold mb-2">
-                                                        <i className="fas fa-lock text-muted me-2"></i>
-                                                        New Password
-                                                    </label>
-                                                    <div className="input-group input-group-lg">
-                                                        <input
-                                                            type={showPassword.new ? "text" : "password"}
-                                                            className="form-control rounded-start-3 border-end-0"
-                                                            style={{ backgroundColor: '#f9fafb' }}
-                                                            value={passwordData.newPassword}
-                                                            onChange={e => {
-                                                                setPasswordData(p => ({...p, newPassword: e.target.value}));
-                                                                checkStrength(e.target.value);
-                                                            }}
-                                                            required
-                                                        />
-                                                        <button
-                                                            className="btn border rounded-end-3 border-start-0"
-                                                            type="button"
-                                                            style={{ backgroundColor: '#f9fafb' }}
-                                                            onClick={() => setShowPassword(p => ({...p, new: !p.new}))}
-                                                        >
-                                                            <i className={`fas fa-eye${showPassword.new ? '-slash' : ''} text-muted`}></i>
-                                                        </button>
-                                                    </div>
-
-                                                    {/* Password Strength Indicator */}
-                                                    {passwordData.newPassword && (
-                                                        <div className="mt-3">
-                                                            <div className="d-flex justify-content-between align-items-center mb-2">
-                                                                <small className="text-muted fw-semibold">Password Strength</small>
-                                                                <span
-                                                                    className={`badge bg-${strengthInfo.color} rounded-pill`}
-                                                                    style={{ fontSize: '0.7rem' }}
-                                                                >
-                                                                    {strengthInfo.text}
-                                                                </span>
-                                                            </div>
-                                                            <div className="progress" style={{ height: '6px' }}>
-                                                                <div
-                                                                    className={`progress-bar bg-${strengthInfo.color}`}
-                                                                    style={{ width: `${(passwordStrength.score / 5) * 100}%` }}
-                                                                ></div>
-                                                            </div>
-
-                                                            {/* Requirements List */}
-                                                            <div className="mt-3 p-3 rounded-3" style={{ backgroundColor: strengthInfo.bgColor }}>
-                                                                <small className="fw-semibold d-block mb-2">Requirements:</small>
-                                                                <ul className="list-unstyled mb-0 small">
-                                                                    <li className={passwordData.newPassword.length >= 8 ? 'text-success' : 'text-muted'}>
-                                                                        <i className={`fas fa-${passwordData.newPassword.length >= 8 ? 'check-circle' : 'circle'} me-2`}></i>
-                                                                        At least 8 characters
-                                                                    </li>
-                                                                    <li className={/[A-Z]/.test(passwordData.newPassword) && /[a-z]/.test(passwordData.newPassword) ? 'text-success' : 'text-muted'}>
-                                                                        <i className={`fas fa-${/[A-Z]/.test(passwordData.newPassword) && /[a-z]/.test(passwordData.newPassword) ? 'check-circle' : 'circle'} me-2`}></i>
-                                                                        Upper & lowercase letters
-                                                                    </li>
-                                                                    <li className={/\d/.test(passwordData.newPassword) ? 'text-success' : 'text-muted'}>
-                                                                        <i className={`fas fa-${/\d/.test(passwordData.newPassword) ? 'check-circle' : 'circle'} me-2`}></i>
-                                                                        At least one number
-                                                                    </li>
-                                                                </ul>
-                                                            </div>
-                                                        </div>
-                                                    )}
-                                                </div>
-
-                                                {/* Confirm Password */}
-                                                <div className="col-12">
-                                                    <label className="form-label fw-semibold mb-2">
-                                                        <i className="fas fa-check-double text-muted me-2"></i>
-                                                        Confirm New Password
-                                                    </label>
-                                                    <div className="input-group input-group-lg">
-                                                        <input
-                                                            type={showPassword.confirm ? "text" : "password"}
-                                                            className="form-control rounded-start-3 border-end-0"
-                                                            style={{ backgroundColor: '#f9fafb' }}
-                                                            value={passwordData.confirmPassword}
-                                                            onChange={e => setPasswordData(p => ({...p, confirmPassword: e.target.value}))}
-                                                            required
-                                                        />
-                                                        <button
-                                                            className="btn border rounded-end-3 border-start-0"
-                                                            type="button"
-                                                            style={{ backgroundColor: '#f9fafb' }}
-                                                            onClick={() => setShowPassword(p => ({...p, confirm: !p.confirm}))}
-                                                        >
-                                                            <i className={`fas fa-eye${showPassword.confirm ? '-slash' : ''} text-muted`}></i>
-                                                        </button>
-                                                    </div>
-                                                    {passwordData.confirmPassword && passwordData.newPassword !== passwordData.confirmPassword && (
-                                                        <small className="text-danger d-block mt-2">
-                                                            <i className="fas fa-exclamation-triangle me-1"></i>
-                                                            Passwords do not match
-                                                        </small>
-                                                    )}
-                                                </div>
-
-                                                <div className="col-12 pt-3">
-                                                    <button
-                                                        type="submit"
-                                                        className="btn btn-danger btn-lg px-5 rounded-3"
-                                                        disabled={isLoading || !passwordStrength.isValid || passwordData.newPassword !== passwordData.confirmPassword}
-                                                    >
-                                                        {isLoading ? (
-                                                            <>
-                                                                <span className="spinner-border spinner-border-sm me-2"></span>
-                                                                Updating Password...
-                                                            </>
-                                                        ) : (
-                                                            <>
-                                                                <i className="fas fa-shield-alt me-2"></i>
-                                                                Update Password
-                                                            </>
-                                                        )}
+                                            <div className="col-12">
+                                                <label className="form-label small text-muted fw-bold">Current Password</label>
+                                                <div className="input-group">
+                                                    <input
+                                                        type={showPassword.current ? "text" : "password"}
+                                                        className="form-control bg-light border-end-0"
+                                                        value={passwordData.currentPassword}
+                                                        onChange={(e) => setPasswordData({...passwordData, currentPassword: e.target.value})}
+                                                    />
+                                                    <button type="button" className="btn btn-light border border-start-0 text-muted" onClick={() => setShowPassword({...showPassword, current: !showPassword.current})}>
+                                                        <i className={`fas ${showPassword.current ? 'fa-eye-slash' : 'fa-eye'}`}></i>
                                                     </button>
                                                 </div>
                                             </div>
-                                        </form>
-                                    </div>
+
+                                            <div className="col-md-6">
+                                                <label className="form-label small text-muted fw-bold">New Password</label>
+                                                <div className="input-group">
+                                                    <input
+                                                        type={showPassword.new ? "text" : "password"}
+                                                        className={`form-control bg-light border-end-0 ${passwordData.newPassword && (passwordStrength.isValid ? 'is-valid' : 'is-invalid')}`}
+                                                        value={passwordData.newPassword}
+                                                        onChange={(e) => handlePasswordChange('newPassword', e.target.value)}
+                                                    />
+                                                    <button type="button" className="btn btn-light border border-start-0 text-muted" onClick={() => setShowPassword({...showPassword, new: !showPassword.new})}>
+                                                        <i className={`fas ${showPassword.new ? 'fa-eye-slash' : 'fa-eye'}`}></i>
+                                                    </button>
+                                                </div>
+                                                {passwordData.newPassword && (
+                                                    <div className="progress mt-2" style={{height: '4px'}}>
+                                                        <div
+                                                            className={`progress-bar bg-${passwordStrength.score <= 2 ? 'danger' : passwordStrength.score === 3 ? 'warning' : 'success'}`}
+                                                            style={{width: `${(passwordStrength.score / 5) * 100}%`}}
+                                                        ></div>
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            <div className="col-md-6">
+                                                <label className="form-label small text-muted fw-bold">Confirm Password</label>
+                                                <div className="input-group">
+                                                    <input
+                                                        type={showPassword.confirm ? "text" : "password"}
+                                                        className={`form-control bg-light border-end-0 ${passwordData.confirmPassword && (passwordData.newPassword === passwordData.confirmPassword ? 'is-valid' : 'is-invalid')}`}
+                                                        value={passwordData.confirmPassword}
+                                                        onChange={(e) => setPasswordData({...passwordData, confirmPassword: e.target.value})}
+                                                    />
+                                                    <button type="button" className="btn btn-light border border-start-0 text-muted" onClick={() => setShowPassword({...showPassword, confirm: !showPassword.confirm})}>
+                                                        <i className={`fas ${showPassword.confirm ? 'fa-eye-slash' : 'fa-eye'}`}></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div className="mt-5 pt-3 border-top text-end">
+                                            <button type="submit" className="btn btn-danger px-4 rounded-pill fw-semibold shadow-sm" disabled={isLoading}>
+                                                {isLoading ? 'Updating...' : 'Update Password'}
+                                            </button>
+                                        </div>
+                                    </form>
                                 )}
                             </div>
                         </div>
@@ -605,91 +482,9 @@ const Settings: React.FC = () => {
                 </div>
             </div>
 
-            {/* Avatar Upload Modal */}
-            {showAvatarModal && (
-                <>
-                    <div
-                        className="modal fade show d-block"
-                        tabIndex={-1}
-                        style={{ backgroundColor: 'rgba(0, 0, 0, 0.6)' }}
-                        onClick={handleCancelUpload}
-                    >
-                        <div
-                            className="modal-dialog modal-dialog-centered"
-                            onClick={e => e.stopPropagation()}
-                        >
-                            <div className="modal-content border-0 shadow-lg rounded-4">
-                                <div className="modal-header border-0 pb-0">
-                                    <h5 className="modal-title fw-bold">
-                                        <i className="fas fa-image text-primary me-2"></i>
-                                        Update Profile Photo
-                                    </h5>
-                                    <button
-                                        type="button"
-                                        className="btn-close"
-                                        onClick={handleCancelUpload}
-                                        disabled={isUploadingAvatar}
-                                    ></button>
-                                </div>
-                                <div className="modal-body text-center py-4">
-                                    <div className="position-relative d-inline-block mb-3">
-                                        <div
-                                            className="rounded-circle overflow-hidden border border-4 shadow-sm"
-                                            style={{ width: '180px', height: '180px', borderColor: '#e5e7eb' }}
-                                        >
-                                            <img
-                                                src={avatarPreview || currentAvatarUrl || '/default.png'}
-                                                alt="Preview"
-                                                className="w-100 h-100"
-                                                style={{ objectFit: 'cover' }}
-                                            />
-                                        </div>
-                                        {isUploadingAvatar && (
-                                            <div
-                                                className="position-absolute top-0 start-0 w-100 h-100 bg-dark bg-opacity-50 rounded-circle d-flex align-items-center justify-content-center"
-                                            >
-                                                <div className="spinner-border text-white" role="status">
-                                                    <span className="visually-hidden">Uploading...</span>
-                                                </div>
-                                            </div>
-                                        )}
-                                    </div>
-                                    <p className="text-muted mb-0">Preview your new profile photo</p>
-                                </div>
-                                <div className="modal-footer border-0 pt-0">
-                                    <button
-                                        type="button"
-                                        className="btn btn-light rounded-3 px-4"
-                                        onClick={handleCancelUpload}
-                                        disabled={isUploadingAvatar}
-                                    >
-                                        Cancel
-                                    </button>
-                                    <button
-                                        type="button"
-                                        className="btn btn-primary rounded-3 px-4"
-                                        onClick={handleAvatarUpload}
-                                        disabled={isUploadingAvatar}
-                                    >
-                                        {isUploadingAvatar ? (
-                                            <>
-                                                <span className="spinner-border spinner-border-sm me-2"></span>
-                                                Uploading...
-                                            </>
-                                        ) : (
-                                            <>
-                                                <i className="fas fa-cloud-upload-alt me-2"></i>
-                                                Update Photo
-                                            </>
-                                        )}
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div className="modal-backdrop fade show"></div>
-                </>
-            )}
+            <style>{`
+                .hover-bg-white:hover { background-color: white !important; box-shadow: 0 .125rem .25rem rgba(0,0,0,.075)!important; }
+            `}</style>
         </div>
     );
 };

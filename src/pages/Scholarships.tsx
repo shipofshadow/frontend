@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { API_BASE_URL } from "../config.ts";
 import { Award, TrendingUp, Users, CheckCircle, Target } from 'lucide-react';
+import {useAuth} from "../context/AuthContext.tsx";
 
 interface Scholarship {
     id: number;
@@ -27,7 +28,7 @@ const Scholarships: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [filter, setFilter] = useState<'all' | 'active' | 'closed'>('all');
-
+    const {isAuthenticated} = useAuth();
     useEffect(() => {
         const fetchScholarships = async () => {
             try {
@@ -77,8 +78,12 @@ const Scholarships: React.FC = () => {
 
     if (loading) {
         return (
+
             <section className="py-5" style={{ backgroundColor: '#f8f9fe', minHeight: '100vh' }}>
-                <div className="container py-5">
+                <div className="container py-5"    style={{
+                    zIndex: 2,
+                    marginTop: !isAuthenticated ? '5rem' : undefined
+                }}>
                     <div className="text-center mb-5">
                         <div className="d-inline-flex align-items-center justify-content-center rounded-circle mb-4"
                              style={{ width: '80px', height: '80px', backgroundColor: '#e8eaf6' }}>

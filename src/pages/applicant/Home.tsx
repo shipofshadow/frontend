@@ -17,7 +17,7 @@ import {
     ArrowRight,
     Info,
     Library,
-    Send, Search, AlertCircle
+    Send, Search, AlertCircle, XOctagon
 } from "lucide-react";
 
 import type { ApplicationStatus } from "../../interfaces/application_status.ts";
@@ -281,6 +281,24 @@ const Home = () => {
                     )}
 
 
+                    {applicationInfo?.status === 'returned' && (
+                        <div className="bg-danger bg-opacity-10 rounded-3 p-3 mb-4 animate__animated animate__shakeX">
+                            <div className="d-flex align-items-start">
+                                {/* Replace XOctagon with your actual imported icon component */}
+                                <XOctagon className="text-danger me-2 mt-1 flex-shrink-0" size={20} />
+                                <div>
+                                    <h6 className="fw-bold text-danger mb-2">Application Returned for Revision (Action Required)</h6>
+                                    <p className="mb-2 small">
+                                        Your application was **returned** by the reviewer. Please check the **Feedback** section below for required corrections on your profile details or submitted documents.
+                                    </p>
+                                    <small className="text-muted">
+                                        You must make the necessary revisions and **resubmit** your application before the deadline.
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
 
 
                     {applicationInfo?.status === 'approved' && (
@@ -466,7 +484,7 @@ const Home = () => {
                                             </div>
                                         </div>
                                     </div>
-                                    <div className="col-md-6">
+                                    <div className="col-md-6 mb-2">
                                         <div className="bg-white bg-opacity-15 rounded-3 p-3">
                                             <div className="d-flex align-items-center justify-content-between">
                                                 <div>

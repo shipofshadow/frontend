@@ -15,6 +15,7 @@ import {
     TrendingUp,
     BookOpen,
     CreditCard,
+    XOctagon // Added XOctagon from previous context for a suitable icon
 } from "lucide-react";
 import { API_BASE_URL } from "../../config.ts";
 import { useAuth } from "../../context/AuthContext.tsx";
@@ -22,7 +23,7 @@ import axios from "axios";
 import { useParams, useNavigate } from "react-router-dom";
 import FilePreview from "../../components/admin/FilePreview.tsx";
 
-// Type Definitions
+// Type Definitions (Keeping these for context)
 interface Student {
     name: string;
     student_id: string;
@@ -47,6 +48,8 @@ interface Evaluation {
     income: number | null;
     score: number | null;
     total_units: number | null;
+    // Assuming the backend sends back a field for specific feedback
+    feedback?: string;
 }
 
 interface Requirement {
@@ -84,7 +87,7 @@ interface ScholarshipStatusResponse {
     approved_at: string;
     selection_reason: string;
     denial_reason?: string;
-    status: "pending" | "evaluated" | "approved" | "denied";
+    status: "pending" | "evaluated" | "approved" | "denied" | "returned"; // Added "returned"
     admin_contact: AdminContact;
     common: CommonData;
     scholarship_requirements?: ScholarshipRequirements;
@@ -173,6 +176,14 @@ const Application = () => {
                 color: "danger",
                 bgClass: "bg-danger-subtle",
                 textClass: "text-danger-emphasis"
+            },
+            returned: { // ADDED RETURNED STATUS
+                badge: "bg-danger text-white",
+                icon: <XOctagon size={18} />,
+                text: "Revision Required",
+                color: "danger",
+                bgClass: "bg-danger-subtle",
+                textClass: "text-danger-emphasis"
             }
         };
 
@@ -201,6 +212,12 @@ const Application = () => {
         navigate("/applicant/status");
     };
 
+    // Handler to navigate to the edit page for resubmission
+    const handleGoToEdit = () => {
+        // application/6/edit
+        navigate(`/applicant/application/${scholarship?.common?.application?.id}/edit`);
+    };
+
     const getFileIcon = (type: string): JSX.Element => {
         const icons: Record<string, JSX.Element> = {
             itr: <CreditCard size={20} className="text-primary" />,
@@ -222,7 +239,7 @@ const Application = () => {
     const tabs: TabConfig[] = [
         { id: "overview", name: "Overview", icon: User },
         { id: "requirements", name: "Requirements", icon: FileText },
-        { id: "evaluation", name: "Evaluation", icon: TrendingUp },
+        { id: "evaluation", name: "Evaluation & Feedback", icon: TrendingUp }, // Updated tab name
     ];
 
     // Loading State
@@ -491,6 +508,19 @@ const Application = () => {
                                     </div>
                                 </div>
                             </div>
+
+                            {/* Evaluation Feedback Section */}
+                            {scholarship.status === 'returned' && (
+                                <div className="mt-5 p-4 border border-danger rounded-4 bg-danger-subtle">
+                                    <h6 className="text-danger fw-bold mb-3 d-flex align-items-center">
+                                        <XOctagon size={20} className="me-2" /> Reviewer Feedback
+                                    </h6>
+                                    <p className="mb-0 small text-danger">
+                                        {/* Assuming the feedback field is available in the evaluation object */}
+                                        {scholarship.common.evaluation.feedback || "No specific feedback was provided. Please review all required documents and profile details for completeness."}
+                                    </p>
+                                </div>
+                            )}
                         </div>
                     </div>
                 );
@@ -558,6 +588,8 @@ const Application = () => {
                 </div>
 
                 {/* Status-specific Messages */}
+
+                {/* APPROVED STATUS */}
                 {scholarship.status === "approved" && (
                     <div className="row mb-4">
                         <div className="col">
@@ -577,6 +609,7 @@ const Application = () => {
                     </div>
                 )}
 
+                {/* DENIED STATUS */}
                 {scholarship.status === "denied" && (
                     <div className="row mb-4">
                         <div className="col">
@@ -596,6 +629,32 @@ const Application = () => {
                     </div>
                 )}
 
+                {/* RETURNED STATUS (ACTION REQUIRED) */}
+                {scholarship.status === "returned" && (
+                    <div className="row mb-4">
+                        <div className="col">
+                            <div className="card border-danger border-2 shadow-lg animate__animated animate__shakeX">
+                                <div className="card-body text-center p-4">
+                                    <XOctagon size={64} className="text-danger mb-3" />
+                                    <h3 className="h4 mb-3 text-danger-emphasis">Application Returned for Revision</h3>
+                                    <p className="text-muted mb-4 lead">
+                                        Your application was **returned** by the reviewer. Please check the **Evaluation & Feedback** tab for required corrections.
+                                        You must make the necessary revisions and **resubmit** your application before the deadline.
+                                    </p>
+                                    <button
+                                        className="btn btn-danger btn-lg rounded-pill px-5 fw-bold"
+                                        onClick={handleGoToEdit}
+                                    >
+                                        <ArrowLeft size={20} className="me-2 rotate-180" /> {/* ArrowRight or rotated ArrowLeft */}
+                                        Go to Application Editor
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* PENDING STATUS */}
                 {scholarship.status === "pending" && (
                     <div className="row mb-4">
                         <div className="col">

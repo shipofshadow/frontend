@@ -261,7 +261,7 @@ const EditProfile = () => {
             }
         } catch (error: any) {
             console.error(error);
-            await Swal.fire({
+                await Swal.fire({
                 icon: 'error',
                 title: 'Update Failed',
                 text: error.response?.data?.message || 'An error occurred while updating your profile.'
