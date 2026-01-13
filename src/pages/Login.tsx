@@ -111,7 +111,7 @@ const Login: React.FC = () => {
             <main className="login-container-inner" aria-label="Login and Information">
                 <section className="info-card-base login-left-card bg-transparent" aria-labelledby="welcome-title">
                     <header className="mb-3 d-flex align-items-center">
-                        <img src="https://ispsctagudin.info/home/assets/img/ispsc_logo.png" alt="iScholar Logo" style={{ width: 60, height: 60, marginRight: 16, borderRadius: 12 }} />
+                        <img src="https://ispsc.edu.ph/file-manager/images/ispsc_logo_2.png" alt="iScholar Logo" style={{ width: 60, height: 60, marginRight: 16, borderRadius: 12 }} />
                         <div>
                             <h2
                                 id="welcome-title"

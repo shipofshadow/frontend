@@ -40,7 +40,7 @@ const Navbar: React.FC = () => {
                 {/* Brand */}
                 <Link to="/" className="navbar-brand d-flex align-items-center gap-2">
                     <img
-                        src="https://ispsctagudin.info/home/assets/img/ispsc_logo.png"
+                        src="https://ispsc.edu.ph/file-manager/images/ispsc_logo_2.png"
                         alt="ISPSC"
                         width="36"
                         height="36"

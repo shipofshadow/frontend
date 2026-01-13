@@ -25,7 +25,7 @@ const Hero = () => {
                     <div className="col-lg-6 mb-5 mb-lg-0">
                         <div className="d-flex align-items-center mb-4">
                             <img
-                                src="https://ispsctagudin.info/home/assets/img/ispsc_logo.png"
+                                src="https://ispsc.edu.ph/file-manager/images/ispsc_logo_2.png"
                                 alt="ISPSC Logo"
                                 className="me-3"
                                 style={{ width: '80px', height: '80px' }}

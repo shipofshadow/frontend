@@ -1,5 +1,5 @@
 import  { useEffect, useState } from 'react';
-import { Clock, Calendar, BookOpen, TrendingUp, Users, CheckCircle, AlertCircle, XCircle, BarChart3, PieChart } from "lucide-react";
+import { Clock, Calendar, BookOpen, TrendingUp, Users, CheckCircle, AlertCircle, XCircle, BarChart3 } from "lucide-react";
 import { API_BASE_URL } from '../../config';
 import { activeApplicants, approvedApplicants, pendingApplicants, rejectedApplicants } from "../../services/dashboard.ts";
 import ApplicantsBarChart from "../../components/charts/ScholarshipBreakdownCharts";
@@ -262,54 +262,6 @@ const Dashboard = () => {
                 <div className="row mb-5">
                     {/* Application Trends Chart */}
                     <ApplicationsTrendChart />
-
-
-
-
-                {/* Enhanced Placeholder Charts */}
-                <div className="row mb-5">
-                    <div className="col-lg-6 mb-4">
-                        <div className="card border-0 shadow-sm h-100">
-                            <div className="card-header bg-white border-0 py-3">
-                                <h5 className="card-title mb-0 d-flex align-items-center">
-                                    <PieChart size={20} className="me-2 text-success" />
-                                    Qualification Distribution
-                                </h5>
-                            </div>
-                            <div className="card-body d-flex align-items-center justify-content-center">
-                                <div className="text-center py-5">
-                                    <PieChart size={64} className="text-muted mb-3" />
-                                    <h6 className="text-muted">Chart Implementation</h6>
-                                    <p className="text-muted small mb-0">
-                                        Qualification breakdown chart will be displayed here
-                                    </p>
-                                    <canvas id="qualificationPieChart" className="d-none"></canvas>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="col-lg-6 mb-4">
-                        <div className="card border-0 shadow-sm h-100">
-                            <div className="card-header bg-white border-0 py-3">
-                                <h5 className="card-title mb-0 d-flex align-items-center">
-                                    <PieChart size={20} className="me-2 text-info" />
-                                    Course Distribution
-                                </h5>
-                            </div>
-                            <div className="card-body d-flex align-items-center justify-content-center">
-                                <div className="text-center py-5">
-                                    <PieChart size={64} className="text-muted mb-3" />
-                                    <h6 className="text-muted">Chart Implementation</h6>
-                                    <p className="text-muted small mb-0">
-                                        Course distribution chart will be displayed here
-                                    </p>
-                                    <canvas id="coursePieChart" className="d-none"></canvas>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
                 </div>
             </div>
         </>

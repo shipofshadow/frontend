@@ -9,7 +9,7 @@ import {
 } from "../../services/settingsService.ts";
 
 const SystemSetting = () => {
-    const { token, isBitress } = useAuth();
+    const { token, isAdmin } = useAuth();
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [successMsg, setSuccessMsg] = useState('');
@@ -119,7 +119,7 @@ const SystemSetting = () => {
         </div>
     );
 
-    if (!isBitress) {
+    if (!isAdmin) {
         return (
             <div className="min-vh-100 d-flex align-items-center justify-content-center bg-light">
                 <div className="text-center">

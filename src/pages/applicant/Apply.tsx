@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from "react";
+import React, {type ChangeEvent, useEffect, useState} from "react";
 import psgc from "@dropdowns/psgc";
 import Swal from "sweetalert2";
 import {useNavigate} from "react-router-dom";
@@ -12,6 +12,9 @@ import { useAcademicTerm } from "../../hooks/useAcademicTerm.ts";
 import type {ApplicationForm} from "../../interfaces/ApplicationForm.ts";
 import {useSettings} from "../../context/SettingsContext.tsx";
 import ApplicationClosed from "../../components/common/applicant/ApplicationClosed.tsx";
+import {hasApplied} from "../../services/applicationService.tsx";
+import type {ApplicationStatus} from "../../interfaces/application_status.ts";
+import AlreadyApplied from "../../components/common/applicant/AlreadyApplied.tsx";
 
 const Apply = () => {
     const [step, setStep] = useState("step1");
@@ -20,9 +23,7 @@ const Apply = () => {
     const {settings} = useSettings();
     const navigate = useNavigate();
 
-    if (!settings.isApplicationOpen) {
-        return <ApplicationClosed />;
-    }
+
 
     interface Region {
         reg_code: string;
@@ -47,6 +48,9 @@ const Apply = () => {
         mun_code: string;
     }
 
+    const [itrFiles, setItrFiles] = useState<File[]>([]);
+    const [, setGradesFile] = useState<File | null>(null);
+    const [applicationInfo, setApplicationInfo] = useState<ApplicationStatus | null>(null);
     const [regions, setRegions] = useState<Region[]>([]);
     const [provinces, setProvinces] = useState<Province[]>([]);
     const [municipalities, setMunicipalities] = useState<Municipality[]>([]);
@@ -141,12 +145,21 @@ const Apply = () => {
     });
 
     useEffect(() => {
+        hasApplied(token)
+            .then(setApplicationInfo)
+            .catch(() => setApplicationInfo({ has_applied: false }))
+    }, []);
+
+    useEffect(() => {
         if (user?.profile) {
             setSelectedRegion(user.profile.region_code || '');
             setSelectedProvince(user.profile.province_code || '');
             setSelectedMunicipality(user.profile.municipality_code || '');
             setSelectedBarangay(user.profile.barangay_code || '');
         }
+
+
+
     }, [user]);
 
     useEffect(() => {
@@ -282,6 +295,18 @@ const Apply = () => {
         }));
     };
 
+    const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files) {
+            const { name, files } = e.target;
+            if (name === 'itr') {
+                // Convert FileList to Array
+                setItrFiles(Array.from(files));
+            } else if (name === 'grades') {
+                setGradesFile(files[0]);
+            }
+        }
+    };
+
     const handleFileUpload = (field: 'itr' | 'grades', file: File | undefined) => {
         if (file && file.size > 5 * 1024 * 1024) {
             alert('File size exceeds 5MB');
@@ -322,8 +347,12 @@ const Apply = () => {
         });
 
 
-        // Files
-        if (formData.itr) data.append('itr', formData.itr);
+        if (itrFiles.length > 0) {
+            itrFiles.forEach((file) => {
+                data.append('itr', file);
+            });
+        }
+
 
         if (formData.grades) data.append('grades', formData.grades);
 
@@ -364,6 +393,14 @@ const Apply = () => {
             });
         }
     };
+
+    if (!settings.isApplicationOpen) {
+        return <ApplicationClosed />;
+    }
+
+    if (applicationInfo?.has_applied) {
+        return <AlreadyApplied/>
+    }
 
     return (
         <div className="container-fluid p-2">
@@ -1092,18 +1129,33 @@ const Apply = () => {
                             <h3 className="text-primary">Step 4: Supporting Documents</h3>
                             <h5 className="card-title mb-4">Upload required documents</h5>
 
-                            <div className="mb-4">
-                                <label>Latest ITR (Income Tax Return) *</label>
+                            <div className="mb-3">
+                                <label className="form-label fw-bold">Income Tax Return (ITR)</label>
                                 <input
-                                    className="form-control"
                                     type="file"
-                                    accept=".pdf, image/jpeg, image/jpg, image/png"
-                                    onChange={(e) => handleFileUpload("itr", e.target.files?.[0])}
+                                    name="itr"
+                                    className="form-control"
+                                    accept=".pdf,.jpg,.jpeg,.png"
+                                    multiple
+                                    onChange={handleFileChange}
                                     required
                                 />
-                                <small className="form-text text-muted">
-                                    Upload parent or guardian's ITR in PDF format (max 5MB)
-                                </small>
+                                <div className="form-text">
+                                    {itrFiles.length > 0
+                                        ? <span className="text-success">{itrFiles.length} file(s) selected</span>
+                                        : "Select all pages of your ITR (e.g., Page 1, Page 2)"}
+                                </div>
+
+                                {/* Visual Preview List (Optional) */}
+                                {itrFiles.length > 0 && (
+                                    <ul className="list-group mt-2">
+                                        {itrFiles.map((f, i) => (
+                                            <li key={i} className="list-group-item py-1 small text-muted">
+                                                {f.name}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                )}
                             </div>
 
                             <div className="alert alert-info">

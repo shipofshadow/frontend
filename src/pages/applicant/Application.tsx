@@ -8,8 +8,6 @@ import {
     AlertCircle,
     User,
     School,
-    Download,
-    Eye,
     ArrowLeft,
     Star,
     TrendingUp,
@@ -385,65 +383,32 @@ const Application = () => {
                 <div key={index} className="col-md-6">
                     <div className="card h-100 border-0 bg-light">
                         <div className="card-body p-3">
-                            <div className="d-flex align-items-start">
+                            {/* File Header Info */}
+                            <div className="d-flex align-items-start mb-3">
                                 <div className="p-2 bg-white rounded me-3">
                                     {getFileIcon(req.type)}
                                 </div>
                                 <div className="flex-grow-1 min-w-0">
-                                    <h6 className="mb-1 text-truncate" title={req.file_name}>
-                                        {req.file_name}
+                                    <h6 className="mb-1 text-truncate">
+                                        {getFileTypeLabel(req.type)}
                                     </h6>
-                                    <p className="text-muted small mb-2">
-                                        {getFileTypeLabel(req.type)} {req.size && `• ${req.size}`}
-                                    </p>
-                                    <small className="text-muted d-block mb-2">
-                                        <Calendar size={12} className="me-1" />
-                                        {formatDate(req.uploaded_at)}
-                                    </small>
                                     <div className="d-flex justify-content-between align-items-center">
-                                    <span className={`badge ${req.status === 'verified' ? 'bg-success' : req.status === 'rejected' ? 'bg-danger' : 'bg-warning'} text-white`}>
-                                        {req.status === 'verified' ? (
-                                            <>
-                                                <CheckCircle size={12} className="me-1" />
-                                                Verified
-                                            </>
-                                        ) : req.status === 'rejected' ? (
-                                            <>
-                                                <AlertCircle size={12} className="me-1" />
-                                                Rejected
-                                            </>
-                                        ) : (
-                                            <>
-                                                <Clock size={12} className="me-1" />
-                                                Pending
-                                            </>
-                                        )}
-                                    </span>
-                                        <div className="btn-group btn-group-sm">
-                                            <button
-                                                className="btn btn-outline-primary btn-sm"
-                                                data-bs-toggle="modal"
-                                                data-bs-target={`#fileModal-${index}`}
-                                            >
-                                                <Eye size={14} />
-                                            </button>
-                                            <button className="btn btn-outline-secondary btn-sm">
-                                                <Download size={14} />
-                                            </button>
-                                        </div>
+                                        <small className="text-muted">
+                                            <Calendar size={12} className="me-1" />
+                                            {formatDate(req.uploaded_at)}
+                                        </small>
+
+
                                     </div>
                                 </div>
                             </div>
-                        </div>
 
-                        {/* Modal for File Preview */}
-                        <div className="modal fade" id={`fileModal-${index}`} tabIndex={-1}>
-                            <div className="modal-dialog modal-lg">
-                                <div className="modal-content">
-                                    <div className="modal-body">
-                                        <FilePreview label={req.type} filePath={req.file_name} />
-                                    </div>
-                                </div>
+                            {/* Immediate File Preview */}
+                            <div className="border-top pt-3">
+                                <FilePreview
+                                    label={req.type}
+                                    filePath={req.file_name}
+                                />
                             </div>
                         </div>
                     </div>

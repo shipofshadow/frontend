@@ -36,15 +36,38 @@ interface NotificationProviderProps {
     children: ReactNode;
 }
 
+// 1. Updated Mapper to handle new backend types
 const mapServerToClient = (payload: any): NotificationData => {
-    // Server emits: id, type, title, message, priority, action_url, metadata, created_at, timestamp
-    // Normalize to UI type; preserve server type in data.server_type
-    const uiType: UiType =
-        payload.type === 'application_approved' ? 'success' :
-            payload.type === 'application_denied' ? 'error' :
-                payload.type === 'system_announcement' ? 'info' :
-                    payload.type === 'scholarship_recommended' ? 'success' :
-                        ['urgent', 'high'].includes(payload.priority) ? 'warning' : 'info';
+    // Determine UI styling based on server type
+    let uiType: UiType = 'info';
+
+    switch (payload.type) {
+        case 'application_approved':
+        case 'scholarship_awarded':
+        case 'scholarship_recommended':
+            uiType = 'success';
+            break;
+        case 'application_denied':
+            uiType = 'error';
+            break;
+        case 'application_returned': // New status
+            uiType = 'warning';
+            break;
+        case 'deadline_reminder':
+            uiType = 'warning';
+            break;
+        case 'application_evaluated': // New status
+        case 'new_application':
+        case 'system_announcement':
+        default:
+            uiType = 'info';
+            break;
+    }
+
+    // Override based on priority if generic
+    if (['urgent', 'high'].includes(payload.priority) && uiType === 'info') {
+        uiType = 'warning';
+    }
 
     return {
         id: String(payload.id ?? payload.notification_id ?? Date.now()),
@@ -71,7 +94,6 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
     const currentPageRef = useRef<number>(1);
     const isFetchingRef = useRef<boolean>(false);
 
-    // Helper: update state with dedupe and cap to 200 items
     const upsertNotifications = (incoming: NotificationData | NotificationData[]) => {
         const list = Array.isArray(incoming) ? incoming : [incoming];
         setNotifications(prev => {
@@ -81,7 +103,6 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
         });
     };
 
-    // Fetch initial notifications and unread count
     const refresh = useMemo(() => {
         return async () => {
             if (!token) return;
@@ -114,7 +135,6 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
                 const json = await res.json();
                 if (json?.success && json?.data) {
                     const items = (json.data.notifications || []).map(mapServerToClient);
-                    // Append at the end to preserve order when paginating
                     setNotifications(prev => {
                         const dedup = new Map(prev.map(n => [n.id, n]));
                         for (const n of items) dedup.set(n.id, dedup.get(n.id) ?? n);
@@ -139,44 +159,56 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
                 transports: ['websocket', 'polling'],
                 autoConnect: true,
                 reconnection: true,
-                reconnectionAttempts: Infinity,
-                reconnectionDelay: 1000,
-                reconnectionDelayMax: 8000,
             });
 
             newSocket.on('connect', () => {
                 setIsConnected(true);
                 setSocket(newSocket);
-                // Join room based on user id so server can emit to room(user_id)
                 try {
                     newSocket.emit('join', String(user.id));
                 } catch (e) {
                     console.warn('Failed to join room:', e);
                 }
-                // Initial sync
                 refresh();
             });
 
-            newSocket.on('disconnect', (reason) => {
-                setIsConnected(false);
-                console.log('Socket disconnected:', reason);
-            });
+            newSocket.on('disconnect', () => setIsConnected(false));
 
-            newSocket.on('connect_error', (error) => {
-                setIsConnected(false);
-                console.error('Socket connection error:', error);
-            });
-
-            // Specific channels normalized to the same flow
-            newSocket.on('application_status_changed', (data) => {
-                const message = `Your application has been ${data.status}`;
-                const mapped = mapServerToClient({ ...data, message });
+            // --- 2. Generic Catch-All Listener ---
+            // Handles 'deadline_reminder', 'profile_updated', etc.
+            newSocket.on('notification', (data) => {
+                const mapped = mapServerToClient(data);
                 upsertNotifications(mapped);
                 setUnreadCount(prev => prev + 1);
-                const toastType: UiType = data.status === 'approved' ? 'success' : data.status === 'denied' ? 'error' : 'info';
-                toastType === 'success' ? notyf.success(message)
-                    : toastType === 'error' ? notyf.error(message)
-                        : notyf.open({ type: 'info', message });
+
+                // Prevent double toast if specific listener handles it
+                const specificTypes = [
+                    'application_approved', 'application_denied', 'application_returned', 'application_evaluated',
+                    'scholarship_recommended', 'new_application', 'system_announcement'
+                ];
+
+                if (!specificTypes.includes(data.type)) {
+                    notyf.open({ type: mapped.type, message: mapped.message });
+                }
+            });
+
+            // --- 3. Specific Listeners (Toast Logic) ---
+
+            newSocket.on('application_status_changed', (data) => {
+                // Handling approved, denied, returned, evaluated
+                const status = data.status; // 'approved', 'denied', 'returned', 'evaluated'
+                let message = `Your application has been ${status}`;
+                if (status === 'returned') message = 'Action Required: Application returned for revision';
+
+                // Ensure state update happens (idempotent due to upsert)
+                const mapped = mapServerToClient({ ...data, message });
+                upsertNotifications(mapped);
+
+                // Toast
+                if (status === 'approved') notyf.success(message);
+                else if (status === 'denied') notyf.error(message);
+                else if (status === 'returned') notyf.open({ type: 'warning', message });
+                else notyf.open({ type: 'info', message });
             });
 
             newSocket.on('scholarship_recommended', (data) => {
@@ -184,34 +216,22 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
                 const message = `You've been recommended for ${name}!`;
                 const mapped = mapServerToClient({ ...data, message });
                 upsertNotifications(mapped);
-                setUnreadCount(prev => prev + 1);
                 notyf.success(message);
             });
 
             newSocket.on('system_announcement', (data) => {
-                const message = data.message || 'New system announcement';
-                const mapped = mapServerToClient({ ...data, message });
+                const mapped = mapServerToClient(data);
                 upsertNotifications(mapped);
-                setUnreadCount(prev => prev + 1);
-                notyf.open({ type: 'info', message });
+                notyf.open({ type: 'info', message: mapped.message });
             });
 
-            // Admin-only channels
-            if (user.role === 'admin') {
+            // Admin & Faculty Listeners
+            if (['admin', 'faculty'].includes(user.role)) {
                 newSocket.on('new_application_submitted', (data) => {
                     const message = `New application submitted by ${data.student_name || 'a student'}`;
                     const mapped = mapServerToClient({ ...data, message });
                     upsertNotifications(mapped);
-                    setUnreadCount(prev => prev + 1);
                     notyf.open({ type: 'info', message });
-                });
-
-                newSocket.on('application_requires_review', (data) => {
-                    const message = `Application #${data.application_id} requires review`;
-                    const mapped = mapServerToClient({ ...data, message, priority: 'high' });
-                    upsertNotifications(mapped);
-                    setUnreadCount(prev => prev + 1);
-                    notyf.open({ type: 'warning', message });
                 });
             }
 
@@ -222,7 +242,7 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
                 setIsConnected(false);
             };
         } else {
-            // Clean up on logout
+            // Cleanup on logout
             if (socket) {
                 socket.removeAllListeners();
                 socket.disconnect();
@@ -231,20 +251,17 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
             setIsConnected(false);
             setNotifications([]);
             setUnreadCount(0);
-            currentPageRef.current = 1;
         }
-    }, [isAuthenticated, token, user]); // useAuth handles token refresh and user changes
+    }, [isAuthenticated, token, user]);
 
     const markAsRead = async (notificationId?: string) => {
         if (!token) return;
         try {
             if (notificationId) {
-                // Server sync
                 await fetch(`${API_BASE_URL}/api/notifications/${notificationId}/read`, {
                     method: 'PUT',
                     headers: { Authorization: `Bearer ${token}` }
                 });
-                // Local update
                 setNotifications(prev => prev.map(n => n.id === notificationId ? { ...n, read: true } : n));
                 setUnreadCount(prev => Math.max(0, prev - 1));
             } else {
@@ -256,7 +273,7 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
                 setUnreadCount(0);
             }
         } catch (err) {
-            console.error('Error marking notification(s) as read:', err);
+            console.error('Error marking read:', err);
         }
     };
 
@@ -266,11 +283,7 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
     };
 
     const sendMessage = (event: string, data: any) => {
-        if (socket && isConnected) {
-            socket.emit(event, data);
-        } else {
-            console.warn('Socket not connected. Cannot send message:', event, data);
-        }
+        if (socket && isConnected) socket.emit(event, data);
     };
 
     const contextValue: NotificationContextType = {

@@ -22,7 +22,7 @@ const getRoleDisplayInfo = (role: string | undefined, campusName?: string) => {
 const Sidebar: React.FC = () => {
   const location = useLocation();
   const { unreadCount } = useNotifications();
-  const { user, isBitress, isFaculty, userCampusName } = useAuth();
+  const { user, isBitress, isFaculty, userCampusName, isAdmin } = useAuth();
   const roleInfo = getRoleDisplayInfo(user?.role, userCampusName);
 
   useEffect(() => {
@@ -195,12 +195,9 @@ const Sidebar: React.FC = () => {
                                 )}
                             </NavLink>
 
-
-
-                {isBitress && (
+                <div className="sidenav-menu-heading">System</div>
+                {isAdmin && (
                     <>
-                        <div className="sidenav-menu-heading">System</div>
-
                         {/* Configuration */}
                         <NavLink
                             to="/admin/system/configure"
@@ -209,6 +206,15 @@ const Sidebar: React.FC = () => {
                             <div className="nav-link-icon"><i data-feather="sliders"></i></div>
                             Configuration
                         </NavLink>
+                    </>
+                )}
+
+
+
+                {isBitress && (
+                    <>
+
+
 
                         {/* Manage Accounts */}
                         <NavLink

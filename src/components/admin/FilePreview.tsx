@@ -13,7 +13,6 @@ const FilePreview: React.FC<FilePreviewProps> = ({ label, filePath }) => {
 
     return (
         <div>
-            <h6>{label}</h6>
             {isImage ? (
                 <img src={fileUrl} alt={label} style={{ maxWidth: "100%", height: "auto" }} />
             ) : isPdf ? (

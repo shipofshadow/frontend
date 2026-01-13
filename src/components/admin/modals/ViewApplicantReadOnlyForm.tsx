@@ -87,6 +87,10 @@ const ViewApplicantReadOnlyForm: React.FC<Props> = ({ applicant }) => {
 
     const combinedIncome = parseFloat(applicant.father_income || 0 as unknown as string) + parseFloat(applicant.mother_income || 0 as unknown as string);
 
+    const avatar = applicant.avatar;
+    const path = avatar
+        ? `${API_BASE_URL}/api/profile/avatar/${encodeURIComponent(avatar.split("/").pop()!)}`
+        : "/default.png";
     const renderScholarshipRecommendations = () => {
         if (loading) {
             return (
@@ -187,9 +191,31 @@ const ViewApplicantReadOnlyForm: React.FC<Props> = ({ applicant }) => {
                     <div className="row align-items-center">
                         <div className="col-lg-8">
                             <div className="d-flex align-items-center mb-3">
-                                <div className="bg-primary bg-opacity-10 rounded-circle p-3 me-3">
-                                    <i className="bi bi-person-fill text-primary fs-3"></i>
+
+                                {/* --- START: Profile Picture Section --- */}
+                                <div className="flex-shrink-0 me-4">
+                                    {path ? (
+                                        // DESIGN 1: If an image exists
+                                        <img
+                                            src={path}
+                                            alt={`${applicant.first_name} ${applicant.last_name}`}
+                                            className="rounded-circle shadow-sm object-fit-cover border border-3 border-white"
+                                            width="80"
+                                            height="80"
+                                        />
+                                    ) : (
+                                        // DESIGN 2: Fallback placeholder (if no image exists)
+                                        // We use inline styles here to ensure it matches the exact dimensions of the img tag above
+                                        <div
+                                            className="bg-primary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center border border-3 border-white shadow-sm"
+                                            style={{width: '80px', height: '80px'}}
+                                        >
+                                            <i className="bi bi-person-fill text-primary fs-2"></i>
+                                        </div>
+                                    )}
                                 </div>
+                                {/* --- END: Profile Picture Section --- */}
+
                                 <div>
                                     <h4 className="mb-1 fw-bold">
                                         {`${applicant.first_name} ${applicant.middle_name || ''} ${applicant.last_name} ${applicant.name_extension || ''}`.trim()}
@@ -576,7 +602,7 @@ const ViewApplicantReadOnlyForm: React.FC<Props> = ({ applicant }) => {
                                 <h5 className="mb-0 fw-bold">Submitted Documents</h5>
                             </div>
                             <div className="row g-4">
-                                {applicant.itr_file && (
+                                {applicant.itr_files && applicant.itr_files.length > 0 && (
                                     <div className="col-md-6">
                                         <div className="card border-0 shadow-sm h-100">
                                             <div className="card-body p-4">
@@ -584,12 +610,26 @@ const ViewApplicantReadOnlyForm: React.FC<Props> = ({ applicant }) => {
                                                     <div className="bg-danger bg-opacity-10 rounded p-2 me-2">
                                                         <i className="bi bi-file-earmark-pdf text-danger fs-5"></i>
                                                     </div>
-                                                    <h6 className="mb-0 fw-bold">Income Tax Return</h6>
+                                                    <h6 className="mb-0 fw-bold">
+                                                        Income Tax Return{/* Pluralize if multiple files */ }
+                                                        {(Array.isArray(applicant.itr_files) ? applicant.itr_files.length : applicant.itr_files.split(',').length) > 1 ? 's' : ''}
+                                                    </h6>
                                                 </div>
-                                                <FilePreview
-                                                    label=""
-                                                    filePath={applicant.itr_file}
-                                                />
+
+                                                <div className="d-flex flex-column gap-3">
+                                                    {/* Handle both Array (if parsed in Python) and String (if raw SQL) */}
+                                                    {(Array.isArray(applicant.itr_files)
+                                                            ? applicant.itr_files
+                                                            : applicant.itr_files.toString().split(',')
+                                                    ).map((filePath, index) => (
+                                                        <FilePreview
+                                                            key={index}
+                                                            // Optional: Add a counter label if there's more than one file
+                                                            label={`Document ${index + 1}`}
+                                                            filePath={filePath.trim()}
+                                                        />
+                                                    ))}
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -612,7 +652,7 @@ const ViewApplicantReadOnlyForm: React.FC<Props> = ({ applicant }) => {
                                         </div>
                                     </div>
                                 )}
-                                {!applicant.itr_file && !applicant.grades_file && (
+                                {!applicant.itr_files && !applicant.grades_file && (
                                     <div className="col-12">
                                         <div className="text-center py-5">
                                             <div className="mb-3">

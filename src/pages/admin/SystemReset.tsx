@@ -197,7 +197,6 @@ const SystemReset = () => {
                             </div>
                             <div>
                                 <h1 className="h5 fw-bold text-white mb-0">System Reset</h1>
-                                <p className="text-white-50 small mb-0">⚡ Bitress-Only Feature</p>
                             </div>
                         </div>
                         <button

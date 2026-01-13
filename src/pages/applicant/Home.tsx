@@ -391,12 +391,12 @@ const Home = () => {
                         {/*    <Download size={18} className="me-2" />*/}
                         {/*    Download PDF*/}
                         {/*</button>*/}
-                        {applicationInfo?.status === 'pending' && (
-                            <button className="btn btn-outline-info">
-                                <MessageCircle size={18} className="me-2" />
-                                Contact Reviewer
-                            </button>
-                        )}
+                        {/*{applicationInfo?.status === 'pending' && (*/}
+                        {/*    <button className="btn btn-outline-info">*/}
+                        {/*        <MessageCircle size={18} className="me-2" />*/}
+                        {/*        Contact Reviewer*/}
+                        {/*    </button>*/}
+                        {/*)}*/}
                         {applicationInfo?.status === 'denied' && (
                             <button className="btn btn-outline-warning">
                                 <Send size={18} className="me-2" />

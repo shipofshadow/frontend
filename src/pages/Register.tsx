@@ -151,7 +151,7 @@ const Register = () => {
                             {/* Header */}
                             <div className="d-flex align-items-center mb-4">
                                 <img
-                                    src="https://ispsctagudin.info/home/assets/img/ispsc_logo.png"
+                                    src="https://ispsc.edu.ph/file-manager/images/ispsc_logo_2.png"
                                     alt="iScholar Logo"
                                     className="rounded-3 me-3"
                                     style={{ width: '60px', height: '60px' }}
@@ -271,7 +271,7 @@ const Register = () => {
                             {/* Mobile Header */}
                             <div className="text-center mb-4 d-lg-none">
                                 <img
-                                    src="https://ispsctagudin.info/home/assets/img/ispsc_logo.png"
+                                    src="https://ispsc.edu.ph/file-manager/images/ispsc_logo_2.png"
                                     alt="iScholar Logo"
                                     className="rounded-3 mb-3"
                                     style={{ width: '50px', height: '50px' }}

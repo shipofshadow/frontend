@@ -3,7 +3,7 @@ const SessionModal = () => {
         <div className="modal show fade" style={{ display: 'block' }} tabIndex={-1}>
             <div className="modal-dialog modal-dialog-centered">
                 <div className="modal-content border-danger">
-                    <div className="modal-header bg-danger text-white">
+                    <div className="modal-header">
                         <h5 className="modal-title">Session Expired</h5>
                     </div>
                     <div className="modal-body">

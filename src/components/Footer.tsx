@@ -49,7 +49,7 @@ const Footer = () => {
                     <div className="col-lg-4 col-md-6">
                         <div className="d-flex align-items-center mb-4">
                             <img
-                                src="https://ispsctagudin.info/home/assets/img/ispsc_logo.png"
+                                src="https://ispsc.edu.ph/file-manager/images/ispsc_logo_2.png"
                                 alt="ISPSC Logo"
                                 className="me-3 rounded"
                                 style={{ width: '60px', height: '60px', objectFit: 'cover' }}

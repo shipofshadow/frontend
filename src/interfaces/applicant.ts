@@ -17,6 +17,7 @@ export interface Applicant {
     email: string;
     status: string;
     remarks: string | null;
+    avatar: string | null;
 
     // Address
     street: string;
@@ -70,7 +71,7 @@ export interface Applicant {
     is_archived: number;
     user_id: number;
 
-    itr_file: string;
+    itr_files?: string | string[] | null;
     grades_file: string;
     grades: GradeEntry[];
 

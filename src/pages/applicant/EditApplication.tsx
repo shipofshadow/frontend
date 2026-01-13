@@ -117,8 +117,8 @@ const EditApplication = () => {
         campus: 0,
         department: 0,
         course: 0,
-        academicYearId: 0,
-        semesterId: 0,
+        academicYearId: term?.academic_year_id || 0,
+        semesterId: term?.semester_id || 0,
         enrollmentStatus: '',
         total_units: 0,
         scholarshipName: '',
@@ -126,8 +126,7 @@ const EditApplication = () => {
         scholarshipAmount: 0,
         itr: null,
         grades: null,
-        gradesList: [{ subject: "", grade: "" }],
-        formatted: '',
+        gradesList: [{ subject: "", grade: "" }]
     });
 
     // Fetch application data
@@ -156,7 +155,6 @@ const EditApplication = () => {
 
                 // Populate form with existing data
                 setFormData({
-                    formatted: data.formatted || '',
                     zipCode: data.zip_code,
                     firstName: data.first_name || '',
                     middleName: data.middle_name || '',
@@ -1037,7 +1035,7 @@ const EditApplication = () => {
                                     <input
                                         type="text"
                                         className="form-control"
-                                        value={formData.formatted || ''}
+                                        value={term?.formatted || ''}
                                         readOnly
                                     />
                                 </div>
