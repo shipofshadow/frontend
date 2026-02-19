@@ -1,19 +1,44 @@
 import  { useState } from 'react';
-import { Star, Target, ArrowRight, Eye, Award, TrendingUp, Filter, Clock } from "lucide-react";
+import { Star, Target, ArrowRight, Eye, Award, TrendingUp, Filter, Clock, CheckCircle, AlertCircle } from "lucide-react";
+import Swal from 'sweetalert2';
+import axios from 'axios';
+import { API_BASE_URL } from '../../../config';
+import { useAuth } from '../../../context/AuthContext';
 
 interface RecommendedScholarship {
+    id: number;
+    scholarship_id: number;
     scholarship_name: string;
     scholarship_description: string;
     grant_amount: number | null;
     score: number; // match %
 }
 
-interface Props {
-    recommendedScholarships: RecommendedScholarship[];
+interface SelectedScholarship {
+    id: number;
+    scholarship_id: number;
+    scholarship_name: string;
+    status: 'student_selected' | 'selected' | 'awarded' | 'cancelled' | 'rejected';
+    selection_reason: string | null;
+    awarded_amount: number | null;
 }
 
-export default function ScholarshipRecommendations({ recommendedScholarships }: Props) {
+interface Props {
+    recommendedScholarships: RecommendedScholarship[];
+    applicationId: number;
+    selectedScholarship?: SelectedScholarship | null;
+    onSelectionChange?: () => void;
+}
+
+export default function ScholarshipRecommendations({ 
+    recommendedScholarships, 
+    applicationId, 
+    selectedScholarship,
+    onSelectionChange 
+}: Props) {
     const [activeFilter, setActiveFilter] = useState('all');
+    const [isSelecting, setIsSelecting] = useState(false);
+    const { token } = useAuth();
 
     const highMatch = recommendedScholarships.filter(s => s.score >= 90);
     const goodMatch = recommendedScholarships.filter(s => s.score >= 70 && s.score < 90);
@@ -23,6 +48,66 @@ export default function ScholarshipRecommendations({ recommendedScholarships }: 
         if (score >= 90) return { level: 'high', color: 'success', label: 'Excellent Match' };
         if (score >= 70) return { level: 'good', color: 'warning', label: 'Good Match' };
         return { level: 'other', color: 'info', label: 'Potential Match' };
+    };
+
+    const handleSelectScholarship = async (scholarship: RecommendedScholarship) => {
+        const result = await Swal.fire({
+            title: 'Confirm Scholarship Selection',
+            html: `
+                <p class="mb-3">You are about to select <strong>${scholarship.scholarship_name}</strong></p>
+                <p class="text-muted small">You can optionally provide a reason for your selection below:</p>
+            `,
+            input: 'textarea',
+            inputPlaceholder: 'Enter your reason for selecting this scholarship (optional)',
+            showCancelButton: true,
+            confirmButtonText: 'Confirm Selection',
+            confirmButtonColor: '#28a745',
+            cancelButtonText: 'Cancel',
+            inputValidator: () => {
+                // No validation needed, reason is optional
+                return null;
+            }
+        });
+
+        if (result.isConfirmed) {
+            try {
+                setIsSelecting(true);
+                await axios.post(
+                    `${API_BASE_URL}/api/evaluations/${applicationId}/student-select-scholarship`,
+                    {
+                        scholarship_id: scholarship.scholarship_id,
+                        selection_reason: result.value || null
+                    },
+                    {
+                        headers: {
+                            Authorization: `Bearer ${token}`
+                        }
+                    }
+                );
+
+                await Swal.fire({
+                    icon: 'success',
+                    title: 'Selection Submitted!',
+                    text: 'Your scholarship selection has been submitted and is pending admin confirmation.',
+                    confirmButtonColor: '#28a745'
+                });
+
+                // Trigger refresh
+                if (onSelectionChange) {
+                    onSelectionChange();
+                }
+            } catch (error) {
+                console.error('Error selecting scholarship:', error);
+                await Swal.fire({
+                    icon: 'error',
+                    title: 'Selection Failed',
+                    text: 'Failed to submit your selection. Please try again.',
+                    confirmButtonColor: '#dc3545'
+                });
+            } finally {
+                setIsSelecting(false);
+            }
+        }
     };
 
     const renderScholarshipCard = (scholarship: RecommendedScholarship, index: number) => {
@@ -118,22 +203,43 @@ export default function ScholarshipRecommendations({ recommendedScholarships }: 
                         </div>
 
                         {/* Action Button */}
-                        <button
-                            className={`btn ${isHighMatch ? 'btn-success' : 'btn-outline-primary'} w-100 d-flex align-items-center justify-content-center gap-2`}
-                            style={{ borderRadius: '8px' }}
-                        >
-                            {isHighMatch ? (
-                                <>
-                                    <ArrowRight size={16} />
-                                    Apply Now
-                                </>
-                            ) : (
-                                <>
-                                    <Eye size={16} />
-                                    View Details
-                                </>
-                            )}
-                        </button>
+                        {selectedScholarship?.scholarship_id === scholarship.scholarship_id ? (
+                            <div className={`alert ${
+                                selectedScholarship.status === 'student_selected' ? 'alert-warning' :
+                                selectedScholarship.status === 'selected' || selectedScholarship.status === 'awarded' ? 'alert-success' :
+                                selectedScholarship.status === 'rejected' ? 'alert-danger' :
+                                'alert-secondary'
+                            } mb-0 py-2 d-flex align-items-center justify-content-center gap-2`}>
+                                {selectedScholarship.status === 'student_selected' && (
+                                    <>
+                                        <Clock size={16} />
+                                        <small className="mb-0 fw-semibold">Pending Admin Confirmation</small>
+                                    </>
+                                )}
+                                {(selectedScholarship.status === 'selected' || selectedScholarship.status === 'awarded') && (
+                                    <>
+                                        <CheckCircle size={16} />
+                                        <small className="mb-0 fw-semibold">Selected</small>
+                                    </>
+                                )}
+                                {selectedScholarship.status === 'rejected' && (
+                                    <>
+                                        <AlertCircle size={16} />
+                                        <small className="mb-0 fw-semibold">Selection Rejected</small>
+                                    </>
+                                )}
+                            </div>
+                        ) : (
+                            <button
+                                className={`btn ${isHighMatch ? 'btn-success' : 'btn-primary'} w-100 d-flex align-items-center justify-content-center gap-2`}
+                                style={{ borderRadius: '8px' }}
+                                onClick={() => handleSelectScholarship(scholarship)}
+                                disabled={isSelecting || (selectedScholarship !== null && selectedScholarship !== undefined && selectedScholarship.status !== 'rejected')}
+                            >
+                                <CheckCircle size={16} />
+                                Select This Scholarship
+                            </button>
+                        )}
                     </div>
                 </div>
             </div>
@@ -206,6 +312,73 @@ export default function ScholarshipRecommendations({ recommendedScholarships }: 
                     </div>
                 </div>
             </div>
+
+            {/* Selection Status Section */}
+            {selectedScholarship && (
+                <div className="row mb-4">
+                    <div className="col-12">
+                        {selectedScholarship.status === 'student_selected' && (
+                            <div className="alert alert-warning border-warning border-2 shadow-sm" role="alert">
+                                <div className="d-flex align-items-start">
+                                    <Clock size={24} className="me-3 flex-shrink-0" />
+                                    <div className="flex-grow-1">
+                                        <h5 className="alert-heading mb-2">
+                                            <strong>Selection Pending Admin Review</strong>
+                                        </h5>
+                                        <p className="mb-2">
+                                            You have selected <strong>{selectedScholarship.scholarship_name}</strong>. 
+                                            Your selection is currently pending admin confirmation.
+                                        </p>
+                                        {selectedScholarship.selection_reason && (
+                                            <div className="mt-2 p-2 bg-white rounded">
+                                                <small className="text-muted d-block mb-1">Your reason:</small>
+                                                <small className="d-block">{selectedScholarship.selection_reason}</small>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                        {(selectedScholarship.status === 'selected' || selectedScholarship.status === 'awarded') && (
+                            <div className="alert alert-success border-success border-2 shadow-sm" role="alert">
+                                <div className="d-flex align-items-start">
+                                    <CheckCircle size={24} className="me-3 flex-shrink-0" />
+                                    <div className="flex-grow-1">
+                                        <h5 className="alert-heading mb-2">
+                                            <strong>Scholarship Confirmed!</strong>
+                                        </h5>
+                                        <p className="mb-2">
+                                            Congratulations! Your selection of <strong>{selectedScholarship.scholarship_name}</strong> has been confirmed by the admin.
+                                        </p>
+                                        {selectedScholarship.awarded_amount && (
+                                            <div className="mt-2 p-2 bg-white rounded">
+                                                <small className="text-muted d-block mb-1">Awarded Amount:</small>
+                                                <strong className="text-success">₱{selectedScholarship.awarded_amount.toLocaleString()}</strong>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                        {selectedScholarship.status === 'rejected' && (
+                            <div className="alert alert-danger border-danger border-2 shadow-sm" role="alert">
+                                <div className="d-flex align-items-start">
+                                    <AlertCircle size={24} className="me-3 flex-shrink-0" />
+                                    <div className="flex-grow-1">
+                                        <h5 className="alert-heading mb-2">
+                                            <strong>Selection Not Approved</strong>
+                                        </h5>
+                                        <p className="mb-2">
+                                            Unfortunately, your selection of <strong>{selectedScholarship.scholarship_name}</strong> was not approved. 
+                                            Please select another scholarship from the recommendations below.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
 
             {/* Statistics Cards */}
             <div className="row mb-4">
