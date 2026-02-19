@@ -62,11 +62,13 @@ interface Recommendation {
 }
 
 interface Selection {
+    scholarship_id?: number;
     scholarship_name?: string;
     awarded_amount?: string | number;
     final_score?: number;
     selected_date?: string;
     selection_reason?: string;
+    status?: 'student_selected' | 'selected' | 'awarded' | 'cancelled' | 'rejected';
 }
 
 
@@ -433,6 +435,201 @@ const ScholarshipDashboard = () => {
                 text: errorMessage,
                 icon: 'error'
             });
+        }
+    };
+
+    const handleConfirmStudentSelection = async (applicationId: number, selection: Selection): Promise<void> => {
+        const applicant = applications.find(a => a.id === applicationId);
+
+        if (!selection || !applicant) {
+            await Swal.fire({
+                title: 'Error!',
+                text: 'Could not find selection details.',
+                icon: 'error'
+            });
+            return;
+        }
+
+        const result = await Swal.fire({
+            title: 'Confirm Student Selection',
+            html: `
+                <div class="text-start">
+                    <p><strong>Applicant:</strong> ${applicant.name}</p>
+                    <p><strong>Selected Scholarship:</strong> ${selection.scholarship_name}</p>
+                    <p class="text-muted mt-3">You can optionally adjust the awarded amount and add remarks:</p>
+                </div>
+            `,
+            input: 'number',
+            inputLabel: 'Awarded Amount',
+            inputPlaceholder: 'Enter awarded amount',
+            inputValue: selection.awarded_amount || '',
+            showCancelButton: true,
+            confirmButtonText: 'Confirm Selection',
+            confirmButtonColor: '#198754',
+            cancelButtonText: 'Cancel',
+            showDenyButton: true,
+            denyButtonText: 'Add Remarks',
+            denyButtonColor: '#0d6efd',
+            preConfirm: (value) => {
+                if (!value || value <= 0) {
+                    Swal.showValidationMessage('Please enter a valid awarded amount');
+                }
+                return value;
+            }
+        });
+
+        if (result.isConfirmed) {
+            try {
+                await axios.put(
+                    `${API_BASE_URL}/api/evaluations/${applicationId}/confirm-selection`,
+                    {
+                        action: 'confirm',
+                        awarded_amount: result.value,
+                        remarks: null
+                    },
+                    {
+                        headers: {
+                            Authorization: `Bearer ${token}`
+                        }
+                    }
+                );
+
+                // Refresh selections
+                await fetchSelections(applicationId);
+
+                await Swal.fire({
+                    title: 'Success!',
+                    text: 'Student selection has been confirmed!',
+                    icon: 'success',
+                    timer: 3000,
+                    showConfirmButton: false
+                });
+            } catch (error) {
+                console.error("Error confirming selection:", error);
+                await Swal.fire({
+                    title: 'Error!',
+                    text: 'Failed to confirm selection. Please try again.',
+                    icon: 'error'
+                });
+            }
+        } else if (result.isDenied) {
+            // Show remarks input
+            const remarksResult = await Swal.fire({
+                title: 'Add Remarks',
+                input: 'textarea',
+                inputLabel: 'Remarks',
+                inputPlaceholder: 'Enter any remarks or notes...',
+                showCancelButton: true,
+                confirmButtonText: 'Confirm with Remarks',
+                confirmButtonColor: '#198754'
+            });
+
+            if (remarksResult.isConfirmed) {
+                try {
+                    await axios.put(
+                        `${API_BASE_URL}/api/evaluations/${applicationId}/confirm-selection`,
+                        {
+                            action: 'confirm',
+                            awarded_amount: selection.awarded_amount,
+                            remarks: remarksResult.value
+                        },
+                        {
+                            headers: {
+                                Authorization: `Bearer ${token}`
+                            }
+                        }
+                    );
+
+                    // Refresh selections
+                    await fetchSelections(applicationId);
+
+                    await Swal.fire({
+                        title: 'Success!',
+                        text: 'Student selection has been confirmed with remarks!',
+                        icon: 'success',
+                        timer: 3000,
+                        showConfirmButton: false
+                    });
+                } catch (error) {
+                    console.error("Error confirming selection:", error);
+                    await Swal.fire({
+                        title: 'Error!',
+                        text: 'Failed to confirm selection. Please try again.',
+                        icon: 'error'
+                    });
+                }
+            }
+        }
+    };
+
+    const handleRejectStudentSelection = async (applicationId: number, selection: Selection): Promise<void> => {
+        const applicant = applications.find(a => a.id === applicationId);
+
+        if (!selection || !applicant) {
+            await Swal.fire({
+                title: 'Error!',
+                text: 'Could not find selection details.',
+                icon: 'error'
+            });
+            return;
+        }
+
+        const result = await Swal.fire({
+            title: 'Reject Student Selection',
+            html: `
+                <div class="text-start">
+                    <p><strong>Applicant:</strong> ${applicant.name}</p>
+                    <p><strong>Selected Scholarship:</strong> ${selection.scholarship_name}</p>
+                    <p class="text-muted mt-3">Please provide a reason for rejecting this selection:</p>
+                </div>
+            `,
+            input: 'textarea',
+            inputPlaceholder: 'Enter rejection reason (required)',
+            showCancelButton: true,
+            confirmButtonText: 'Reject Selection',
+            confirmButtonColor: '#dc3545',
+            cancelButtonText: 'Cancel',
+            inputValidator: (value) => {
+                if (!value) {
+                    return 'You need to provide a reason for rejection!';
+                }
+                return null;
+            }
+        });
+
+        if (result.isConfirmed) {
+            try {
+                await axios.put(
+                    `${API_BASE_URL}/api/evaluations/${applicationId}/confirm-selection`,
+                    {
+                        action: 'reject',
+                        remarks: result.value
+                    },
+                    {
+                        headers: {
+                            Authorization: `Bearer ${token}`
+                        }
+                    }
+                );
+
+                // Refresh selections
+                await fetchSelections(applicationId);
+
+                await Swal.fire({
+                    title: 'Selection Rejected',
+                    text: 'The student selection has been rejected. The student can now select another scholarship.',
+                    icon: 'info',
+                    timer: 3000,
+                    showConfirmButton: false
+                });
+            } catch (error) {
+                console.error("Error rejecting selection:", error);
+                await Swal.fire({
+                    title: 'Error!',
+                    text: 'Failed to reject selection. Please try again.',
+                    icon: 'error'
+                });
+            }
         }
     };
 
@@ -1235,6 +1432,12 @@ const ScholarshipDashboard = () => {
 
                                                                 {getStatusBadge(app.status)}
                                                                 { getClassificationBadge(evaluation.classification)}
+                                                                {appSelection?.status === 'student_selected' && (
+                                                                    <span className="badge bg-warning text-dark d-flex align-items-center gap-1 px-3 py-2">
+                                                                        <Clock size={14} />
+                                                                        Student Selection Pending
+                                                                    </span>
+                                                                )}
                                                             </div>
                                                         </div>
                                                     </div>
@@ -1242,10 +1445,78 @@ const ScholarshipDashboard = () => {
 
                                                 <div className="card-body p-4">
                                                     {appSelection ? (
-                                                        /* Selection Complete */
-                                                        <div className="alert alert-success border-0 bg-success bg-opacity-10">
-                                                            <div className="d-flex align-items-center gap-3 mb-3">
-                                                                <div className="bg-success bg-opacity-20 p-3 rounded-3">
+                                                        appSelection.status === 'student_selected' ? (
+                                                            /* Student Selection Pending Review */
+                                                            <div className="alert alert-warning border-warning border-2 bg-warning bg-opacity-10">
+                                                                <div className="d-flex align-items-center gap-3 mb-3">
+                                                                    <div className="bg-warning bg-opacity-20 p-3 rounded-3">
+                                                                        <Clock className="text-warning" size={24} />
+                                                                    </div>
+                                                                    <div>
+                                                                        <h6 className="fw-bold mb-1 text-warning">Student Selection Pending Review</h6>
+                                                                        <div className="text-warning opacity-75 small">The student has selected a scholarship and is awaiting your confirmation</div>
+                                                                    </div>
+                                                                </div>
+
+                                                                <div className="row g-3 mb-3">
+                                                                    <div className="col-sm-6 col-lg-4">
+                                                                        <div className="bg-white rounded-3 p-3 text-center shadow-sm">
+                                                                            <div className="fw-bold text-dark mb-1">
+                                                                                {appSelection.scholarship_name || 'Selected Scholarship'}
+                                                                            </div>
+                                                                            <div className="small text-muted">Selected Scholarship</div>
+                                                                        </div>
+                                                                    </div>
+                                                                    <div className="col-sm-6 col-lg-4">
+                                                                        <div className="bg-white rounded-3 p-3 text-center shadow-sm">
+                                                                            <div className="fw-bold text-primary mb-1">
+                                                                                ₱{appSelection.awarded_amount ? parseFloat(appSelection.awarded_amount as string).toLocaleString() : 'N/A'}
+                                                                            </div>
+                                                                            <div className="small text-muted">Grant Amount</div>
+                                                                        </div>
+                                                                    </div>
+                                                                    <div className="col-sm-6 col-lg-4">
+                                                                        <div className="bg-white rounded-3 p-3 text-center shadow-sm">
+                                                                            <div className="fw-bold text-warning mb-1">
+                                                                                <Clock size={16} className="me-1" />
+                                                                                Pending
+                                                                            </div>
+                                                                            <div className="small text-muted">Status</div>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+
+                                                                {appSelection.selection_reason && (
+                                                                    <div className="mb-3 p-3 bg-white rounded-3">
+                                                                        <div className="small">
+                                                                            <strong className="text-dark">Student's Reason:</strong>
+                                                                            <p className="mb-0 mt-2 text-muted">{appSelection.selection_reason}</p>
+                                                                        </div>
+                                                                    </div>
+                                                                )}
+
+                                                                <div className="d-flex gap-2 flex-wrap">
+                                                                    <button 
+                                                                        className="btn btn-success d-flex align-items-center gap-2"
+                                                                        onClick={() => handleConfirmStudentSelection(app.id, appSelection)}
+                                                                    >
+                                                                        <CheckCircle size={16} />
+                                                                        Confirm Selection
+                                                                    </button>
+                                                                    <button 
+                                                                        className="btn btn-danger d-flex align-items-center gap-2"
+                                                                        onClick={() => handleRejectStudentSelection(app.id, appSelection)}
+                                                                    >
+                                                                        <XCircle size={16} />
+                                                                        Reject Selection
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+                                                        ) : (
+                                                            /* Selection Complete */
+                                                            <div className="alert alert-success border-0 bg-success bg-opacity-10">
+                                                                <div className="d-flex align-items-center gap-3 mb-3">
+                                                                    <div className="bg-success bg-opacity-20 p-3 rounded-3">
                                                                     <CheckCircle className="text-success" size={24} />
                                                                 </div>
                                                                 <div>
@@ -1306,6 +1577,7 @@ const ScholarshipDashboard = () => {
                                                                 </button>
                                                             </div>
                                                         </div>
+                                                        )
                                                     ) : appRecommendations.length > 0 ? (
                                                         /* Show Recommendations for Selection */
                                                         <div>
