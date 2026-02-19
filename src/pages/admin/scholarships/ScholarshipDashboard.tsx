@@ -473,6 +473,7 @@ const ScholarshipDashboard = () => {
             preConfirm: (value) => {
                 if (!value || value <= 0) {
                     Swal.showValidationMessage('Please enter a valid awarded amount');
+                    return false;
                 }
                 return value;
             }
@@ -593,7 +594,6 @@ const ScholarshipDashboard = () => {
                 if (!value) {
                     return 'You need to provide a reason for rejection!';
                 }
-                return null;
             }
         });
 

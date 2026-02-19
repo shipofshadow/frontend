@@ -234,7 +234,7 @@ export default function ScholarshipRecommendations({
                                 className={`btn ${isHighMatch ? 'btn-success' : 'btn-primary'} w-100 d-flex align-items-center justify-content-center gap-2`}
                                 style={{ borderRadius: '8px' }}
                                 onClick={() => handleSelectScholarship(scholarship)}
-                                disabled={isSelecting || (selectedScholarship !== null && selectedScholarship !== undefined && selectedScholarship.status !== 'rejected')}
+                                disabled={isSelecting || (selectedScholarship && selectedScholarship.status !== 'rejected')}
                             >
                                 <CheckCircle size={16} />
                                 Select This Scholarship
