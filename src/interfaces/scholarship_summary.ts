@@ -46,7 +46,7 @@ export interface SelectedScholarship {
     scholarship_name: string;
     scholarship_description: string;
     grant_amount: number;
-    status: 'selected' | 'awarded' | 'cancelled';
+    status: 'student_selected' | 'selected' | 'awarded' | 'cancelled' | 'rejected';
     awarded_amount: number | null;
     selection_reason: string | null;
     selected_at: string;

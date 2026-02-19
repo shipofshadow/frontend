@@ -78,6 +78,8 @@ const ScholarshipSummary: React.FC<ScholarshipSummaryProps> = ({ studentId }) =>
             case 'denied': return 'badge bg-danger';
             case 'awarded': return 'badge bg-primary';
             case 'selected': return 'badge bg-info';
+            case 'student_selected': return 'badge bg-warning text-dark';
+            case 'rejected': return 'badge bg-danger';
             case 'cancelled': return 'badge bg-secondary';
             default: return 'badge bg-light text-dark';
         }
