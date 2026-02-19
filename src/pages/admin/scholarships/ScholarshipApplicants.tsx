@@ -62,6 +62,8 @@ interface Recommendation {
     score: number;
     classification: string;
     reasons: string[];
+    selection_status?: string | null; // Added
+    is_active?: number; // Added
 }
 
 interface Selection {
@@ -161,12 +163,15 @@ const ScholarshipApplicants: React.FC = () => {
     // Fetch recommendations for an application
     const fetchRecommendations = async (applicationId: number): Promise<Recommendation[]> => {
         try {
-            const response = await axios.get<Recommendation[]>(
-                `${API_BASE_URL}/api/evaluations/${applicationId}/recommendations`,
+            // Updated to POST to match ViewApplicantReadOnlyForm behavior and get selection_status
+            const response = await axios.post<{ recommendations: Recommendation[] }>(
+                `${API_BASE_URL}/api/evaluations/recommendations`,
+                { application_id: applicationId },
                 { headers: { Authorization: `Bearer ${token}` } }
             );
-            setRecommendations(prev => ({ ...prev, [applicationId]: response.data }));
-            return response.data;
+            const recs = response.data.recommendations || [];
+            setRecommendations(prev => ({ ...prev, [applicationId]: recs }));
+            return recs;
         } catch (error) {
             console.error("Error fetching recommendations:", error);
             return [];
@@ -232,7 +237,8 @@ const ScholarshipApplicants: React.FC = () => {
             pending: { class: 'bg-warning text-dark', text: 'Pending' },
             approved: { class: 'bg-success', text: 'Approved' },
             denied: { class: 'bg-danger', text: 'Denied' },
-            evaluated: { class: 'bg-primary', text: 'Evaluated' }
+            evaluated: { class: 'bg-primary', text: 'Evaluated' },
+            awaiting_approval: { class: 'bg-info text-dark', text: 'Verification Pending' } // Added
         };
         const config = variants[status] || variants.pending;
         return <span className={`badge ${config.class}`}>{config.text}</span>;
@@ -258,7 +264,7 @@ const ScholarshipApplicants: React.FC = () => {
     // Filter applications
     const filteredApplications = applications.filter(app => {
         const courseInfo = getCourseInfo(app.course_id);
-        const matchesSearch = 
+        const matchesSearch =
             app.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
             courseInfo.name.toLowerCase().includes(searchTerm.toLowerCase());
         const matchesStatus = statusFilter === 'all' || app.status === statusFilter;
@@ -399,11 +405,23 @@ const ScholarshipApplicants: React.FC = () => {
     // Open selection modal
     const handleOpenSelection = async (app: ApplicantData) => {
         setCurrentApplicant(app);
-        setSelectedScholarshipId(null);
-        setCustomAmount('');
-        setSelectionReason('');
+
         // Ensure we have latest recommendations
-        await fetchRecommendations(app.id);
+        const recs = await fetchRecommendations(app.id);
+
+        // Check for existing student selection
+        const studentSelection = recs.find(r => r.selection_status === 'selected');
+
+        if (studentSelection) {
+            setSelectedScholarshipId(studentSelection.scholarship_id);
+            setCustomAmount(studentSelection.amount.toString());
+            setSelectionReason('Student selected this scholarship.');
+        } else {
+            setSelectedScholarshipId(null);
+            setCustomAmount('');
+            setSelectionReason('');
+        }
+
         setShowSelectionModal(true);
     };
 
@@ -877,7 +895,7 @@ const ScholarshipApplicants: React.FC = () => {
                                                                 className="btn btn-sm btn-outline-success"
                                                                 title="Select/Award"
                                                                 onClick={() => handleOpenSelection(app)}
-                                                                disabled={!evaluation || hasSelection || app.status === 'denied'}
+                                                                disabled={!evaluation || (hasSelection && app.status === 'approved') || app.status === 'denied'}
                                                             >
                                                                 <Award size={14} />
                                                             </button>
@@ -1231,6 +1249,11 @@ const ScholarshipApplicants: React.FC = () => {
                                                                                     {(rec.score).toFixed(1)}%
                                                                                 </span>
                                                                                 {getClassificationBadge(rec.classification)}
+                                                                                {rec.selection_status === 'selected' && (
+                                                                                    <span className="badge bg-info text-dark ms-1">
+                                                                                        Student's Choice
+                                                                                    </span>
+                                                                                )}
                                                                             </div>
                                                                         </div>
                                                                     </div>
@@ -1298,7 +1321,7 @@ const ScholarshipApplicants: React.FC = () => {
                                     ) : (
                                         <>
                                             <Award className="me-2" size={16} />
-                                            Award Scholarship
+                                            {recommendations[currentApplicant.id]?.find(r => r.selection_status === 'selected')?.scholarship_id === selectedScholarshipId ? 'Approve Selection' : 'Override & Award'}
                                         </>
                                     )}
                                 </button>

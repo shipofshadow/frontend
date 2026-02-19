@@ -1,4 +1,4 @@
-import {useState, useEffect, type JSX} from "react";
+import { useState, useEffect, type JSX } from "react";
 import {
     Calendar,
     DollarSign,
@@ -13,15 +13,19 @@ import {
     TrendingUp,
     BookOpen,
     CreditCard,
-    XOctagon // Added XOctagon from previous context for a suitable icon
+    XOctagon,
+    Sparkles, // Added Sparkles for the new tab
+    Loader2 // Added Loader icon
 } from "lucide-react";
 import { API_BASE_URL } from "../../config.ts";
 import { useAuth } from "../../context/AuthContext.tsx";
 import axios from "axios";
 import { useParams, useNavigate } from "react-router-dom";
 import FilePreview from "../../components/admin/FilePreview.tsx";
+import type { RecommendedScholarship } from "../../interfaces/scholarship_summary.ts";
+import RecommendedScholarshipList from "../../components/RecommendedScholarshipList.tsx";
 
-// Type Definitions (Keeping these for context)
+// --- Type Definitions ---
 interface Student {
     name: string;
     student_id: string;
@@ -46,7 +50,6 @@ interface Evaluation {
     income: number | null;
     score: number | null;
     total_units: number | null;
-    // Assuming the backend sends back a field for specific feedback
     feedback?: string;
 }
 
@@ -85,7 +88,7 @@ interface ScholarshipStatusResponse {
     approved_at: string;
     selection_reason: string;
     denial_reason?: string;
-    status: "pending" | "evaluated" | "approved" | "denied" | "returned"; // Added "returned"
+    status: "pending" | "evaluated" | "approved" | "denied" | "returned" | "awaiting_approval"; // Added awaiting_approval
     admin_contact: AdminContact;
     common: CommonData;
     scholarship_requirements?: ScholarshipRequirements;
@@ -106,15 +109,25 @@ interface TabConfig {
     icon: React.ComponentType<{ size: number; className?: string }>;
 }
 
-// Component
+// --- Main Component ---
 const Application = () => {
     const [scholarship, setScholarship] = useState<ScholarshipStatusResponse>();
     const [activeTab, setActiveTab] = useState<string>("overview");
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
-    const { token } = useAuth();
+    const { token, applications } = useAuth();
     const { application_id } = useParams<{ application_id: string }>();
     const navigate = useNavigate();
+
+    // Tracks which scholarship ID is currently being selected (for loading state on buttons)
+    const [selectingId, setSelectingId] = useState<number | null>(null);
+
+    // Tracks the scholarship the student has already selected (for highlighting in the list)
+    const [selectedScholarshipId, setSelectedScholarshipId] = useState<number | null>(null);
+
+    // Safe extraction of recommendations from the auth context
+    const currentApp = applications?.applications?.find(s => s.application.id === Number(application_id));
+    const recommendations = currentApp?.recommended_scholarships as RecommendedScholarship[] || [];
 
     useEffect(() => {
         const fetchScholarship = async () => {
@@ -141,6 +154,39 @@ const Application = () => {
         }
     }, [application_id, token]);
 
+    const handleSelectScholarship = async (scholarshipId: number) => {
+        if (!window.confirm("Are you sure you want to select this scholarship? This will submit your application for final admin verification.")) {
+            return;
+        }
+
+        try {
+            setSelectingId(scholarshipId);
+            setSelectedScholarshipId(scholarshipId);
+            // Assuming your backend route is /api/application/select-scholarship
+            await axios.post(
+                `${API_BASE_URL}/api/application/select-scholarship`,
+                {
+                    application_id: scholarship?.common.application.id,
+                    scholarship_id: scholarshipId
+                },
+                {
+                    headers: { Authorization: `Bearer ${token}` }
+                }
+            );
+
+            // Success feedback
+            alert("Scholarship selected successfully! Please wait for admin verification.");
+
+            // Reload to fetch the new status (awaiting_approval)
+            window.location.reload();
+
+        } catch (err) {
+            console.error(err);
+            alert("Failed to select scholarship. Please try again.");
+            setSelectingId(null);
+        }
+    };
+
     const getStatusConfig = (status: string): StatusConfig => {
         const configs: Record<string, StatusConfig> = {
             pending: {
@@ -159,6 +205,16 @@ const Application = () => {
                 bgClass: "bg-secondary-subtle",
                 textClass: "text-secondary-emphasis"
             },
+            // --- NEW STATUS CONFIG ---
+            awaiting_approval: {
+                badge: "bg-info text-dark",
+                icon: <Loader2 size={18} className="animate-spin" />,
+                text: "Verification Pending",
+                color: "info",
+                bgClass: "bg-info-subtle",
+                textClass: "text-info-emphasis"
+            },
+            // -----------------------
             approved: {
                 badge: "bg-success text-white",
                 icon: <CheckCircle size={18} />,
@@ -175,7 +231,7 @@ const Application = () => {
                 bgClass: "bg-danger-subtle",
                 textClass: "text-danger-emphasis"
             },
-            returned: { // ADDED RETURNED STATUS
+            returned: {
                 badge: "bg-danger text-white",
                 icon: <XOctagon size={18} />,
                 text: "Revision Required",
@@ -210,9 +266,7 @@ const Application = () => {
         navigate("/applicant/status");
     };
 
-    // Handler to navigate to the edit page for resubmission
     const handleGoToEdit = () => {
-        // application/6/edit
         navigate(`/applicant/application/${scholarship?.common?.application?.id}/edit`);
     };
 
@@ -234,13 +288,19 @@ const Application = () => {
         return labels[type] || 'Document';
     };
 
+    // --- Tab Configuration ---
     const tabs: TabConfig[] = [
         { id: "overview", name: "Overview", icon: User },
         { id: "requirements", name: "Requirements", icon: FileText },
-        { id: "evaluation", name: "Evaluation & Feedback", icon: TrendingUp }, // Updated tab name
+        { id: "evaluation", name: "Evaluation & Feedback", icon: TrendingUp },
     ];
 
-    // Loading State
+    // Conditionally add the Recommended tab
+    if (recommendations.length > 0) {
+        tabs.push({ id: "recommended", name: "Recommended", icon: Sparkles });
+    }
+
+    // --- Loading State ---
     if (loading) {
         return (
             <div className="min-vh-100 d-flex align-items-center justify-content-center bg-light">
@@ -255,7 +315,7 @@ const Application = () => {
         );
     }
 
-    // Error State
+    // --- Error State ---
     if (error) {
         return (
             <div className="min-vh-100 d-flex align-items-center justify-content-center bg-light">
@@ -279,7 +339,7 @@ const Application = () => {
         );
     }
 
-    // No Data State
+    // --- No Data State ---
     if (!scholarship) {
         return (
             <div className="min-vh-100 d-flex align-items-center justify-content-center bg-light">
@@ -306,7 +366,7 @@ const Application = () => {
 
     const statusConfig = getStatusConfig(scholarship.status);
 
-    // Student Information Component
+    // --- Sub-components ---
     const StudentInfoSection = () => (
         <div className="col-lg-6">
             <h5 className="mb-3 d-flex align-items-center">
@@ -332,7 +392,6 @@ const Application = () => {
         </div>
     );
 
-    // Academic Performance Component
     const AcademicPerformanceSection = () => (
         <div className="col-lg-6">
             <h5 className="mb-3 d-flex align-items-center">
@@ -376,14 +435,12 @@ const Application = () => {
         </div>
     );
 
-    // Requirements Component
     const RequirementsSection = () => (
         <div className="row g-3">
             {scholarship.common.requirements.map((req, index) => (
                 <div key={index} className="col-md-6">
                     <div className="card h-100 border-0 bg-light">
                         <div className="card-body p-3">
-                            {/* File Header Info */}
                             <div className="d-flex align-items-start mb-3">
                                 <div className="p-2 bg-white rounded me-3">
                                     {getFileIcon(req.type)}
@@ -397,13 +454,9 @@ const Application = () => {
                                             <Calendar size={12} className="me-1" />
                                             {formatDate(req.uploaded_at)}
                                         </small>
-
-
                                     </div>
                                 </div>
                             </div>
-
-                            {/* Immediate File Preview */}
                             <div className="border-top pt-3">
                                 <FilePreview
                                     label={req.type}
@@ -481,11 +534,23 @@ const Application = () => {
                                         <XOctagon size={20} className="me-2" /> Reviewer Feedback
                                     </h6>
                                     <p className="mb-0 small text-danger">
-                                        {/* Assuming the feedback field is available in the evaluation object */}
                                         {scholarship.common.evaluation.feedback || "No specific feedback was provided. Please review all required documents and profile details for completeness."}
                                     </p>
                                 </div>
                             )}
+                        </div>
+                    </div>
+                );
+            case "recommended":
+                return (
+                    <div className="card border-0 shadow-sm">
+                        <div className="card-body p-0">
+                            <RecommendedScholarshipList
+                                scholarships={recommendations}
+                                onSelect={handleSelectScholarship}
+                                currentStatus={scholarship?.status}
+                                selectedId={selectedScholarshipId}
+                            />
                         </div>
                     </div>
                 );
@@ -554,6 +619,28 @@ const Application = () => {
 
                 {/* Status-specific Messages */}
 
+                {/* AWAITING APPROVAL STATUS (New Block) */}
+                {scholarship.status === "awaiting_approval" && (
+                    <div className="row mb-4">
+                        <div className="col">
+                            <div className="card border-info border-2 shadow-sm animate__animated animate__fadeIn">
+                                <div className="card-body text-center p-4">
+                                    <div className="mb-3 text-info">
+                                        <CheckCircle size={64} />
+                                    </div>
+                                    <h3 className="text-info-emphasis mb-3">Scholarship Selected!</h3>
+                                    <p className="text-muted mb-3 lead">
+                                        You have successfully selected a scholarship.
+                                    </p>
+                                    <div className="alert alert-info d-inline-block px-4">
+                                        <strong>Next Step:</strong> Please wait for the administrator to verify and approve your selection.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
                 {/* APPROVED STATUS */}
                 {scholarship.status === "approved" && (
                     <div className="row mb-4">
@@ -603,14 +690,14 @@ const Application = () => {
                                     <XOctagon size={64} className="text-danger mb-3" />
                                     <h3 className="h4 mb-3 text-danger-emphasis">Application Returned for Revision</h3>
                                     <p className="text-muted mb-4 lead">
-                                        Your application was **returned** by the reviewer. Please check the **Evaluation & Feedback** tab for required corrections.
-                                        You must make the necessary revisions and **resubmit** your application before the deadline.
+                                        Your application was <strong>returned</strong> by the reviewer. Please check the <strong>Evaluation & Feedback</strong> tab for required corrections.
+                                        You must make the necessary revisions and <strong>resubmit</strong> your application before the deadline.
                                     </p>
                                     <button
                                         className="btn btn-danger btn-lg rounded-pill px-5 fw-bold"
                                         onClick={handleGoToEdit}
                                     >
-                                        <ArrowLeft size={20} className="me-2 rotate-180" /> {/* ArrowRight or rotated ArrowLeft */}
+                                        <ArrowLeft size={20} className="me-2 rotate-180" />
                                         Go to Application Editor
                                     </button>
                                 </div>
@@ -645,7 +732,6 @@ const Application = () => {
                         </div>
                     </div>
                 )}
-
 
                 {/* Tabs Navigation */}
                 <div className="row mb-4">
