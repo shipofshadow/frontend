@@ -13,13 +13,15 @@ import {
     TrendingUp,
     BookOpen,
     CreditCard,
-    XOctagon // Added XOctagon from previous context for a suitable icon
+    XOctagon, // Added XOctagon from previous context for a suitable icon
+    Target
 } from "lucide-react";
 import { API_BASE_URL } from "../../config.ts";
 import { useAuth } from "../../context/AuthContext.tsx";
 import axios from "axios";
 import { useParams, useNavigate } from "react-router-dom";
 import FilePreview from "../../components/admin/FilePreview.tsx";
+import ScholarshipRecommendations from "../../components/common/applicant/ScholarshipRecommendations.tsx";
 
 // Type Definitions (Keeping these for context)
 interface Student {
@@ -78,6 +80,24 @@ interface ScholarshipRequirements {
     max_income: number;
 }
 
+interface RecommendedScholarshipData {
+    id: number;
+    scholarship_id: number;
+    scholarship_name: string;
+    scholarship_description: string;
+    grant_amount: number | null;
+    score: number;
+}
+
+interface SelectedScholarshipData {
+    id: number;
+    scholarship_id: number;
+    scholarship_name: string;
+    status: 'student_selected' | 'selected' | 'awarded' | 'cancelled' | 'rejected';
+    selection_reason: string | null;
+    awarded_amount: number | null;
+}
+
 interface ScholarshipStatusResponse {
     name: string;
     description: string;
@@ -109,6 +129,8 @@ interface TabConfig {
 // Component
 const Application = () => {
     const [scholarship, setScholarship] = useState<ScholarshipStatusResponse>();
+    const [recommendations, setRecommendations] = useState<RecommendedScholarshipData[]>([]);
+    const [selectedScholarship, setSelectedScholarship] = useState<SelectedScholarshipData | null>(null);
     const [activeTab, setActiveTab] = useState<string>("overview");
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
@@ -140,6 +162,67 @@ const Application = () => {
             fetchScholarship();
         }
     }, [application_id, token]);
+
+    // Fetch recommendations and selected scholarship when status is evaluated
+    useEffect(() => {
+        const fetchRecommendationsAndSelection = async () => {
+            if (!scholarship || scholarship.status !== 'evaluated') {
+                return;
+            }
+
+            try {
+                // Fetch recommendations
+                const recResponse = await axios.get<RecommendedScholarshipData[]>(
+                    `${API_BASE_URL}/api/profile/scholarship-recommendations/${application_id}`,
+                    {
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                        },
+                    }
+                );
+                setRecommendations(recResponse.data || []);
+
+                // Fetch selected scholarship
+                const selResponse = await axios.get<SelectedScholarshipData | null>(
+                    `${API_BASE_URL}/api/evaluations/${application_id}/selection`,
+                    {
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                        },
+                    }
+                );
+                setSelectedScholarship(selResponse.data);
+            } catch (error) {
+                console.error('Error fetching recommendations:', error);
+            }
+        };
+
+        if (token && application_id && scholarship) {
+            fetchRecommendationsAndSelection();
+        }
+    }, [application_id, token, scholarship]);
+
+    const handleSelectionChange = async () => {
+        // Refetch recommendations and selection
+        if (!scholarship || scholarship.status !== 'evaluated') {
+            return;
+        }
+
+        try {
+            // Fetch selected scholarship
+            const selResponse = await axios.get<SelectedScholarshipData | null>(
+                `${API_BASE_URL}/api/evaluations/${application_id}/selection`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
+            );
+            setSelectedScholarship(selResponse.data);
+        } catch (error) {
+            console.error('Error fetching selection:', error);
+        }
+    };
 
     const getStatusConfig = (status: string): StatusConfig => {
         const configs: Record<string, StatusConfig> = {
@@ -646,6 +729,20 @@ const Application = () => {
                     </div>
                 )}
 
+
+                {/* EVALUATED STATUS - Show Scholarship Recommendations */}
+                {scholarship.status === "evaluated" && recommendations.length > 0 && (
+                    <div className="row mb-4">
+                        <div className="col">
+                            <ScholarshipRecommendations
+                                recommendedScholarships={recommendations}
+                                applicationId={Number(application_id)}
+                                selectedScholarship={selectedScholarship}
+                                onSelectionChange={handleSelectionChange}
+                            />
+                        </div>
+                    </div>
+                )}
 
                 {/* Tabs Navigation */}
                 <div className="row mb-4">
