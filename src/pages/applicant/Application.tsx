@@ -13,13 +13,15 @@ import {
     TrendingUp,
     BookOpen,
     CreditCard,
-    XOctagon // Added XOctagon from previous context for a suitable icon
+    XOctagon,
+    Award,
 } from "lucide-react";
 import { API_BASE_URL } from "../../config.ts";
 import { useAuth } from "../../context/AuthContext.tsx";
 import axios from "axios";
 import { useParams, useNavigate } from "react-router-dom";
 import FilePreview from "../../components/admin/FilePreview.tsx";
+import ScholarshipRecommendations from "./ScholarshipRecommendations.tsx";
 
 // Type Definitions (Keeping these for context)
 interface Student {
@@ -69,7 +71,7 @@ interface CommonData {
     application: Application;
     evaluation: Evaluation;
     requirements: Requirement[];
-    scholarship_rules: Record<string, any>;
+    scholarship_rules: Record<string, unknown>;
 }
 
 interface ScholarshipRequirements {
@@ -237,7 +239,8 @@ const Application = () => {
     const tabs: TabConfig[] = [
         { id: "overview", name: "Overview", icon: User },
         { id: "requirements", name: "Requirements", icon: FileText },
-        { id: "evaluation", name: "Evaluation & Feedback", icon: TrendingUp }, // Updated tab name
+        { id: "evaluation", name: "Evaluation & Feedback", icon: TrendingUp },
+        { id: "scholarships", name: "Scholarships", icon: Award },
     ];
 
     // Loading State
@@ -377,45 +380,64 @@ const Application = () => {
     );
 
     // Requirements Component
-    const RequirementsSection = () => (
-        <div className="row g-3">
-            {scholarship.common.requirements.map((req, index) => (
-                <div key={index} className="col-md-6">
-                    <div className="card h-100 border-0 bg-light">
-                        <div className="card-body p-3">
-                            {/* File Header Info */}
-                            <div className="d-flex align-items-start mb-3">
-                                <div className="p-2 bg-white rounded me-3">
-                                    {getFileIcon(req.type)}
-                                </div>
-                                <div className="flex-grow-1 min-w-0">
-                                    <h6 className="mb-1 text-truncate">
-                                        {getFileTypeLabel(req.type)}
-                                    </h6>
-                                    <div className="d-flex justify-content-between align-items-center">
-                                        <small className="text-muted">
-                                            <Calendar size={12} className="me-1" />
-                                            {formatDate(req.uploaded_at)}
-                                        </small>
+    const RequirementsSection = () => {
+        const getStatusBadge = (status: Requirement['status']) => {
+            switch (status) {
+                case 'verified':
+                    return <span className="badge bg-success">Verified</span>;
+                case 'rejected':
+                    return <span className="badge bg-danger">Rejected</span>;
+                default:
+                    return <span className="badge bg-warning text-dark">Pending</span>;
+            }
+        };
 
+        return (
+            <div className="row g-3">
+                {scholarship.common.requirements.length === 0 ? (
+                    <div className="col-12 text-center py-4 text-muted">
+                        <FileText size={40} className="mb-2" />
+                        <p className="mb-0">No requirements uploaded yet.</p>
+                    </div>
+                ) : (
+                    scholarship.common.requirements.map((req, index) => (
+                        <div key={index} className="col-md-6">
+                            <div className="card h-100 border-0 bg-light">
+                                <div className="card-body p-3">
+                                    {/* File Header Info */}
+                                    <div className="d-flex align-items-start mb-3">
+                                        <div className="p-2 bg-white rounded me-3">
+                                            {getFileIcon(req.type)}
+                                        </div>
+                                        <div className="flex-grow-1 min-w-0">
+                                            <div className="d-flex align-items-center justify-content-between mb-1">
+                                                <h6 className="mb-0 text-truncate me-2">
+                                                    {getFileTypeLabel(req.type)}
+                                                </h6>
+                                                {getStatusBadge(req.status)}
+                                            </div>
+                                            <small className="text-muted">
+                                                <Calendar size={12} className="me-1" />
+                                                {formatDate(req.uploaded_at)}
+                                            </small>
+                                        </div>
+                                    </div>
 
+                                    {/* Immediate File Preview */}
+                                    <div className="border-top pt-3">
+                                        <FilePreview
+                                            label={req.type}
+                                            filePath={req.file_name}
+                                        />
                                     </div>
                                 </div>
                             </div>
-
-                            {/* Immediate File Preview */}
-                            <div className="border-top pt-3">
-                                <FilePreview
-                                    label={req.type}
-                                    filePath={req.file_name}
-                                />
-                            </div>
                         </div>
-                    </div>
-                </div>
-            ))}
-        </div>
-    );
+                    ))
+                )}
+            </div>
+        );
+    };
 
     const renderTabContent = () => {
         switch (activeTab) {
@@ -489,6 +511,15 @@ const Application = () => {
                         </div>
                     </div>
                 );
+            case "scholarships": {
+                const appIdNum = application_id ? Number(application_id) : undefined;
+                return (
+                    <ScholarshipRecommendations
+                        applicationId={!isNaN(appIdNum!) ? appIdNum : undefined}
+                        embedded
+                    />
+                );
+            }
             default:
                 return null;
         }
