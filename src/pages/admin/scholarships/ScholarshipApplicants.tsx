@@ -66,10 +66,12 @@ interface Recommendation {
 
 interface Selection {
     scholarship_name?: string;
+    scholarship_id?: number;
     awarded_amount?: string | number;
     final_score?: number;
     selected_date?: string;
     selection_reason?: string;
+    status?: string;
 }
 
 type StatusFilter = 'all' | 'pending' | 'evaluated' | 'approved' | 'denied';
@@ -405,6 +407,67 @@ const ScholarshipApplicants: React.FC = () => {
         // Ensure we have latest recommendations
         await fetchRecommendations(app.id);
         setShowSelectionModal(true);
+    };
+
+    // Approve student's scholarship selection
+    const handleApproveSelection = async () => {
+        if (!currentApplicant) return;
+
+        const selection = selections[currentApplicant.id];
+        const confirm = await Swal.fire({
+            title: 'Approve Student\'s Selection?',
+            html: `
+                <div class="text-start">
+                    <p><strong>Applicant:</strong> ${currentApplicant.name}</p>
+                    <p><strong>Selected Scholarship:</strong> ${selection?.scholarship_name || 'N/A'}</p>
+                    <p class="text-muted mt-3">This will approve the student's chosen scholarship.</p>
+                </div>
+            `,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'Yes, approve',
+            confirmButtonColor: '#198754',
+            cancelButtonText: 'Cancel'
+        });
+
+        if (!confirm.isConfirmed) return;
+
+        try {
+            setLoadingId(currentApplicant.id);
+            await axios.post(
+                `${API_BASE_URL}/api/evaluations/${currentApplicant.id}/approve`,
+                {},
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+
+            setSelections(prev => ({
+                ...prev,
+                [currentApplicant.id]: { ...prev[currentApplicant.id], status: 'awarded' }
+            }));
+
+            setApplications(prev => prev.map(app =>
+                app.id === currentApplicant.id ? { ...app, status: 'approved' } : app
+            ));
+
+            setShowSelectionModal(false);
+
+            await Swal.fire({
+                title: 'Approved!',
+                text: `Scholarship "${selection?.scholarship_name}" has been approved for ${currentApplicant.name}.`,
+                icon: 'success',
+                timer: 3000,
+                showConfirmButton: false
+            });
+        } catch (error) {
+            console.error("Error approving selection:", error);
+            await Swal.fire({
+                title: 'Error!',
+                text: 'Failed to approve selection. Please try again.',
+                icon: 'error'
+            });
+        } finally {
+            setLoadingId(null);
+        }
     };
 
     // Award scholarship
@@ -806,7 +869,9 @@ const ScholarshipApplicants: React.FC = () => {
                                         {filteredApplications.map((app, index) => {
                                             const evaluation = evaluationResults[app.id];
                                             const gwa = evaluation?.gwa || calculateGWA(app.grades);
-                                            const hasSelection = !!selections[app.id];
+                                            const selection = selections[app.id];
+                                            const isAwarded = selection?.status === 'awarded';
+                                            const hasStudentSelection = !!selection && selection.status !== 'awarded';
 
                                             return (
                                                 <tr key={app.id}>
@@ -874,10 +939,10 @@ const ScholarshipApplicants: React.FC = () => {
                                                                 <FileText size={14} />
                                                             </button>
                                                             <button
-                                                                className="btn btn-sm btn-outline-success"
-                                                                title="Select/Award"
+                                                                className={`btn btn-sm ${hasStudentSelection ? 'btn-warning' : 'btn-outline-success'}`}
+                                                                title={hasStudentSelection ? "Approve Student's Selection" : "Select/Award"}
                                                                 onClick={() => handleOpenSelection(app)}
-                                                                disabled={!evaluation || hasSelection || app.status === 'denied'}
+                                                                disabled={!evaluation || isAwarded || app.status === 'denied'}
                                                             >
                                                                 <Award size={14} />
                                                             </button>
@@ -1190,6 +1255,20 @@ const ScholarshipApplicants: React.FC = () => {
                                     <span className="text-muted ms-2">• {getCourseInfo(currentApplicant.course_id).name}</span>
                                 </div>
 
+                                {/* Student's Selection (if any) */}
+                                {selections[currentApplicant.id] && selections[currentApplicant.id].status !== 'awarded' && (
+                                    <div className="alert alert-info mb-4">
+                                        <h6 className="fw-bold mb-2 d-flex align-items-center">
+                                            <CheckCircle size={18} className="me-2 text-info" />
+                                            Student's Selected Scholarship
+                                        </h6>
+                                        <p className="mb-1 fw-semibold">{selections[currentApplicant.id].scholarship_name || 'N/A'}</p>
+                                        {selections[currentApplicant.id].selection_reason && (
+                                            <p className="small text-muted mb-0">Reason: {selections[currentApplicant.id].selection_reason}</p>
+                                        )}
+                                    </div>
+                                )}
+
                                 {/* Scholarship Selection */}
                                 {recommendations[currentApplicant.id]?.length > 0 ? (
                                     <>
@@ -1284,24 +1363,46 @@ const ScholarshipApplicants: React.FC = () => {
                                 <button type="button" className="btn btn-secondary" onClick={() => setShowSelectionModal(false)}>
                                     Cancel
                                 </button>
-                                <button
-                                    type="button"
-                                    className="btn btn-success"
-                                    onClick={handleAwardScholarship}
-                                    disabled={!selectedScholarshipId || loadingId === currentApplicant.id}
-                                >
-                                    {loadingId === currentApplicant.id ? (
-                                        <>
-                                            <span className="spinner-border spinner-border-sm me-2" role="status"></span>
-                                            Awarding...
-                                        </>
-                                    ) : (
-                                        <>
-                                            <Award className="me-2" size={16} />
-                                            Award Scholarship
-                                        </>
-                                    )}
-                                </button>
+                                {selections[currentApplicant.id] && selections[currentApplicant.id].status !== 'awarded' && (
+                                    <button
+                                        type="button"
+                                        className="btn btn-success"
+                                        onClick={handleApproveSelection}
+                                        disabled={loadingId === currentApplicant.id}
+                                    >
+                                        {loadingId === currentApplicant.id ? (
+                                            <>
+                                                <span className="spinner-border spinner-border-sm me-2" role="status"></span>
+                                                Approving...
+                                            </>
+                                        ) : (
+                                            <>
+                                                <CheckCircle className="me-2" size={16} />
+                                                Approve Student's Selection
+                                            </>
+                                        )}
+                                    </button>
+                                )}
+                                {(!selections[currentApplicant.id] || selections[currentApplicant.id].status === 'awarded') && (
+                                    <button
+                                        type="button"
+                                        className="btn btn-success"
+                                        onClick={handleAwardScholarship}
+                                        disabled={!selectedScholarshipId || loadingId === currentApplicant.id}
+                                    >
+                                        {loadingId === currentApplicant.id ? (
+                                            <>
+                                                <span className="spinner-border spinner-border-sm me-2" role="status"></span>
+                                                Awarding...
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Award className="me-2" size={16} />
+                                                Award Scholarship
+                                            </>
+                                        )}
+                                    </button>
+                                )}
                             </div>
                         </div>
                     </div>

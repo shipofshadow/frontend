@@ -1,4 +1,4 @@
-import {useState, useEffect, type JSX} from "react";
+import {useState, useEffect, useCallback, type JSX} from "react";
 import {
     Calendar,
     DollarSign,
@@ -13,13 +13,15 @@ import {
     TrendingUp,
     BookOpen,
     CreditCard,
-    XOctagon // Added XOctagon from previous context for a suitable icon
+    XOctagon, // Added XOctagon from previous context for a suitable icon
+    Award
 } from "lucide-react";
 import { API_BASE_URL } from "../../config.ts";
 import { useAuth } from "../../context/AuthContext.tsx";
 import axios from "axios";
 import { useParams, useNavigate } from "react-router-dom";
 import FilePreview from "../../components/admin/FilePreview.tsx";
+import Swal from "sweetalert2";
 
 // Type Definitions (Keeping these for context)
 interface Student {
@@ -48,6 +50,30 @@ interface Evaluation {
     total_units: number | null;
     // Assuming the backend sends back a field for specific feedback
     feedback?: string;
+    recommendations_generated?: boolean;
+}
+
+interface AppRecommendedScholarship {
+    id: number;
+    scholarship_id: number;
+    scholarship_name: string;
+    scholarship_description: string;
+    grant_amount: number;
+    score: number;
+    classification: string;
+    eligibility_reasons: string[] | null;
+    notes: string | null;
+}
+
+interface AppScholarshipSelection {
+    scholarship_id: number;
+    scholarship_name: string;
+    scholarship_description: string;
+    grant_amount: number;
+    status: string;
+    awarded_amount: number | null;
+    selection_reason: string | null;
+    selected_at: string;
 }
 
 interface Requirement {
@@ -116,6 +142,11 @@ const Application = () => {
     const { application_id } = useParams<{ application_id: string }>();
     const navigate = useNavigate();
 
+    // Scholarship recommendations & selection state
+    const [recommendations, setRecommendations] = useState<AppRecommendedScholarship[]>([]);
+    const [scholarshipSelection, setScholarshipSelection] = useState<AppScholarshipSelection | null>(null);
+    const [scholarshipsLoading, setScholarshipsLoading] = useState<boolean>(false);
+
     useEffect(() => {
         const fetchScholarship = async () => {
             try {
@@ -140,6 +171,38 @@ const Application = () => {
             fetchScholarship();
         }
     }, [application_id, token]);
+
+    // Fetch recommendations and selection when scholarships tab is active
+    const fetchScholarshipData = useCallback(async () => {
+        if (!application_id || !token) return;
+        setScholarshipsLoading(true);
+        try {
+            const [recResult, selResult] = await Promise.allSettled([
+                axios.get<AppRecommendedScholarship[]>(
+                    `${API_BASE_URL}/api/evaluations/${application_id}/recommendations`,
+                    { headers: { Authorization: `Bearer ${token}` } }
+                ),
+                axios.get<AppScholarshipSelection>(
+                    `${API_BASE_URL}/api/evaluations/${application_id}/selection`,
+                    { headers: { Authorization: `Bearer ${token}` } }
+                )
+            ]);
+            if (recResult.status === 'fulfilled') {
+                setRecommendations(recResult.value.data);
+            }
+            if (selResult.status === 'fulfilled' && selResult.value.data) {
+                setScholarshipSelection(selResult.value.data);
+            }
+        } finally {
+            setScholarshipsLoading(false);
+        }
+    }, [application_id, token]);
+
+    useEffect(() => {
+        if (activeTab === 'scholarships') {
+            fetchScholarshipData();
+        }
+    }, [activeTab, fetchScholarshipData]);
 
     const getStatusConfig = (status: string): StatusConfig => {
         const configs: Record<string, StatusConfig> = {
@@ -234,10 +297,46 @@ const Application = () => {
         return labels[type] || 'Document';
     };
 
+    const handleSelectScholarship = async (scholarshipId: number, scholarshipName: string) => {
+        const confirm = await Swal.fire({
+            title: 'Choose this Scholarship?',
+            html: `<p>Are you sure you want to select <strong>${scholarshipName}</strong>?</p><p class="text-muted small">Once submitted, this will be reviewed by the admin.</p>`,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'Yes, choose this',
+            confirmButtonColor: '#198754',
+            cancelButtonText: 'Cancel'
+        });
+
+        if (!confirm.isConfirmed) return;
+
+        try {
+            await axios.post(
+                `${API_BASE_URL}/api/evaluations/${application_id}/select`,
+                { scholarship_id: scholarshipId },
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+            await Swal.fire({
+                title: 'Selection Submitted!',
+                text: 'Your scholarship selection has been submitted for admin review.',
+                icon: 'success',
+                timer: 2500,
+                showConfirmButton: false
+            });
+            await fetchScholarshipData();
+        } catch (err) {
+            console.error('Failed to submit scholarship selection:', err);
+            await Swal.fire('Error', 'Failed to submit scholarship selection. Please try again.', 'error');
+        }
+    };
+
     const tabs: TabConfig[] = [
         { id: "overview", name: "Overview", icon: User },
         { id: "requirements", name: "Requirements", icon: FileText },
         { id: "evaluation", name: "Evaluation & Feedback", icon: TrendingUp }, // Updated tab name
+        ...(scholarship?.common?.evaluation?.recommendations_generated
+            ? [{ id: "scholarships", name: "Scholarships", icon: Award }]
+            : [])
     ];
 
     // Loading State
@@ -487,6 +586,132 @@ const Application = () => {
                                 </div>
                             )}
                         </div>
+                    </div>
+                );
+            case "scholarships":
+                return (
+                    <div>
+                        <h5 className="mb-4 d-flex align-items-center">
+                            <Award size={20} className="me-2 text-primary" />
+                            Scholarship Recommendations
+                        </h5>
+
+                        {scholarshipsLoading ? (
+                            <div className="text-center py-5">
+                                <div className="spinner-border text-primary mb-3" role="status">
+                                    <span className="visually-hidden">Loading...</span>
+                                </div>
+                                <p className="text-muted">Loading recommendations...</p>
+                            </div>
+                        ) : scholarshipSelection ? (
+                            <div>
+                                {/* Selected Scholarship */}
+                                <div className={`card border-2 shadow-sm mb-4 ${
+                                    scholarshipSelection.status === 'awarded' ? 'border-success' :
+                                    scholarshipSelection.status === 'cancelled' ? 'border-danger' :
+                                    'border-warning'
+                                }`}>
+                                    <div className="card-body p-4">
+                                        <div className="d-flex align-items-start justify-content-between mb-3">
+                                            <div>
+                                                <h6 className="fw-bold mb-1">{scholarshipSelection.scholarship_name}</h6>
+                                                <p className="text-muted small mb-0">{scholarshipSelection.scholarship_description}</p>
+                                            </div>
+                                            <span className={`badge fs-6 px-3 py-2 ${
+                                                scholarshipSelection.status === 'awarded' ? 'bg-success' :
+                                                scholarshipSelection.status === 'cancelled' ? 'bg-danger' :
+                                                'bg-warning text-dark'
+                                            }`}>
+                                                {scholarshipSelection.status === 'awarded' ? (
+                                                    <><CheckCircle size={14} className="me-1" />Approved</>
+                                                ) : scholarshipSelection.status === 'cancelled' ? (
+                                                    <><AlertCircle size={14} className="me-1" />Denied</>
+                                                ) : (
+                                                    <><Clock size={14} className="me-1" />Pending Admin Approval</>
+                                                )}
+                                            </span>
+                                        </div>
+                                        <div className="d-flex gap-3 flex-wrap">
+                                            <div className="bg-light rounded-3 px-3 py-2">
+                                                <small className="text-muted d-block">Grant Amount</small>
+                                                <span className="fw-bold text-success">
+                                                    {scholarshipSelection.awarded_amount != null
+                                                        ? formatCurrency(scholarshipSelection.awarded_amount)
+                                                        : formatCurrency(scholarshipSelection.grant_amount)}
+                                                </span>
+                                            </div>
+                                            {scholarshipSelection.selection_reason && (
+                                                <div className="bg-light rounded-3 px-3 py-2 flex-grow-1">
+                                                    <small className="text-muted d-block">Selection Reason</small>
+                                                    <span className="small">{scholarshipSelection.selection_reason}</span>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                                {scholarshipSelection.status === 'selected' && (
+                                    <div className="alert alert-info d-flex align-items-start">
+                                        <Clock size={18} className="me-2 mt-1 flex-shrink-0" />
+                                        <div>
+                                            <strong>Your selection is being reviewed.</strong>
+                                            <p className="mb-0 small mt-1">The admin will review your chosen scholarship and notify you once a decision has been made.</p>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        ) : recommendations.length > 0 ? (
+                            <div className="row g-3">
+                                {recommendations.map((rec) => (
+                                    <div key={rec.id} className="col-12">
+                                        <div className="card border shadow-sm">
+                                            <div className="card-body">
+                                                <div className="d-flex justify-content-between align-items-start mb-2 flex-wrap gap-2">
+                                                    <div className="flex-grow-1 me-2">
+                                                        <h6 className="fw-bold mb-1">{rec.scholarship_name}</h6>
+                                                        <p className="text-muted small mb-0">{rec.scholarship_description}</p>
+                                                    </div>
+                                                    <span className="badge bg-success fs-6">
+                                                        {formatCurrency(rec.grant_amount)}
+                                                    </span>
+                                                </div>
+                                                <div className="d-flex gap-2 mb-3 flex-wrap">
+                                                    <span className="badge bg-primary">
+                                                        Match: {rec.score.toFixed(1)}%
+                                                    </span>
+                                                    <span className="badge bg-secondary">{rec.classification}</span>
+                                                </div>
+                                                {rec.eligibility_reasons && Array.isArray(rec.eligibility_reasons) && rec.eligibility_reasons.length > 0 && (
+                                                    <div className="bg-light rounded-3 p-3 mb-3">
+                                                        <small className="text-muted fw-semibold d-block mb-2">Eligibility Reasons:</small>
+                                                        <ul className="list-unstyled mb-0">
+                                                            {rec.eligibility_reasons.map((reason: string, idx: number) => (
+                                                                <li key={idx} className="small d-flex align-items-start mb-1">
+                                                                    <CheckCircle size={13} className="text-success me-2 mt-1 flex-shrink-0" />
+                                                                    {reason}
+                                                                </li>
+                                                            ))}
+                                                        </ul>
+                                                    </div>
+                                                )}
+                                                <button
+                                                    className="btn btn-success btn-sm"
+                                                    onClick={() => handleSelectScholarship(rec.scholarship_id, rec.scholarship_name)}
+                                                >
+                                                    <Award size={14} className="me-2" />
+                                                    Choose this Scholarship
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="text-center py-5">
+                                <AlertCircle size={48} className="text-muted mb-3" />
+                                <h5 className="text-muted">No Recommendations Available</h5>
+                                <p className="text-muted small">There are no scholarship recommendations for your application yet.</p>
+                            </div>
+                        )}
                     </div>
                 );
             default:
