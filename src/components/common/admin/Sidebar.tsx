@@ -83,6 +83,13 @@ const Sidebar: React.FC = () => {
                     <div className="nav-link-icon"><i className="far fa-medal"></i></div>Scholarship Summary
                 </NavLink>
 
+                <NavLink
+                    to="/admin/scholarships/approvals"
+                    className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
+                >
+                    <div className="nav-link-icon"><i data-feather="check-circle"></i></div>Scholarship Approvals
+                </NavLink>
+
 
               <div className="sidenav-menu-heading">Applicant Management</div>
 

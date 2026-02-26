@@ -3,6 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../../context/AuthContext';
 import { NotificationBell } from './NotificationBell.tsx';
 import {API_BASE_URL} from "../../../config.ts";
+import { Award } from 'lucide-react';
 
 const Navbar: React.FC = () => {
     const navigate = useNavigate();
@@ -100,6 +101,17 @@ const Navbar: React.FC = () => {
                                     >
                                         <i className="fa-solid fa-clipboard-check fa-sm fa-fw text-secondary"></i>
                                         <span>Applications</span>
+                                    </Link>
+                                </li>
+
+                                <li className="nav-item">
+                                    <Link
+                                        to="/applicant/scholarship-recommendations"
+                                        className={`nav-link d-flex align-items-center gap-2 ${isActive('/applicant/scholarship-recommendations') ? 'active' : ''}`}
+                                        aria-current={ariaCurrent('/applicant/scholarship-recommendations')}
+                                    >
+                                        <Award size={14} className="text-secondary" />
+                                        <span>Scholarships</span>
                                     </Link>
                                 </li>
                             </>
