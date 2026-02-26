@@ -31,6 +31,7 @@ export interface Evaluation {
 
 export interface RecommendedScholarship {
     id: number;
+    scholarship_id: number;
     scholarship_name: string;
     scholarship_description: string;
     grant_amount: number;
