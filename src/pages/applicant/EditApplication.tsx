@@ -448,7 +448,7 @@ const EditApplication = () => {
 
             if (!res.ok) throw new Error('Failed to update application');
 
-            const result = await res.json();
+            await res.json();
 
             Swal.fire({
                 icon: 'success',
@@ -639,8 +639,8 @@ const EditApplication = () => {
                                 <div className="form-group">
                                     <label htmlFor="street">Street, House No., etc.</label>
                                     <input type="text" className="form-control mb-3" value={formData.street}
-                                           onChange={(e) => handleInputChange('street', e.target.value)}
-                                           placeholder="Enter street, house number, etc." />
+                                        onChange={(e) => handleInputChange('street', e.target.value)}
+                                        placeholder="Enter street, house number, etc." />
 
                                     <div className="row">
                                         <div className="col-md-3">
@@ -685,14 +685,14 @@ const EditApplication = () => {
 
                                         <div className="col-md-2">
                                             <label>Zip Code</label>
-                                            <input type="number" className="form-control" value={formData.zipCode} onChange={(e => setFormData({...formData, zipCode: e.target.value}))}/>
+                                            <input type="number" className="form-control" value={formData.zipCode} onChange={(e => setFormData({ ...formData, zipCode: e.target.value }))} />
                                         </div>
 
                                         <div className="row">
                                             <div className="col-md-6">
                                                 <label>Citizenship</label>
                                                 <select name="citizenship" className="form-control" value={formData.citizenship}
-                                                        onChange={(e) => setFormData({ ...formData, citizenship: e.target.value })}>
+                                                    onChange={(e) => setFormData({ ...formData, citizenship: e.target.value })}>
                                                     <option value="">Select citizenship</option>
                                                     {citizenship.map(c => (
                                                         <option key={c} value={c}>{c}</option>
@@ -727,43 +727,43 @@ const EditApplication = () => {
                                     <div className="mb-3 col-md-3">
                                         <label>Last Name</label>
                                         <input className="form-control" type="text" placeholder="Last Name"
-                                               value={formData.father.lastName}
-                                               onChange={(e) => handleNestedInputChange('father', 'lastName', e.target.value)}
+                                            value={formData.father.lastName}
+                                            onChange={(e) => handleNestedInputChange('father', 'lastName', e.target.value)}
                                         />
                                     </div>
                                     <div className="mb-3 col-md-3">
                                         <label>First Name</label>
                                         <input className="form-control" type="text" placeholder="First Name"
-                                               value={formData.father.firstName}
-                                               onChange={(e) => handleNestedInputChange('father', 'firstName', e.target.value)}
+                                            value={formData.father.firstName}
+                                            onChange={(e) => handleNestedInputChange('father', 'firstName', e.target.value)}
                                         />
                                     </div>
                                     <div className="mb-3 col-md-3">
                                         <label>Middle Name</label>
                                         <input className="form-control" type="text" placeholder="Middle Name"
-                                               value={formData.father.middleName || ''}
-                                               onChange={(e) => handleNestedInputChange('father', 'middleName', e.target.value)}
+                                            value={formData.father.middleName || ''}
+                                            onChange={(e) => handleNestedInputChange('father', 'middleName', e.target.value)}
                                         />
                                     </div>
                                     <div className="mb-3 col-md-3">
                                         <label>Extension</label>
                                         <input className="form-control" type="text" placeholder="e.g., Jr."
-                                               value={formData.father.extension || ''}
-                                               onChange={(e) => handleNestedInputChange('father', 'extension', e.target.value)}
+                                            value={formData.father.extension || ''}
+                                            onChange={(e) => handleNestedInputChange('father', 'extension', e.target.value)}
                                         />
                                     </div>
                                     <div className="mb-3 col-md-6">
                                         <label>Occupation</label>
                                         <input className="form-control" type="text" placeholder="Occupation"
-                                               value={formData.father.occupation}
-                                               onChange={(e) => handleNestedInputChange('father', 'occupation', e.target.value)}
+                                            value={formData.father.occupation}
+                                            onChange={(e) => handleNestedInputChange('father', 'occupation', e.target.value)}
                                         />
                                     </div>
                                     <div className="mb-3 col-md-6">
                                         <label>Monthly Income</label>
                                         <input className="form-control" type="number" placeholder="₱"
-                                               value={formData.father.income}
-                                               onChange={(e) => handleNestedInputChange('father', 'income', parseFloat(e.target.value) || 0)}
+                                            value={formData.father.income}
+                                            onChange={(e) => handleNestedInputChange('father', 'income', parseFloat(e.target.value) || 0)}
                                         />
                                     </div>
 
@@ -774,37 +774,37 @@ const EditApplication = () => {
                                     <div className="mb-3 col-md-4">
                                         <label>Mother's Maiden Last Name</label>
                                         <input className="form-control" type="text"
-                                               value={formData.mother.lastName}
-                                               onChange={(e) => handleNestedInputChange('mother', 'lastName', e.target.value)}
+                                            value={formData.mother.lastName}
+                                            onChange={(e) => handleNestedInputChange('mother', 'lastName', e.target.value)}
                                         />
                                     </div>
                                     <div className="mb-3 col-md-4">
                                         <label>Mother's First Name</label>
                                         <input className="form-control" type="text"
-                                               value={formData.mother.firstName}
-                                               onChange={(e) => handleNestedInputChange('mother', 'firstName', e.target.value)}
+                                            value={formData.mother.firstName}
+                                            onChange={(e) => handleNestedInputChange('mother', 'firstName', e.target.value)}
                                         />
                                     </div>
                                     <div className="mb-3 col-md-4">
                                         <label>Mother's Maiden Middle Name</label>
                                         <input className="form-control" type="text"
-                                               value={formData.mother.middleName || ''}
-                                               onChange={(e) => handleNestedInputChange('mother', 'middleName', e.target.value)}
+                                            value={formData.mother.middleName || ''}
+                                            onChange={(e) => handleNestedInputChange('mother', 'middleName', e.target.value)}
                                         />
                                     </div>
 
                                     <div className="mb-3 col-md-6">
                                         <label>Occupation</label>
                                         <input className="form-control" type="text"
-                                               value={formData.mother.occupation}
-                                               onChange={(e) => handleNestedInputChange('mother', 'occupation', e.target.value)}
+                                            value={formData.mother.occupation}
+                                            onChange={(e) => handleNestedInputChange('mother', 'occupation', e.target.value)}
                                         />
                                     </div>
                                     <div className="mb-3 col-md-6">
                                         <label>Monthly Income</label>
                                         <input className="form-control" type="number" placeholder="₱"
-                                               value={formData.mother.income}
-                                               onChange={(e) => handleNestedInputChange('mother', 'income', parseFloat(e.target.value) || 0)}
+                                            value={formData.mother.income}
+                                            onChange={(e) => handleNestedInputChange('mother', 'income', parseFloat(e.target.value) || 0)}
                                         />
                                     </div>
 
@@ -815,16 +815,16 @@ const EditApplication = () => {
                                     <div className="mb-3 col-md-6">
                                         <label>Emergency Contact Name</label>
                                         <input className="form-control" type="text"
-                                               value={formData.emergencyContactName}
-                                               onChange={(e) => handleInputChange('emergencyContactName', e.target.value)}
+                                            value={formData.emergencyContactName}
+                                            onChange={(e) => handleInputChange('emergencyContactName', e.target.value)}
                                         />
                                     </div>
 
                                     <div className="mb-3 col-md-6">
                                         <label>Emergency Contact Number</label>
                                         <input className="form-control" type="tel"
-                                               value={formData.emergencyContactNumber}
-                                               onChange={(e) => handleInputChange('emergencyContactNumber', e.target.value)}
+                                            value={formData.emergencyContactNumber}
+                                            onChange={(e) => handleInputChange('emergencyContactNumber', e.target.value)}
                                         />
                                     </div>
 
@@ -835,36 +835,36 @@ const EditApplication = () => {
                                     <div className="mb-3 col-md-4">
                                         <label>Household Members</label>
                                         <input className="form-control" type="number"
-                                               value={formData.householdNumber}
-                                               onChange={(e) => handleInputChange('householdNumber', parseInt(e.target.value) || 0)}
+                                            value={formData.householdNumber}
+                                            onChange={(e) => handleInputChange('householdNumber', parseInt(e.target.value) || 0)}
                                         />
                                     </div>
                                     <div className="mb-3 col-md-4">
                                         <label>Number of Siblings</label>
                                         <input className="form-control" type="number"
-                                               value={formData.siblings}
-                                               onChange={(e) => handleInputChange('siblings', parseInt(e.target.value) || 0)}
+                                            value={formData.siblings}
+                                            onChange={(e) => handleInputChange('siblings', parseInt(e.target.value) || 0)}
                                         />
                                     </div>
                                     <div className="mb-3 col-md-4">
                                         <label>Siblings Currently Studying</label>
                                         <input className="form-control" type="number"
-                                               value={formData.siblingsStudying}
-                                               onChange={(e) => handleInputChange('siblingsStudying', parseInt(e.target.value) || 0)}
+                                            value={formData.siblingsStudying}
+                                            onChange={(e) => handleInputChange('siblingsStudying', parseInt(e.target.value) || 0)}
                                         />
                                     </div>
                                     <div className="mb-3 col-md-6">
                                         <label>IP Affiliation</label>
                                         <input className="form-control" type="text"
-                                               value={formData.ipAffiliation || ''}
-                                               onChange={(e) => handleInputChange('ipAffiliation', e.target.value)}
+                                            value={formData.ipAffiliation || ''}
+                                            onChange={(e) => handleInputChange('ipAffiliation', e.target.value)}
                                         />
                                     </div>
                                     <div className="mb-3 col-md-6">
                                         <label>Are you a recipient of any DSWD Program?</label>
                                         <select className="form-control"
-                                                value={formData.dswdProgram || ''}
-                                                onChange={(e) => handleInputChange('dswdProgram', e.target.value)}
+                                            value={formData.dswdProgram || ''}
+                                            onChange={(e) => handleInputChange('dswdProgram', e.target.value)}
                                         >
                                             <option value="">Select DSWD Program</option>
                                             <option value="None">None</option>
@@ -902,8 +902,8 @@ const EditApplication = () => {
                                     <div className="mb-3 col-md-4">
                                         <label htmlFor="year_level" className="form-label">Year Level</label>
                                         <select className="form-select"
-                                                value={formData.year_level}
-                                                onChange={(e) => handleInputChange('year_level', e.target.value)}
+                                            value={formData.year_level}
+                                            onChange={(e) => handleInputChange('year_level', e.target.value)}
                                         >
                                             <option value="">Select Year Level</option>
                                             <option value="1">1st Year</option>
@@ -1040,8 +1040,8 @@ const EditApplication = () => {
                                 <div className="mb-3 col-md-4">
                                     <label className="form-label">Enrollment Status</label>
                                     <select className="form-control"
-                                            value={formData.enrollmentStatus}
-                                            onChange={(e) => handleInputChange('enrollmentStatus', e.target.value)}>
+                                        value={formData.enrollmentStatus}
+                                        onChange={(e) => handleInputChange('enrollmentStatus', e.target.value)}>
                                         <option value="">Select Enrollment Status</option>
                                         <option value="Enrolled">Enrolled</option>
                                         <option value="Not Enrolled">Not Enrolled</option>
@@ -1282,20 +1282,20 @@ const EditApplication = () => {
                                                 <div className="table-responsive">
                                                     <table className="table table-sm table-bordered mb-0">
                                                         <thead className="table-light">
-                                                        <tr>
-                                                            <th>Subject</th>
-                                                            <th>Grade</th>
-                                                            <th>Units</th>
-                                                        </tr>
+                                                            <tr>
+                                                                <th>Subject</th>
+                                                                <th>Grade</th>
+                                                                <th>Units</th>
+                                                            </tr>
                                                         </thead>
                                                         <tbody>
-                                                        {grades.map((g, i) => (
-                                                            <tr key={i}>
-                                                                <td>{g.subject || "N/A"}</td>
-                                                                <td>{g.grade || "N/A"}</td>
-                                                                <td>{g.units || "N/A"}</td>
-                                                            </tr>
-                                                        ))}
+                                                            {grades.map((g, i) => (
+                                                                <tr key={i}>
+                                                                    <td>{g.subject || "N/A"}</td>
+                                                                    <td>{g.grade || "N/A"}</td>
+                                                                    <td>{g.units || "N/A"}</td>
+                                                                </tr>
+                                                            ))}
                                                         </tbody>
                                                     </table>
                                                 </div>
