@@ -1,0 +1,338 @@
+/* ══════════════════════════════════════════════════════════════════════════
+   Fuzzy Logic Studio - Modern AI Decision Engine Stylesheet
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.fuzzy-studio {
+    --fz-primary: #6366f1;
+    --fz-primary-glow: rgba(99, 102, 241, 0.25);
+    --fz-success: #10b981;
+    --fz-success-glow: rgba(16, 185, 129, 0.25);
+    --fz-warning: #f59e0b;
+    --fz-warning-glow: rgba(245, 158, 11, 0.25);
+    --fz-danger: #ef4444;
+    --fz-danger-glow: rgba(239, 68, 68, 0.25);
+    --fz-info: #0ea5e9;
+    --fz-card-bg: #ffffff;
+    --fz-border: #e2e8f0;
+    --fz-radius: 18px;
+    font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+}
+
+/* ── Hero Studio Header ─────────────────────────────────────────── */
+.fz-hero-banner {
+    background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 55%, #172554 100%);
+    color: #f8fafc;
+    border-radius: var(--fz-radius);
+    padding: 1.75rem 2rem;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 12px 36px -10px rgba(15, 23, 42, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.fz-hero-banner::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -10%;
+    width: 400px;
+    height: 400px;
+    background: radial-gradient(circle, rgba(99, 102, 241, 0.25) 0%, rgba(99, 102, 241, 0) 70%);
+    pointer-events: none;
+}
+
+.fz-hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    border-radius: 999px;
+    background: rgba(99, 102, 241, 0.2);
+    border: 1px solid rgba(129, 140, 248, 0.35);
+    color: #c7d2fe;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+}
+
+.fz-status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: #10b981;
+    box-shadow: 0 0 10px #10b981;
+    animation: fz-pulse 2s infinite;
+}
+
+@keyframes fz-pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(1.25); }
+}
+
+/* ── Modern Studio Glass Cards ──────────────────────────────────── */
+.fz-card {
+    background: var(--fz-card-bg);
+    border: 1px solid var(--fz-border);
+    border-radius: var(--fz-radius);
+    box-shadow: 0 4px 20px -4px rgba(0, 0, 0, 0.04), 0 2px 6px -2px rgba(0, 0, 0, 0.02);
+    transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s;
+    overflow: hidden;
+}
+
+.fz-card:hover {
+    box-shadow: 0 10px 28px -6px rgba(0, 0, 0, 0.08), 0 4px 10px -2px rgba(0, 0, 0, 0.03);
+}
+
+.fz-card-header {
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid #f1f5f9;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* ── Studio Navigation Pill Tabs ────────────────────────────────── */
+.fz-nav-container {
+    background: #f1f5f9;
+    padding: 4px;
+    border-radius: 999px;
+    display: inline-flex;
+    gap: 4px;
+    border: 1px solid #e2e8f0;
+}
+
+.fz-nav-btn {
+    border: none;
+    background: transparent;
+    padding: 8px 18px;
+    border-radius: 999px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #64748b;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.fz-nav-btn:hover {
+    color: #1e293b;
+}
+
+.fz-nav-btn.active {
+    background: #ffffff;
+    color: #4338ca;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+/* ── Custom Range Slider ────────────────────────────────────────── */
+.fz-slider-track-wrap {
+    position: relative;
+    padding: 0.5rem 0;
+}
+
+.fz-slider {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 8px;
+    border-radius: 999px;
+    background: #e2e8f0;
+    outline: none;
+    transition: background 0.2s;
+    cursor: pointer;
+}
+
+.fz-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: #6366f1;
+    border: 3px solid #ffffff;
+    box-shadow: 0 2px 8px rgba(99, 102, 241, 0.4);
+    cursor: grab;
+    transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.fz-slider::-webkit-slider-thumb:hover,
+.fz-slider::-webkit-slider-thumb:active {
+    transform: scale(1.18);
+    box-shadow: 0 0 0 6px rgba(99, 102, 241, 0.2);
+}
+
+.fz-slider::-moz-range-thumb {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: #6366f1;
+    border: 3px solid #ffffff;
+    box-shadow: 0 2px 8px rgba(99, 102, 241, 0.4);
+    cursor: grab;
+    transition: transform 0.15s, box-shadow 0.15s;
+}
+
+/* ── Preset Scenario Pills ──────────────────────────────────────── */
+.fz-preset-pill {
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #e2e8f0;
+    padding: 5px 12px;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.fz-preset-pill:hover {
+    background: rgba(255, 255, 255, 0.22);
+    color: #ffffff;
+    transform: translateY(-1px);
+}
+
+/* ── Multi-Membership Function Chart ─────────────────────────────── */
+.fz-chart-container {
+    background: #fafafa;
+    border-radius: 14px;
+    border: 1px solid #f1f5f9;
+    padding: 12px;
+    position: relative;
+    overflow: hidden;
+}
+
+.fz-chart-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px dashed #e2e8f0;
+}
+
+.fz-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.78rem;
+    font-weight: 600;
+}
+
+.fz-legend-color {
+    width: 12px;
+    height: 12px;
+    border-radius: 3px;
+}
+
+/* ── 2D Decision Matrix Heatmap ─────────────────────────────────── */
+.fz-matrix-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 8px;
+}
+
+.fz-matrix-cell {
+    border-radius: 12px;
+    padding: 16px 12px;
+    text-align: center;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    cursor: pointer;
+    position: relative;
+    border: 1px solid transparent;
+}
+
+.fz-matrix-cell:hover {
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 8px 20px -4px rgba(0, 0, 0, 0.12);
+    z-index: 10;
+}
+
+.fz-cell-score-high {
+    background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+    border-color: #a7f3d0;
+    color: #065f46;
+}
+
+.fz-cell-score-medium {
+    background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+    border-color: #fde68a;
+    color: #92400e;
+}
+
+.fz-cell-score-low {
+    background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+    border-color: #bfdbfe;
+    color: #1e40af;
+}
+
+.fz-cell-score-danger {
+    background: linear-gradient(135deg, #fff1f2 0%, #ffe4e6 100%);
+    border-color: #fecdd3;
+    color: #9f1239;
+}
+
+.fz-cell-empty {
+    background: #f8fafc;
+    border: 2px dashed #cbd5e1;
+    color: #94a3b8;
+}
+
+.fz-cell-empty:hover {
+    background: #f1f5f9;
+    border-color: #94a3b8;
+    color: #64748b;
+}
+
+/* ── Live Defuzzification Gauge ─────────────────────────────────── */
+.fz-gauge-wrap {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.fz-gauge-glow {
+    position: absolute;
+    width: 140px;
+    height: 140px;
+    border-radius: 50%;
+    filter: blur(20px);
+    opacity: 0.3;
+    transition: all 0.5s ease;
+}
+
+/* ── Active Rule Firing Pill ────────────────────────────────────── */
+.fz-fired-rule {
+    border-radius: 12px;
+    padding: 12px 14px;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    transition: all 0.2s ease;
+}
+
+.fz-fired-rule.active-firing {
+    border-color: #818cf8;
+    background: linear-gradient(to right, #f5f3ff 0%, #ffffff 100%);
+    box-shadow: 0 4px 12px -2px rgba(99, 102, 241, 0.12);
+}
+
+/* ── Mini Progress Bar for Membership ───────────────────────────── */
+.fz-mem-bar {
+    height: 6px;
+    border-radius: 999px;
+    background: #e2e8f0;
+    overflow: hidden;
+    position: relative;
+}
+
+.fz-mem-fill {
+    height: 100%;
+    border-radius: 999px;
+    transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}

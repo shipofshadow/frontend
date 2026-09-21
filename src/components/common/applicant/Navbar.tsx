@@ -114,6 +114,17 @@ const Navbar: React.FC = () => {
                                         <span>Scholarships</span>
                                     </Link>
                                 </li>
+
+                                <li className="nav-item">
+                                    <Link
+                                        to="/applicant/eligibility-result"
+                                        className={`nav-link d-flex align-items-center gap-2 ${isActive('/applicant/eligibility-result') ? 'active' : ''}`}
+                                        aria-current={ariaCurrent('/applicant/eligibility-result')}
+                                    >
+                                        <i className="fa-solid fa-chart-pie fa-sm fa-fw text-secondary"></i>
+                                        <span>Assessment</span>
+                                    </Link>
+                                </li>
                             </>
                         )}
                     </ul>
@@ -169,6 +180,15 @@ const Navbar: React.FC = () => {
                                             >
                                                 <i className="fa-regular fa-user fa-sm fa-fw text-primary"></i>
                                                 <span>My Profile</span>
+                                            </Link>
+                                        </li>
+                                        <li>
+                                            <Link
+                                                to="/applicant/eligibility-result"
+                                                className="dropdown-item d-flex align-items-center gap-2 py-2"
+                                            >
+                                                <i className="fa-solid fa-chart-pie fa-sm fa-fw text-info"></i>
+                                                <span>Eligibility Assessment</span>
                                             </Link>
                                         </li>
                                         <li>

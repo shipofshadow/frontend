@@ -226,8 +226,10 @@ const ScholarshipApplicants: React.FC = () => {
         return courses[courseId] || { name: "Unknown Course" };
     };
 
-    const formatCurrency = (value: string | number): string => {
+    const formatCurrency = (value?: string | number | null): string => {
+        if (value === undefined || value === null || value === '') return '₱0.00';
         const num = typeof value === 'string' ? parseFloat(value) : value;
+        if (typeof num !== 'number' || isNaN(num)) return '₱0.00';
         return `₱${num.toLocaleString()}`;
     };
 

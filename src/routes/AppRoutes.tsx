@@ -53,6 +53,7 @@ import Application from "../pages/applicant/Application.tsx";
 import TermsOfServicePage from "../pages/TermsOfServicePage.tsx";
 import ScholarshipSummaryReport from '../pages/admin/reports/ScholarshipSummaryReport.tsx';
 import About from "../pages/About.tsx";
+import Contact from "../pages/Contact.tsx";
 import Scholarships from "../pages/Scholarships.tsx";
 import EditApplication from "../pages/applicant/EditApplication.tsx";
 import BulkAnalysisTool from "../pages/admin/BulkAnalysisTool.tsx";
@@ -175,7 +176,7 @@ const AppRoutes: React.FC = () => {
                 <Route path="reset-password" element={<ResetPassword />} />
                 <Route path="privacy-policy" element={<PrivacyPolicyPage/>} />
                 <Route path="terms-of-service" element={<TermsOfServicePage/>} />
-                {/*<Route path="contact" element={<Contact />} />*/}
+                <Route path="contact" element={<Contact />} />
                 <Route path="about" element={<About />} />
                 <Route path="scholarships" element={<Scholarships />} />
                 <Route path="prequalify" element={<Prequalify/>} />

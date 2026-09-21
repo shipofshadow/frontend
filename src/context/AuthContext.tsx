@@ -266,11 +266,20 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         try {
             let activeToken = token;
 
-            // If no valid token, try refresh
+            // If no valid token, check if there's a stored refresh token
             if (!activeToken || activeToken.split(".").length !== 3) {
+                const storedRefresh = storage.get("refresh_token");
+                if (!storedRefresh) {
+                    setUser(null);
+                    setIsLoading(false);
+                    return;
+                }
+
                 activeToken = await refreshAccessToken();
                 if (!activeToken) {
-                    throw new Error("No valid token");
+                    setUser(null);
+                    setIsLoading(false);
+                    return;
                 }
             }
 

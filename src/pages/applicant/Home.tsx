@@ -388,6 +388,11 @@ const Home = () => {
                                                     style={{width: `${applicant?.evaluation?.score * 100}%`}}
                                                 ></div>
                                             </div>
+                                            <div className="mt-2 text-end">
+                                                <Link to="/applicant/eligibility-result" className="small fw-semibold text-primary text-decoration-none d-inline-flex align-items-center gap-1">
+                                                    View Detailed Evaluation Assessment &rarr;
+                                                </Link>
+                                            </div>
                                         </div>
                                     )}
                                 </div>
@@ -402,6 +407,13 @@ const Home = () => {
                         >
                             <Eye size={18} className="me-2" />
                             View Full Application
+                        </Link>
+                        <Link
+                            to="/applicant/eligibility-result"
+                            className="btn btn-outline-primary"
+                        >
+                            <TrendingUp size={18} className="me-2" />
+                            Eligibility Assessment
                         </Link>
 
                         {/*<button className="btn btn-outline-secondary">*/}
@@ -491,15 +503,17 @@ const Home = () => {
 
                                 <div className="row g-3">
                                     <div className="col-md-6">
-                                        <div className="bg-white bg-opacity-15 rounded-3 p-3">
-                                            <div className="d-flex align-items-center justify-content-between">
-                                                <div>
-                                                    <div className="h4 fw-bold mb-0">{eligibilityScore}%</div>
-                                                    <small className="opacity-90">Eligibility Score</small>
+                                        <Link to="/applicant/eligibility-result" className="text-white text-decoration-none d-block">
+                                            <div className="bg-white bg-opacity-15 rounded-3 p-3" style={{ cursor: 'pointer' }}>
+                                                <div className="d-flex align-items-center justify-content-between">
+                                                    <div>
+                                                        <div className="h4 fw-bold mb-0">{eligibilityScore}%</div>
+                                                        <small className="opacity-90">Eligibility Score · View Details &rarr;</small>
+                                                    </div>
+                                                    <TrendingUp size={24} className="opacity-75" />
                                                 </div>
-                                                <TrendingUp size={24} className="opacity-75" />
                                             </div>
-                                        </div>
+                                        </Link>
                                     </div>
                                     <div className="col-md-6 mb-2">
                                         <div className="bg-white bg-opacity-15 rounded-3 p-3">

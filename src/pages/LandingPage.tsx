@@ -95,20 +95,20 @@ const LandingPage: React.FC = () => {
                     setStatistics(prev => ({ ...prev, totalScholarships: data.filter((s: Scholarship) => s.is_active).length }));
                 }
 
-                // 2. Fetch Dashboard Stats (Active/Approved) - Simplified for brevity
+                // 2. Fetch Public Stats (No Auth Required)
                 try {
-                    const activeRes = await fetch(`${API_BASE_URL}/api/dashboard/active-applicants`);
-                    const approvedRes = await fetch(`${API_BASE_URL}/api/dashboard/approved-applicants`);
-                    if (activeRes.ok && approvedRes.ok) {
-                        const activeData = await activeRes.json();
-                        const approvedData = await approvedRes.json();
-                        setStatistics(prev => ({
-                            ...prev,
-                            totalApplications: activeData.active_applicants,
-                            approvedStudents: approvedData.approved_applicants
-                        }));
+                    const statsRes = await fetch(`${API_BASE_URL}/api/dashboard/public-stats`);
+                    if (statsRes.ok) {
+                        const statsData = await statsRes.json();
+                        if (statsData.success) {
+                            setStatistics(prev => ({
+                                ...prev,
+                                totalApplications: statsData.total_applications || prev.totalApplications,
+                                approvedStudents: statsData.approved_students || prev.approvedStudents
+                            }));
+                        }
                     }
-                } catch (e) { console.warn("Stats fetch failed", e); }
+                } catch (e) { console.warn("Public stats fetch failed", e); }
 
                 // 3. Fetch Public Announcements [NEW]
                 const annRes = await fetch(`${API_BASE_URL}/api/announcements/public`);

@@ -1,26 +1,8 @@
-const Document = () => {
-    return (
-        <>
-                <header className="page-header page-header-compact page-header-light border-bottom bg-white mb-4">
-            <div className="container-fluid px-4">
-                <div className="page-header-content">
-                    <div className="row align-items-center justify-content-between pt-3">
-                        <div className="col-auto mb-3">
-                            <h1 className="page-header-title">
-                                <div className="page-header-icon"><i data-feather="user"></i></div>
-                                Document 
-                            </h1>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </header>
+import React from 'react';
+import { Navigate } from 'react-router-dom';
 
-        <div className="container-fluid px-4">
-        </div>
-
-        </>
-    );
-}
+const Document: React.FC = () => {
+    return <Navigate to="/admin/documents/requirements" replace />;
+};
 
 export default Document;

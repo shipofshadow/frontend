@@ -305,7 +305,11 @@ const ApplicationsTrendChart = () => {
                 }
 
                 const endpoint = `${API_BASE_URL}/api/dashboard/applications-trend?${params.toString()}`;
-                const res = await fetch(endpoint);
+                const res = await fetch(endpoint, {
+                    headers: {
+                        ...(token ? { Authorization: `Bearer ${token}` } : {})
+                    }
+                });
 
                 if (!res.ok) {
                     throw new Error(`Failed to fetch trend data: ${res.status} ${res.statusText}`);
@@ -354,6 +358,7 @@ const ApplicationsTrendChart = () => {
             }
         },
         [
+            token,
             selectedCampusId,
             selectedDepartmentId,
             selectedCourseId
