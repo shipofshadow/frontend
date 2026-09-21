@@ -1,7 +1,26 @@
+import { useState } from "react";
 import { useNotifications } from "../context/NotificationContext.tsx";
 
-export function NotificationHistory() {
+interface NotificationHistoryProps {
+    adminView?: boolean;
+}
+
+export function NotificationHistory({ adminView = false }: NotificationHistoryProps) {
     const { notifications, unreadCount, markAsRead, fetchMore, refresh } = useNotifications();
+    const [typeFilter, setTypeFilter] = useState<'all' | 'applications' | 'system' | 'unread'>('all');
+
+    const filteredNotifications = notifications.filter(n => {
+        if (typeFilter === 'unread') return !n.read;
+        if (typeFilter === 'applications') {
+            const sType = n.data?.server_type || '';
+            return sType.includes('application') || (n.title && /application/i.test(n.title));
+        }
+        if (typeFilter === 'system') {
+            const sType = n.data?.server_type || '';
+            return sType === 'system_announcement' || sType.includes('scholarship') || (n.title && /(scholarship|system|quota)/i.test(n.title));
+        }
+        return true;
+    });
 
     const priorityBadge = (p?: string) => {
         switch (p) {
@@ -51,9 +70,14 @@ export function NotificationHistory() {
                         <div>
                             <h2 className="mb-2 text-dark fw-bold">
                                 <i className="fas fa-bell text-primary me-3"></i>
-                                Notifications
+                                {adminView ? "Admin Notifications & Alerts" : "Notifications"}
                             </h2>
-                            <p className="text-muted mb-0 fs-6">Stay updated with your latest activities and alerts</p>
+                            <p className="text-muted mb-0 fs-6">
+                                {adminView 
+                                    ? "Monitor new submissions, verification requests, and system-wide alerts"
+                                    : "Stay updated with your latest activities and alerts"
+                                }
+                            </p>
                         </div>
 
                         <div className="d-flex gap-3 align-items-center flex-wrap">
@@ -104,9 +128,40 @@ export function NotificationHistory() {
                                 <div className="col-md-3 col-6">
                                     <div className="d-flex align-items-center justify-content-center">
                                         <i className="fas fa-clock text-info me-2"></i>
-                                        <span className="text-muted">Last updated</span>
+                                        <span className="text-muted">Filtered: {filteredNotifications.length}</span>
                                     </div>
                                 </div>
+                            </div>
+
+                            {/* Type Filter Buttons */}
+                            <div className="d-flex align-items-center gap-2 flex-wrap mt-3 pt-3 border-top">
+                                <span className="small text-muted fw-semibold me-1">
+                                    <i className="fas fa-filter me-1"></i>Filter:
+                                </span>
+                                <button 
+                                    className={`btn btn-sm ${typeFilter === 'all' ? 'btn-primary' : 'btn-outline-secondary'}`}
+                                    onClick={() => setTypeFilter('all')}
+                                >
+                                    All ({notifications.length})
+                                </button>
+                                <button 
+                                    className={`btn btn-sm ${typeFilter === 'applications' ? 'btn-primary' : 'btn-outline-secondary'}`}
+                                    onClick={() => setTypeFilter('applications')}
+                                >
+                                    Applications
+                                </button>
+                                <button 
+                                    className={`btn btn-sm ${typeFilter === 'system' ? 'btn-primary' : 'btn-outline-secondary'}`}
+                                    onClick={() => setTypeFilter('system')}
+                                >
+                                    Scholarships & System
+                                </button>
+                                <button 
+                                    className={`btn btn-sm ${typeFilter === 'unread' ? 'btn-primary' : 'btn-outline-secondary'}`}
+                                    onClick={() => setTypeFilter('unread')}
+                                >
+                                    Unread ({unreadCount})
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -116,14 +171,18 @@ export function NotificationHistory() {
             {/* Notifications Grid */}
             <div className="row">
                 <div className="col-12">
-                    {notifications.length === 0 ? (
+                    {filteredNotifications.length === 0 ? (
                         <div className="text-center py-5">
                             <div className="mb-4">
                                 <div className="bg-light rounded-circle d-inline-flex p-4 mb-3">
                                     <i className="fas fa-bell-slash fa-3x text-muted"></i>
                                 </div>
                                 <h4 className="text-muted mb-2">No notifications found</h4>
-                                <p className="text-muted mb-4">You're all caught up! New notifications will appear here.</p>
+                                <p className="text-muted mb-4">
+                                    {typeFilter !== 'all' 
+                                        ? "No notifications match the selected filter." 
+                                        : "You're all caught up! New notifications will appear here."}
+                                </p>
                                 <button className="btn btn-primary" onClick={() => refresh()}>
                                     <i className="fas fa-sync-alt me-2"></i>Check for updates
                                 </button>
@@ -131,7 +190,7 @@ export function NotificationHistory() {
                         </div>
                     ) : (
                         <div className="notification-list">
-                            {notifications.map(n => (
+                            {filteredNotifications.map(n => (
                                 <div
                                     key={n.id}
                                     className={`notification-card card border-0 shadow-sm mb-3 ${!n.read ? 'unread-notification' : ''}`}
@@ -161,6 +220,16 @@ export function NotificationHistory() {
                                                             {!n.read && (
                                                                 <span className="badge bg-primary bg-gradient ms-2 pulse-animation">
                                                                     <i className="fas fa-star fa-xs me-1"></i>New
+                                                                </span>
+                                                            )}
+                                                            {adminView && (n.data?.server_type === 'new_application' || n.data?.server_type === 'new_application_submitted') && (
+                                                                <span className="badge bg-info-subtle text-info border border-info-subtle ms-2">
+                                                                    New Application
+                                                                </span>
+                                                            )}
+                                                            {adminView && n.data?.server_type === 'system_announcement' && (
+                                                                <span className="badge bg-secondary-subtle text-secondary border border-secondary-subtle ms-2">
+                                                                    System Alert
                                                                 </span>
                                                             )}
                                                         </h5>

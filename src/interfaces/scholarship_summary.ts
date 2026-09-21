@@ -9,8 +9,9 @@ export interface StudentInfo {
 
 export interface Application {
     id: number;
-    status: 'pending' | 'approved' | 'denied' | 'evaluated' | 'returned';
+    status: 'pending' | 'approved' | 'denied' | 'evaluated' | 'returned' | string;
     submitted_at: string;
+    approved_at?: string | null;
     remarks: string | null;
     semester: string;
     academic_year: string;

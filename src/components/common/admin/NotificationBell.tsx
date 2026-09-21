@@ -36,7 +36,7 @@ export function NotificationBell() {
 
                 {unreadCount > 0 && (
                     <span
-                        className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger text-white"
+                        className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger text-white badge-pulse"
                         style={{
                             fontSize: "0.7rem",
                             minWidth: "18px",
@@ -45,9 +45,9 @@ export function NotificationBell() {
                             padding: "2px 5px",
                         }}
                     >
-      {unreadCount > 99 ? "99+" : unreadCount}
+                        {unreadCount > 99 ? "99+" : unreadCount}
                         <span className="visually-hidden">unread notifications</span>
-    </span>
+                    </span>
                 )}
             </button>
 

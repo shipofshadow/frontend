@@ -151,7 +151,6 @@ const EditApplication = () => {
                 if (!res.ok) throw new Error('Failed to fetch application');
 
                 const data = await res.json();
-                console.log(data)
 
                 // Populate form with existing data
                 setFormData({
@@ -241,7 +240,7 @@ const EditApplication = () => {
                     icon: 'error',
                     title: 'Error',
                     text: 'Failed to load application data',
-                }).then(() => console.log('no'));
+                });
             }
         };
 
@@ -459,8 +458,6 @@ const EditApplication = () => {
             }).then(() => {
                 navigate('/applicant/status');
             });
-
-            console.log(result);
         } catch (error) {
             console.error('Update error:', error);
             await Swal.fire({

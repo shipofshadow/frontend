@@ -84,7 +84,6 @@ const ArchivedApplicants = () => {
                 headers: { Authorization: `Bearer ${token}` },
             });
             setSelectedApplicant(response.data);
-            console.log(response.data);
         } catch (error) {
             console.error('Error viewing applicant:', error);
             await Swal.fire('Error', 'Failed to load applicant details.', 'error');

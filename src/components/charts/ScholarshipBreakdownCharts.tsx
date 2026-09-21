@@ -257,7 +257,9 @@ const ApplicantsBarChart = () => {
             }
 
             const endpoint = `${API_BASE_URL}/api/dashboard/applicants-breakdown${params.toString() ? `?${params.toString()}` : ''}`;
-            const res = await fetch(endpoint);
+            const res = await fetch(endpoint, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
 
             if (!res.ok) {
                 throw new Error(`Failed to fetch data: ${res.statusText}`);

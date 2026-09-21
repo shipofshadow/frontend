@@ -29,6 +29,7 @@ import type { AppDispatch, RootState } from "../../store/slices";
 import {Link} from "react-router-dom";
 import {API_BASE_URL} from "../../config.ts";
 import {useSettings} from "../../context/SettingsContext.tsx";
+import ApplicationTimeline from "../../components/common/applicant/ApplicationTimeline.tsx";
 
 interface Announcement {
     id: number;
@@ -215,6 +216,22 @@ const Home = () => {
                     </div>
                 </div>
                 <div className="card-body">
+                    {/* Compact Application Timeline */}
+                    <div className="mb-4 p-3 bg-light rounded-3 border">
+                        <div className="d-flex justify-content-between align-items-center mb-3">
+                            <span className="fw-semibold text-muted small text-uppercase">Application Progress</span>
+                            <Link to="/applicant/status" className="small text-primary text-decoration-none fw-medium">
+                                Full Timeline &rarr;
+                            </Link>
+                        </div>
+                        <ApplicationTimeline
+                            status={applicant?.application?.status || applicationInfo?.status || 'pending'}
+                            submittedAt={applicant?.application?.submitted_at || applicationInfo?.submitted_at}
+                            approvedAt={applicant?.application?.approved_at}
+                            compact
+                        />
+                    </div>
+
                     <div className="row mb-4">
                         <div className="col-md-8">
                             <h6 className="text-muted mb-3">Application Details</h6>

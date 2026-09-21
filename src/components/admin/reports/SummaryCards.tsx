@@ -31,8 +31,6 @@ const SummaryCards = ({ data }: SummaryCardsProps) => {
 
     const current = data.current;
 
-    console.log(current)
-
     const formatCurrency = (amount: number) => {
         if (isNaN(amount)) return "₱0";
         return `₱${Math.round(amount).toLocaleString("en-PH")}`;

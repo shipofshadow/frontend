@@ -23,6 +23,9 @@ export interface Scholarship {
     name: string;
     description: string;
     is_active: boolean;
+    total_slots?: number | null;
+    filled_slots?: number;
+    slots_remaining?: number | null;
     created_at: string;
     updated_at: string;
     rules: ScholarshipRules;

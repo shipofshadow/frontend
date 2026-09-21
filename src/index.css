@@ -6,3 +6,161 @@
     z-index: 99999 !important;
 }
 
+/* ── Notification badge pulse ─────────────────────────── */
+@keyframes notif-pulse {
+    0%   { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.7); }
+    70%  { box-shadow: 0 0 0 6px rgba(220, 53, 69, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0); }
+}
+
+.badge-pulse {
+    animation: notif-pulse 1.4s ease-out infinite;
+    transition: transform 0.2s ease;
+}
+
+.badge-pulse:hover {
+    transform: scale(1.15);
+}
+
+/* ── Application Status Timeline ─────────────────────── */
+.app-timeline {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0;
+    position: relative;
+    padding: 0.5rem 0 1rem;
+}
+
+.app-timeline-step {
+    flex: 1;
+    min-width: 120px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    text-align: center;
+}
+
+.app-timeline-step:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    top: 18px;
+    left: calc(50% + 18px);
+    width: calc(100% - 36px);
+    height: 3px;
+    background: #dee2e6;
+    z-index: 0;
+    transition: background 0.4s;
+}
+
+.app-timeline-step.step-done:not(:last-child)::after {
+    background: #198754;
+}
+
+.app-timeline-step.step-active:not(:last-child)::after {
+    background: linear-gradient(to right, #0d6efd 0%, #dee2e6 100%);
+}
+
+.app-timeline-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1;
+    font-size: 1rem;
+    border: 3px solid #dee2e6;
+    background: #fff;
+    transition: all 0.3s ease;
+}
+
+.step-done   .app-timeline-icon { background: #198754; border-color: #198754; color: #fff; }
+.step-active .app-timeline-icon { background: #0d6efd; border-color: #0d6efd; color: #fff; box-shadow: 0 0 0 4px rgba(13,110,253,.25); }
+.step-rejected .app-timeline-icon { background: #dc3545; border-color: #dc3545; color: #fff; }
+
+.app-timeline-label {
+    margin-top: 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #6c757d;
+}
+
+.step-done   .app-timeline-label { color: #198754; }
+.step-active .app-timeline-label { color: #0d6efd; }
+.step-rejected .app-timeline-label { color: #dc3545; }
+
+.app-timeline-date {
+    font-size: 0.68rem;
+    color: #adb5bd;
+    margin-top: 2px;
+}
+
+/* ── Draft save indicator ─────────────────────────────── */
+.draft-saved-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.72rem;
+    padding: 2px 8px;
+    border-radius: 20px;
+    background: rgba(25, 135, 84, 0.1);
+    color: #198754;
+    border: 1px solid rgba(25,135,84,.3);
+    transition: opacity 0.3s;
+}
+
+.draft-saving-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.72rem;
+    padding: 2px 8px;
+    border-radius: 20px;
+    background: rgba(13, 110, 253, 0.08);
+    color: #0d6efd;
+    border: 1px solid rgba(13,110,253,.3);
+}
+
+/* ── Fuzzy score bars ─────────────────────────────────── */
+.fuzzy-bar-track {
+    height: 8px;
+    border-radius: 4px;
+    background: #e9ecef;
+    overflow: hidden;
+}
+
+.fuzzy-bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.8s cubic-bezier(.4,0,.2,1);
+}
+
+/* ── Slot badge ───────────────────────────────────────── */
+.slot-badge-full {
+    background: #dc3545;
+    color: #fff;
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-size: 0.7rem;
+    font-weight: 600;
+}
+
+.slot-badge-low {
+    background: #fd7e14;
+    color: #fff;
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-size: 0.7rem;
+    font-weight: 600;
+}
+
+.slot-badge-ok {
+    background: #198754;
+    color: #fff;
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-size: 0.7rem;
+    font-weight: 600;
+}
+

@@ -22,8 +22,8 @@ import Applicants from '../pages/admin/Applicants';
 import Users from '../pages/admin/Users';
 import SystemSetting from '../pages/admin/SystemSetting';
 import SystemReset from '../pages/admin/SystemReset';
-import Document from '../pages/admin/Document';
 import ActivityLogs from '../pages/admin/ActivityLogs';
+import EligibilityResult from '../pages/applicant/EligibilityResult';
 import ArchivedApplicants from '../pages/admin/ArchivedApplicants';
 import Reports from '../pages/admin/Reports';
 import Campuses from '../pages/admin/ManageCampuses.tsx';
@@ -62,10 +62,11 @@ import PotentialApplicants from "../pages/admin/students/PotentialApplicants.tsx
 import EditProfile from "../pages/applicant/EditProfile.tsx";
 import ScholarshipRecommendations from "../pages/applicant/ScholarshipRecommendations.tsx";
 import ScholarshipSelectionApprovals from "../pages/admin/ScholarshipSelectionApprovals.tsx";
+import ActivateAccount from "../pages/ActivateAccount.tsx";
 export function AuthRedirect() {
     const { isAuthenticated, isAdmin, isStudent } = useAuth();
 
-    if (!isAuthenticated) return <Navigate to="/applicant/login" replace />;
+    if (!isAuthenticated) return <Navigate to="/login" replace />;
 
     if (isAdmin) return <Navigate to="/admin" replace />;
     if (isStudent) return <Navigate to="/applicant/home" replace />;
@@ -84,9 +85,8 @@ const AppRoutes: React.FC = () => {
                     <Route index element={<Dashboard />} />
                     <Route path="dashboard" element={<Dashboard />} />
                     <Route path="users" element={<Users />} />
-                    <Route path="documents" element={<Document />} />
                     <Route path="activity-logs" element={<ActivityLogs />} />
-                    <Route path="reports" element={<Reports />} />
+
                     <Route path="campuses" element={<Campuses />} />
                     <Route path="metrics" element={<Metrics />} />
                     <Route path="departments" element={<Departments />} />
@@ -117,16 +117,16 @@ const AppRoutes: React.FC = () => {
 
                     {/* Document Routes */}
                     <Route path="documents">
-                        <Route index element={<Applicants />} />
+                        <Route index element={<Navigate to="requirements" replace />} />
                         <Route path="requirements" element={<SubmittedRequirements />} />
                         <Route path="archives" element={<ArchivedDocuments />} />
                     </Route>
 
                     {/* Report Routes */}
                     <Route path="reports">
+                        <Route index element={<Reports />} />
                         <Route path="applicants" element={<ApplicantsReport/>}/>
                         <Route path="department" element={<CampusReport/>}/>
-
                     </Route>
 
                     <Route path="system">
@@ -140,7 +140,7 @@ const AppRoutes: React.FC = () => {
                     <Route path="bulk-prequalification" element={<BulkAnalysisTool />} />
                     <Route path="fuzzy-logic" element={<FuzzyLogic />} />
 
-                    <Route path="notifications" element={<Notifications/>} />
+                    <Route path="notifications" element={<Notifications adminView />} />
 
                     <Route path="profile" element={<AdminSettings />} />
 
@@ -151,7 +151,6 @@ const AppRoutes: React.FC = () => {
             <Route path="/applicant" element={<ApplicantLayout />}>
                 <Route index element={<AuthRedirect />} />
                 <Route element={<ProtectedRoute allowedRoles={["student"]} />}>
-                    <Route index element={<AuthRedirect />} />
                     <Route path="dashboard" element={<AuthRedirect />} />
                     <Route path="apply" element={<Apply />} />
                     <Route path="status" element={<Applications />} />
@@ -164,6 +163,7 @@ const AppRoutes: React.FC = () => {
                     <Route path="application/:application_id/edit" element={<EditApplication />} />
                     <Route path="profile/edit" element={<EditProfile />} />
                     <Route path="scholarship-recommendations" element={<ScholarshipRecommendations />} />
+                    <Route path="eligibility-result" element={<EligibilityResult />} />
                 </Route>
             </Route>
 
@@ -182,6 +182,7 @@ const AppRoutes: React.FC = () => {
             </Route>
 
             <Route path="complete-profile" element={<CompleteProfile />} />
+            <Route path="activate" element={<ActivateAccount />} />
             <Route path="*" element={<NotFound />} />
             <Route path="auth/callback" element={<AuthCallback />} />
 

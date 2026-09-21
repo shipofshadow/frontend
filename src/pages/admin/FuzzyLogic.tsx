@@ -194,6 +194,30 @@ const FuzzyLogic = () => {
                 }
                 await loadSets();
             } else if (modalType === 'rule') {
+                // Check for duplicate condition combinations
+                const conditionMap: Record<string, string> = {};
+                for (const c of currentItem.conditions || []) {
+                    const varName = getVariableName(c.variable_id);
+                    const setName = sets.find(s => s.set_id === c.set_id)?.set_name;
+                    if (varName && setName) {
+                        conditionMap[varName] = setName;
+                    }
+                }
+
+                const duplicate = rules.find(r => {
+                    if (editMode && r.rule_id === currentItem.rule_id) return false;
+                    const rKeys = Object.keys(r.if);
+                    const cKeys = Object.keys(conditionMap);
+                    if (rKeys.length !== cKeys.length) return false;
+                    return rKeys.every(k => r.if[k] === conditionMap[k]);
+                });
+
+                if (duplicate) {
+                    alert(`A rule with this exact condition combination already exists (Rule #${duplicate.rule_id}: ${duplicate.description || duplicate.then}). Please edit that rule instead.`);
+                    setSaving(false);
+                    return;
+                }
+
                 const ruleData = {
                     consequent_value: currentItem.consequent_value,
                     description: currentItem.description,

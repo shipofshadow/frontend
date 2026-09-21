@@ -6,7 +6,6 @@ const Hero = () => {
     const navigate = useNavigate();
 
     const handleNavigation = (path: string) => {
-        console.log('Navigate to:', path);
         navigate(path);
     };
 

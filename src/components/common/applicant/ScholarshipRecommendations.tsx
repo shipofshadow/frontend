@@ -6,6 +6,9 @@ interface RecommendedScholarship {
     scholarship_description: string;
     grant_amount: number | null;
     score: number; // match %
+    total_slots?: number | null;
+    filled_slots?: number;
+    slots_remaining?: number | null;
 }
 
 interface Props {
@@ -89,6 +92,19 @@ export default function ScholarshipRecommendations({ recommendedScholarships }: 
                                         ₱{scholarship.grant_amount.toLocaleString()}
                                     </span>
                                     <small className="text-muted">per semester</small>
+                                </div>
+                            )}
+
+                            {/* Slots badge */}
+                            {scholarship.total_slots != null && (
+                                <div className="mb-1">
+                                    {scholarship.slots_remaining === 0 ? (
+                                        <span className="slot-badge-full">⚠ Full — No slots available</span>
+                                    ) : scholarship.slots_remaining != null && scholarship.slots_remaining <= 3 ? (
+                                        <span className="slot-badge-low">🔥 Only {scholarship.slots_remaining} slot{scholarship.slots_remaining !== 1 ? 's' : ''} left</span>
+                                    ) : (
+                                        <span className="slot-badge-ok">✓ {scholarship.slots_remaining} slots remaining</span>
+                                    )}
                                 </div>
                             )}
                         </div>

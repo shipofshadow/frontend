@@ -9,6 +9,7 @@ import ScholarshipSummary from "../../common/admin/ScholarshipSummary.tsx";
 
 interface Props {
     applicant: Applicant;
+    onClose?: () => void;
 }
 
 interface RecommendedScholarship {

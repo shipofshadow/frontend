@@ -92,7 +92,6 @@ const ScholarshipDashboard = () => {
         })
             .then(response => {
                 setApplications(response.data)
-                console.log("lol", response.data)
             })
             .catch(error => {
                 console.error("Error fetching evaluatees:", error);
@@ -142,8 +141,6 @@ const ScholarshipDashboard = () => {
                     Authorization: `Bearer ${token}`
                 }
             });
-
-            console.log(response.data);
 
             setRecommendations(prev => ({
                 ...prev,
@@ -235,7 +232,6 @@ const ScholarshipDashboard = () => {
                 headers: { Authorization: `Bearer ${token}` },
             });
             setSelectedApplicant(response.data);
-            console.log(response.data);
         } catch (error) {
             console.error('Error viewing applicant:', error);
             await Swal.fire('Error', 'Failed to load applicant details.', 'error');
@@ -265,7 +261,6 @@ const ScholarshipDashboard = () => {
 
 
     const getCourseInfo = (courseId: number) => {
-        console.log(courseId);
         return courses[courseId] || { name: "Unknown Course", email_domain: "student" };
     };
 
@@ -708,6 +703,95 @@ const ScholarshipDashboard = () => {
                             </div>
                         </div>
                     </div>
+
+                    {/* Scholarship Quotas & Capacity Overview */}
+                    {scholarships.length > 0 && (
+                        <div className="card border-0 shadow-sm mb-4">
+                            <div className="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+                                <h6 className="m-0 fw-bold text-primary d-flex align-items-center gap-2">
+                                    <Award size={18} />
+                                    Scholarship Quotas & Capacity
+                                </h6>
+                                <span className="badge bg-light text-muted border">
+                                    {scholarships.length} Programs
+                                </span>
+                            </div>
+                            <div className="card-body p-0">
+                                <div className="table-responsive">
+                                    <table className="table table-hover align-middle mb-0">
+                                        <thead className="table-light">
+                                            <tr>
+                                                <th className="ps-4">Scholarship Name</th>
+                                                <th>Status</th>
+                                                <th>Filled / Total Slots</th>
+                                                <th style={{ width: '30%' }}>Capacity</th>
+                                                <th className="text-end pe-4">Remaining</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {scholarships.map((s) => {
+                                                const total = s.total_slots;
+                                                const filled = s.filled_slots ?? 0;
+                                                const remaining = s.slots_remaining ?? (total != null ? Math.max(total - filled, 0) : null);
+                                                const pct = total ? Math.min(Math.round((filled / total) * 100), 100) : 0;
+                                                const isFull = total != null && filled >= total;
+                                                const barColor = isFull ? 'bg-danger' : pct >= 80 ? 'bg-warning' : 'bg-success';
+
+                                                return (
+                                                    <tr key={s.id}>
+                                                        <td className="ps-4 fw-medium text-dark">{s.name}</td>
+                                                        <td>
+                                                            <span className={`badge ${s.is_active ? 'bg-success-subtle text-success border border-success-subtle' : 'bg-secondary-subtle text-secondary'}`}>
+                                                                {s.is_active ? 'Active' : 'Inactive'}
+                                                            </span>
+                                                        </td>
+                                                        <td>
+                                                            {total != null ? (
+                                                                <span className="fw-semibold">
+                                                                    {filled} / {total}
+                                                                </span>
+                                                            ) : (
+                                                                <span className="text-muted">Unlimited</span>
+                                                            )}
+                                                        </td>
+                                                        <td>
+                                                            {total != null ? (
+                                                                <div className="d-flex align-items-center gap-2">
+                                                                    <div className="progress flex-grow-1" style={{ height: '8px' }}>
+                                                                        <div
+                                                                            className={`progress-bar ${barColor}`}
+                                                                            style={{ width: `${pct}%` }}
+                                                                            role="progressbar"
+                                                                        />
+                                                                    </div>
+                                                                    <span className="small text-muted fw-semibold" style={{ minWidth: '38px' }}>
+                                                                        {pct}%
+                                                                    </span>
+                                                                </div>
+                                                            ) : (
+                                                                <span className="text-muted">—</span>
+                                                            )}
+                                                        </td>
+                                                        <td className="text-end pe-4">
+                                                            {total != null ? (
+                                                                isFull ? (
+                                                                    <span className="badge bg-danger">Full</span>
+                                                                ) : (
+                                                                    <span className="fw-bold text-dark">{remaining} available</span>
+                                                                )
+                                                            ) : (
+                                                                <span className="text-muted">∞</span>
+                                                            )}
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            })}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    )}
 
                     {/* Process Tabs */}
                     <div className="card border-0 shadow-sm mb-4">
@@ -1348,6 +1432,18 @@ const ScholarshipDashboard = () => {
                                                                                     ₱{rec.amount ? parseFloat(String(rec.amount)).toLocaleString() : 'N/A'}
                                                                                 </span>
                                                                                                     </div>
+                                                                                                    {(() => {
+                                                                                                        const matchedSch = scholarships.find(s => s.id === rec.scholarship_id);
+                                                                                                        if (!matchedSch || matchedSch.total_slots == null) return null;
+                                                                                                        const isFull = (matchedSch.filled_slots ?? 0) >= matchedSch.total_slots;
+                                                                                                        return (
+                                                                                                            <div className="col-auto">
+                                                                                                                <span className={`badge ${isFull ? 'bg-danger text-white' : 'bg-light text-dark border'} px-3 py-2`}>
+                                                                                                                    {matchedSch.filled_slots ?? 0} / {matchedSch.total_slots} Slots {isFull ? '(Quota Full)' : ''}
+                                                                                                                </span>
+                                                                                                            </div>
+                                                                                                        );
+                                                                                                    })()}
                                                                                                 </div>
 
                                                                                                 <div className="collapse" id={`reasons-${app.id}-${index}`}>
@@ -1375,23 +1471,35 @@ const ScholarshipDashboard = () => {
 
                                                                                     <div className="col-lg-4 text-lg-end mt-3 mt-lg-0">
                                                                                         <div className="d-flex flex-column gap-2">
-                                                                                            <button
-                                                                                                className="btn btn-success d-flex align-items-center justify-content-center gap-2 px-4 py-2"
-                                                                                                onClick={() => handleSelectScholarship(app.id, rec.scholarship_id)}
-                                                                                                disabled={loadingId === `${app.id}-${rec.scholarship_id}`}
-                                                                                            >
-                                                                                                {loadingId === `${app.id}-${rec.scholarship_id}` ? (
-                                                                                                    <>
-                                                                                                        <div className="spinner-border spinner-border-sm" role="status"></div>
-                                                                                                        Awarding...
-                                                                                                    </>
-                                                                                                ) : (
-                                                                                                    <>
-                                                                                                        <CheckCircle size={16} />
-                                                                                                        Award This Scholarship
-                                                                                                    </>
-                                                                                                )}
-                                                                                            </button>
+                                                                                            {(() => {
+                                                                                                const matchedSch = scholarships.find(s => s.id === rec.scholarship_id);
+                                                                                                const isFull = matchedSch?.total_slots != null && (matchedSch.filled_slots ?? 0) >= matchedSch.total_slots;
+                                                                                                return (
+                                                                                                    <button
+                                                                                                        className={`btn ${isFull ? 'btn-secondary' : 'btn-success'} d-flex align-items-center justify-content-center gap-2 px-4 py-2`}
+                                                                                                        onClick={() => handleSelectScholarship(app.id, rec.scholarship_id)}
+                                                                                                        disabled={isFull || loadingId === `${app.id}-${rec.scholarship_id}`}
+                                                                                                        title={isFull ? "This scholarship quota is already full" : undefined}
+                                                                                                    >
+                                                                                                        {loadingId === `${app.id}-${rec.scholarship_id}` ? (
+                                                                                                            <>
+                                                                                                                <div className="spinner-border spinner-border-sm" role="status"></div>
+                                                                                                                Awarding...
+                                                                                                            </>
+                                                                                                        ) : isFull ? (
+                                                                                                            <>
+                                                                                                                <XCircle size={16} />
+                                                                                                                Quota Full
+                                                                                                            </>
+                                                                                                        ) : (
+                                                                                                            <>
+                                                                                                                <CheckCircle size={16} />
+                                                                                                                Award This Scholarship
+                                                                                                            </>
+                                                                                                        )}
+                                                                                                    </button>
+                                                                                                );
+                                                                                            })()}
 
                                                                                             <button
                                                                                                 className="btn btn-outline-secondary btn-sm d-flex align-items-center justify-content-center gap-2"

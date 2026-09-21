@@ -15,6 +15,7 @@ import ApplicationClosed from "../../components/common/applicant/ApplicationClos
 import {hasApplied} from "../../services/applicationService.tsx";
 import type {ApplicationStatus} from "../../interfaces/application_status.ts";
 import AlreadyApplied from "../../components/common/applicant/AlreadyApplied.tsx";
+import { useApplicationDraft } from "../../hooks/useApplicationDraft.ts";
 
 const Apply = () => {
     const [step, setStep] = useState("step1");
@@ -22,6 +23,8 @@ const Apply = () => {
     const { user, token } = useAuth();
     const {settings} = useSettings();
     const navigate = useNavigate();
+    const [showDraftBanner, setShowDraftBanner] = useState(false);
+    const draft = useApplicationDraft(token, term?.semester_id ?? null);
 
 
 
@@ -149,6 +152,14 @@ const Apply = () => {
             .then(setApplicationInfo)
             .catch(() => setApplicationInfo({ has_applied: false }))
     }, []);
+
+    // Load draft on mount
+    useEffect(() => {
+        if (!term?.semester_id) return;
+        draft.loadDraft().then(data => {
+            if (data) setShowDraftBanner(true);
+        });
+    }, [term?.semester_id]);
 
     useEffect(() => {
         if (user?.profile) {
@@ -328,6 +339,14 @@ const Apply = () => {
     }, [campusId, departmentId, courseId]);
 
 
+    // Schedule a debounced draft save whenever non-file form data changes
+    useEffect(() => {
+        if (!term?.semester_id) return;
+        // Exclude file fields from draft (cannot be serialised to JSON)
+        const { itr: _itr, grades: _grades, ...saveable } = formData as ApplicationForm & { itr?: unknown; grades?: unknown };
+        draft.scheduleSave(saveable as Record<string, unknown>);
+    }, [formData]);
+
     const handleSubmit = async () => {
         const data = new FormData();
 
@@ -372,7 +391,10 @@ const Apply = () => {
 
             if (!res.ok) throw new Error('Failed to submit application');
 
-            const result = await res.json();
+            await res.json();
+
+            // Clear draft after successful submission
+            await draft.clearDraft();
 
             Swal.fire({
                 icon: 'success',
@@ -382,8 +404,6 @@ const Apply = () => {
             }).then(() => {
                 navigate('/applicant/home');
             });
-
-            console.log(result);
         } catch (error) {
             console.error('Submission error:', error);
             await Swal.fire({
@@ -402,10 +422,47 @@ const Apply = () => {
         return <AlreadyApplied/>
     }
 
+    const resumeDraft = async () => {
+        const data = await draft.loadDraft();
+        if (data) {
+            setFormData(prev => ({ ...prev, ...(data as Partial<ApplicationForm>) }));
+        }
+        setShowDraftBanner(false);
+    };
+
     return (
         <div className="container-fluid p-2">
+            {/* Draft resume banner */}
+            {showDraftBanner && (
+                <div className="alert alert-info alert-dismissible d-flex align-items-center gap-2 mb-2" role="alert">
+                    <i className="fas fa-save" />
+                    <div className="flex-grow-1">
+                        <strong>Saved draft found.</strong> We found a previously saved draft for this application.
+                    </div>
+                    <button className="btn btn-sm btn-primary" onClick={resumeDraft}>Resume Draft</button>
+                    <button
+                        className="btn-close"
+                        onClick={() => setShowDraftBanner(false)}
+                        aria-label="Dismiss"
+                    />
+                </div>
+            )}
             <div className="card">
                 <div className="card-header border-bottom">
+                    {/* Draft save status indicator */}
+                    <div className="d-flex justify-content-end mb-1">
+                        {draft.isSaving ? (
+                            <span className="draft-saving-badge">
+                                <span className="spinner-border spinner-border-sm" style={{ width: 10, height: 10 }} />
+                                Saving draft…
+                            </span>
+                        ) : draft.lastSaved ? (
+                            <span className="draft-saved-badge">
+                                <i className="fas fa-check-circle" />
+                                Draft saved {draft.lastSaved.toLocaleTimeString()}
+                            </span>
+                        ) : null}
+                    </div>
                     <div className="nav nav-pills nav-justified flex-column flex-xl-row nav-wizard">
                         <a
                             className={`nav-item nav-link ${step === "step1" ? "active" : ""}`}

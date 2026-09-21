@@ -14,6 +14,16 @@ export default defineConfig(({ mode }) => {
             port: 5173,
             allowedHosts: ['ischolar.xyz'],
             strictPort: true,
+            proxy: {
+                '/api': {
+                    target: 'http://localhost:8000',
+                    changeOrigin: true,
+                },
+                '/socket.io': {
+                    target: 'http://localhost:8000',
+                    ws: true,
+                },
+            },
         },
         plugins: [react()],
         base: '/',

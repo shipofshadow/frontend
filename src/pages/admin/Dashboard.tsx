@@ -7,7 +7,7 @@ import ApplicationsTrendChart from "../../components/charts/ApplicationsTrendCha
 import { useAuth } from "../../context/AuthContext.tsx";
 
 const Dashboard = () => {
-    const { isFaculty, userCampusId, userCampusName } = useAuth();
+    const { isFaculty, userCampusId, userCampusName, token } = useAuth();
     const [currentDate, setCurrentDate] = useState(new Date());
     const [activeApplicantsCount, setActiveApplicantsCount] = useState<number | null>(null);
     const [approvedApplicantsCount, setApprovedApplicantsCount] = useState<number | null>(null);
@@ -47,10 +47,10 @@ const Dashboard = () => {
 
             try {
                 const [active, approved, pending, rejected] = await Promise.all([
-                    activeApplicants(campusIdParam).catch(() => 0),
-                    approvedApplicants(campusIdParam).catch(() => 0),
-                    pendingApplicants(campusIdParam).catch(() => 0),
-                    rejectedApplicants(campusIdParam).catch(() => 0)
+                    activeApplicants(campusIdParam, token).catch(() => 0),
+                    approvedApplicants(campusIdParam, token).catch(() => 0),
+                    pendingApplicants(campusIdParam, token).catch(() => 0),
+                    rejectedApplicants(campusIdParam, token).catch(() => 0)
                 ]);
 
                 setActiveApplicantsCount(active);
@@ -68,7 +68,7 @@ const Dashboard = () => {
         fetchAllData().catch((err) =>
             console.error("Promise rejection in fetchAllData:", err)
         );
-    }, [isFaculty, userCampusId]);
+    }, [isFaculty, userCampusId, token]);
 
     const formatDate = (date: Date) => {
         const options: Intl.DateTimeFormatOptions = { month: 'long', day: 'numeric', year: 'numeric' };

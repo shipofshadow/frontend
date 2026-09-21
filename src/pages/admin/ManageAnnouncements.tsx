@@ -27,12 +27,15 @@ const ManageAnnouncements = () => {
     const [isEditing, setIsEditing] = useState(false);
     const [editId, setEditId] = useState<number | null>(null);
 
+    const [campuses, setCampuses] = useState<{ id: number; name: string }[]>([]);
+
     const initialFormState = {
         title: '',
         message: '',
         priority: 'normal',
         audience_type: 'all',
         role_filter: 'student',
+        campus_filter: '',
         publish_now: true
     };
     const [formData, setFormData] = useState(initialFormState);
@@ -53,6 +56,15 @@ const ManageAnnouncements = () => {
 
     useEffect(() => {
         fetchAnnouncements();
+        fetch(`${API_BASE_URL}/api/campus`, {
+            headers: token ? { Authorization: `Bearer ${token}` } : {}
+        })
+            .then(res => res.json())
+            .then(data => {
+                if (Array.isArray(data)) setCampuses(data);
+                else if (data?.data && Array.isArray(data.data)) setCampuses(data.data);
+            })
+            .catch(() => {});
     }, [token]);
 
     const handleEdit = (item: Announcement) => {
@@ -64,6 +76,7 @@ const ManageAnnouncements = () => {
             priority: item.priority,
             audience_type: item.audience_type,
             role_filter: item.audience_filter?.role || 'student',
+            campus_filter: (item.audience_filter as any)?.campus_id || '',
             publish_now: false // Default to false when editing
         });
         setShowModal(true);
@@ -133,7 +146,10 @@ const ManageAnnouncements = () => {
             message: formData.message,
             priority: formData.priority,
             audience_type: formData.audience_type,
-            audience_filter: formData.audience_type === 'role' ? { role: formData.role_filter } : {},
+            audience_filter: formData.audience_type === 'role' ? {
+                role: formData.role_filter,
+                ...(formData.campus_filter ? { campus_id: formData.campus_filter } : {})
+            } : {},
             publish_now: !isEditing && formData.publish_now
         };
 
@@ -354,6 +370,23 @@ const ManageAnnouncements = () => {
                                                 </div>
                                             </div>
                                         </div>
+
+                                        {formData.audience_type === 'role' && (
+                                            <div className="mb-3">
+                                                <label className="form-label fw-bold small text-uppercase text-muted">Target Campus</label>
+                                                <select
+                                                    className="form-select bg-light border-0"
+                                                    value={formData.campus_filter}
+                                                    onChange={e => setFormData({...formData, campus_filter: e.target.value})}
+                                                    disabled={isEditing && announcements.find(a => a.id === editId)?.is_published}
+                                                >
+                                                    <option value="">All Campuses</option>
+                                                    {campuses.map(c => (
+                                                        <option key={c.id} value={c.id}>{c.name}</option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                        )}
 
                                         <div className="mb-3">
                                             <label className="form-label fw-bold small text-uppercase text-muted">Message</label>

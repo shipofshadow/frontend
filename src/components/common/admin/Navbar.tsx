@@ -15,8 +15,6 @@ const Navbar: React.FC = () => {
     const path = avatar
         ? `${API_BASE_URL}/api/profile/avatar/${encodeURIComponent(avatar.split("/").pop()!)}`
         : "/default.png";  // served from public folder
-    console.log(user)
-
 
     useEffect(() => {
   feather.replace();

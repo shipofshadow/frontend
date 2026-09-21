@@ -2,14 +2,17 @@ import React from 'react';
 import {NotificationHistory} from "../../components/NotificationHistory.tsx";
 
 
-const Notifications: React.FC = () => {
+interface NotificationsProps {
+    adminView?: boolean;
+}
+
+const Notifications: React.FC<NotificationsProps> = ({ adminView = false }) => {
 
     return (
-        <div className="container py-5">
+        <div className="container py-4">
             <div className="row justify-content-center">
                 <div className="col-xl-12 col-lg-12">
-
-                    <NotificationHistory/>
+                    <NotificationHistory adminView={adminView} />
                 </div>
             </div>
         </div>

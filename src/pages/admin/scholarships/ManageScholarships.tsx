@@ -33,6 +33,9 @@ interface Scholarship {
     name: string;
     description: string | null;
     grant_amount: number;
+    total_slots?: number | null;
+    filled_slots?: number;
+    slots_remaining?: number | null;
     is_active: boolean;
     created_at: string;
     updated_at: string;
@@ -45,6 +48,7 @@ interface ScholarshipForm {
     description: string;
     is_active: boolean;
     grant_amount: string | number;
+    total_slots?: string | number;
     rules: {
         min_gwa?: string | number;
         max_gwa?: string | number;
@@ -72,6 +76,7 @@ const ManageScholarships = () => {
         name: "",
         description: "",
         grant_amount: "",
+        total_slots: "",
         is_active: true,
         rules: {
             min_gwa: "",
@@ -118,6 +123,7 @@ const ManageScholarships = () => {
             name: form.name,
             description: form.description || null,
             grant_amount: form.grant_amount ? Number(form.grant_amount) : 0,
+            total_slots: form.total_slots ? Number(form.total_slots) : null,
             is_active: form.is_active,
             rules: {
                 min_gwa: form.rules.min_gwa ? Number(form.rules.min_gwa) : null,
@@ -150,6 +156,7 @@ const ManageScholarships = () => {
                 name: "",
                 description: "",
                 grant_amount: "",
+                total_slots: "",
                 is_active: true,
                 rules: {
                     min_gwa: "",
@@ -231,6 +238,7 @@ const ManageScholarships = () => {
             name: scholarship.name,
             description: scholarship.description || "",
             grant_amount: scholarship.grant_amount || "",
+            total_slots: scholarship.total_slots ?? "",
             is_active: scholarship.is_active,
             rules: {
                 min_gwa: scholarship.rules?.min_gwa || "",
@@ -430,6 +438,7 @@ const ManageScholarships = () => {
                                         <th className="border-0">Name</th>
                                         <th className="border-0">Description</th>
                                         <th className="border-0 text-end">Grant Amount</th>
+                                        <th className="border-0 text-center">Slots</th>
                                         <th className="border-0 text-center">GWA Range</th>
                                         <th className="border-0 text-end">Income Limit</th>
                                         <th className="border-0 text-center">Priorities</th>
@@ -458,6 +467,19 @@ const ManageScholarships = () => {
                                             </td>
                                             <td className="text-end fw-semibold text-success">
                                                 ₱{scholarship.grant_amount.toLocaleString()}
+                                            </td>
+                                            <td className="text-center small">
+                                                {scholarship.total_slots != null ? (
+                                                    <span className={`badge ${
+                                                        (scholarship.filled_slots ?? 0) >= scholarship.total_slots
+                                                            ? "bg-danger"
+                                                            : "bg-light text-dark border"
+                                                    }`}>
+                                                        {scholarship.filled_slots ?? 0} / {scholarship.total_slots}
+                                                    </span>
+                                                ) : (
+                                                    <span className="text-muted">Unlimited</span>
+                                                )}
                                             </td>
                                             <td className="text-center small">
                                                 <span className="badge bg-light text-dark border">
@@ -600,6 +622,20 @@ const ManageScholarships = () => {
                                                 </div>
                                             </div>
                                         </div>
+                                        <div className="info-row">
+                                            <div className="row">
+                                                <div className="col-4 text-muted small">Capacity / Slots:</div>
+                                                <div className="col-8">
+                                                    {viewScholarship.total_slots != null ? (
+                                                        <span className="fw-semibold">
+                                                            {viewScholarship.filled_slots ?? 0} filled of {viewScholarship.total_slots} slots ({viewScholarship.slots_remaining ?? 0} remaining)
+                                                        </span>
+                                                    ) : (
+                                                        <span className="text-muted">Unlimited slots</span>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
 
@@ -718,7 +754,7 @@ const ManageScholarships = () => {
                                         </h6>
                                     </div>
 
-                                    <div className="col-md-4">
+                                    <div className="col-md-3">
                                         <label htmlFor="addScholarshipName" className="form-label fw-semibold">
                                             Scholarship Name <span className="text-danger">*</span>
                                         </label>
@@ -733,7 +769,7 @@ const ManageScholarships = () => {
                                         />
                                     </div>
 
-                                    <div className="col-md-4">
+                                    <div className="col-md-3">
                                         <label className="form-label fw-semibold">Grant Amount (₱)</label>
                                         <input
                                             type="number"
@@ -744,7 +780,22 @@ const ManageScholarships = () => {
                                         />
                                     </div>
 
-                                    <div className="col-md-4">
+                                    <div className="col-md-3">
+                                        <label htmlFor="addTotalSlots" className="form-label fw-semibold">
+                                            Total Slots
+                                        </label>
+                                        <input
+                                            id="addTotalSlots"
+                                            type="number"
+                                            min="1"
+                                            className="form-control"
+                                            placeholder="Leave blank = unlimited"
+                                            value={newScholarship.total_slots ?? ""}
+                                            onChange={(e) => setNewScholarship({ ...newScholarship, total_slots: e.target.value })}
+                                        />
+                                    </div>
+
+                                    <div className="col-md-3">
                                         <label htmlFor="addIsActive" className="form-label fw-semibold">
                                             Status
                                         </label>
@@ -1063,7 +1114,7 @@ const ManageScholarships = () => {
                                             </h6>
                                         </div>
 
-                                        <div className="col-md-4">
+                                        <div className="col-md-3">
                                             <label htmlFor="editScholarshipName" className="form-label fw-semibold">
                                                 Scholarship Name <span className="text-danger">*</span>
                                             </label>
@@ -1078,7 +1129,7 @@ const ManageScholarships = () => {
                                             />
                                         </div>
 
-                                        <div className="col-md-4">
+                                        <div className="col-md-3">
                                             <label className="form-label fw-semibold">Grant Amount (₱)</label>
                                             <input
                                                 type="number"
@@ -1089,7 +1140,22 @@ const ManageScholarships = () => {
                                             />
                                         </div>
 
-                                        <div className="col-md-4">
+                                        <div className="col-md-3">
+                                            <label htmlFor="editTotalSlots" className="form-label fw-semibold">
+                                                Total Slots
+                                            </label>
+                                            <input
+                                                id="editTotalSlots"
+                                                type="number"
+                                                min="1"
+                                                className="form-control"
+                                                placeholder="Leave blank = unlimited"
+                                                value={editScholarship.total_slots ?? ""}
+                                                onChange={(e) => setEditScholarship({ ...editScholarship, total_slots: e.target.value })}
+                                            />
+                                        </div>
+
+                                        <div className="col-md-3">
                                             <label htmlFor="editIsActive" className="form-label fw-semibold">
                                                 Status
                                             </label>

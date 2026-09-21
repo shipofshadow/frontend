@@ -22,6 +22,8 @@ import axios from "axios";
 import { useParams, useNavigate } from "react-router-dom";
 import FilePreview from "../../components/admin/FilePreview.tsx";
 import ScholarshipRecommendations from "./ScholarshipRecommendations.tsx";
+import ApplicationTimeline from "../../components/common/applicant/ApplicationTimeline.tsx";
+import FuzzyScoreExplanation from "../../components/common/applicant/FuzzyScoreExplanation.tsx";
 
 // Type Definitions (Keeping these for context)
 interface Student {
@@ -508,6 +510,16 @@ const Application = () => {
                                     </p>
                                 </div>
                             )}
+                            {/* Fuzzy Score Explanation */}
+                            {scholarship.common.evaluation.score != null && (
+                                <FuzzyScoreExplanation
+                                    explanation={(scholarship.common.evaluation as any).explanation ?? null}
+                                    classification={scholarship.common.evaluation.classification}
+                                    score={scholarship.common.evaluation.score}
+                                    gwa={scholarship.common.evaluation.gwa}
+                                    income={scholarship.common.evaluation.income}
+                                />
+                            )}
                         </div>
                     </div>
                 );
@@ -578,6 +590,22 @@ const Application = () => {
                                         </div>
                                     </div>
                                 </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Application Status Timeline */}
+                <div className="row mb-3">
+                    <div className="col">
+                        <div className="card border-0 shadow-sm">
+                            <div className="card-body px-4 pt-3 pb-2">
+                                <div className="small text-muted fw-semibold mb-1">Application Progress</div>
+                                <ApplicationTimeline
+                                    status={scholarship.status}
+                                    submittedAt={scholarship.common.application.submitted_at}
+                                    approvedAt={scholarship.approved_at}
+                                />
                             </div>
                         </div>
                     </div>
