@@ -389,9 +389,12 @@ const Apply = () => {
                 body: data,
             });
 
-            if (!res.ok) throw new Error('Failed to submit application');
+            const resData = await res.json().catch(() => ({}));
 
-            await res.json();
+            if (!res.ok) {
+                const errMsg = resData?.error || 'Failed to submit application';
+                throw new Error(errMsg);
+            }
 
             // Clear draft after successful submission
             await draft.clearDraft();
@@ -409,10 +412,11 @@ const Apply = () => {
             await Swal.fire({
                 icon: 'error',
                 title: 'Submission Failed',
-                text: 'There was an error submitting your application. Please try again later.',
+                text: error instanceof Error ? error.message : 'There was an error submitting your application. Please try again later.',
             });
         }
     };
+
 
     if (!settings.isApplicationOpen) {
         return <ApplicationClosed />;
@@ -1396,8 +1400,8 @@ const Apply = () => {
                                     <div className="row small mb-2 align-items-center">
                                         <div className="col-sm-3 text-muted">ITR (Income Tax Return):</div>
                                         <div className="col">
-                                            {formData.itr ? (
-                                                <span className="badge bg-success">Uploaded</span>
+                                            {itrFiles.length > 0 ? (
+                                                <span className="badge bg-success">Uploaded ({itrFiles.length} file{itrFiles.length > 1 ? 's' : ''})</span>
                                             ) : (
                                                 <span className="badge bg-danger">Not Uploaded</span>
                                             )}
