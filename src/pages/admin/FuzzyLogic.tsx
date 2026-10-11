@@ -55,13 +55,15 @@ const SET_COLORS = [
 const getSetColor = (index: number) => SET_COLORS[index % SET_COLORS.length];
 
 // Format numbers nicely (e.g. currency or decimal)
-const formatScalar = (val: number, isCurrency: boolean = false) => {
+const formatScalar = (val: number | string | undefined | null, isCurrency: boolean = false) => {
+    const num = Number(val);
+    if (val === undefined || val === null || isNaN(num)) return '0';
     if (isCurrency) {
-        if (val >= 1000000) return `₱${(val / 1000000).toFixed(1)}M`;
-        if (val >= 1000) return `₱${(val / 1000).toFixed(0)}k`;
-        return `₱${val.toLocaleString()}`;
+        if (num >= 1000000) return `₱${(num / 1000000).toFixed(1)}M`;
+        if (num >= 1000) return `₱${(num / 1000).toFixed(0)}k`;
+        return `₱${num.toLocaleString()}`;
     }
-    return val >= 100 ? val.toLocaleString() : val.toFixed(2);
+    return num >= 100 ? num.toLocaleString() : num.toFixed(2);
 };
 
 // ── Multi-Membership Function Visualizer Canvas ──────────────────────────────
@@ -101,10 +103,13 @@ const MultiVariableCurveCanvas: React.FC<MultiCurveProps> = ({
     // Calculate degree of membership for a set given a crisp value
     const calcDegree = (set: FuzzySet, x: number | undefined) => {
         if (x === undefined) return 0;
-        const { param_a: a, param_b: b, param_c: c } = set;
-        if (x >= a && x <= b && b > a) return (x - a) / (b - a);
-        if (x >= b && x <= c && c > b) return (c - x) / (c - b);
-        if (x === b) return 1;
+        const a = Number(set.param_a);
+        const b = Number(set.param_b);
+        const c = Number(set.param_c);
+        const numX = Number(x);
+        if (numX >= a && numX <= b && b > a) return (numX - a) / (b - a);
+        if (numX >= b && numX <= c && c > b) return (c - numX) / (c - b);
+        if (numX === b) return 1;
         return 0;
     };
 
@@ -342,7 +347,7 @@ export const FuzzyLogic: React.FC = () => {
                 const varSets = sets.filter((s) => s.variable_id === v.variable_id);
                 if (varSets.length > 0) {
                     const mid = varSets[Math.floor(varSets.length / 2)];
-                    defaults[v.variable_name] = mid.param_b;
+                    defaults[v.variable_name] = Number(mid.param_b) || 0;
                 } else {
                     defaults[v.variable_name] = 1.0;
                 }
@@ -375,7 +380,13 @@ export const FuzzyLogic: React.FC = () => {
         const response = await fetch(`${API_BASE_URL}/api/fuzzy/sets`);
         if (!response.ok) throw new Error('Failed to load sets');
         const data = await response.json();
-        setSets(data);
+        const normalized = (data || []).map((s: any) => ({
+            ...s,
+            param_a: Number(s.param_a),
+            param_b: Number(s.param_b),
+            param_c: Number(s.param_c)
+        }));
+        setSets(normalized);
     };
 
     const loadRules = async () => {
@@ -406,10 +417,13 @@ export const FuzzyLogic: React.FC = () => {
             const val = simInputs[varName];
             let degree = 0;
             if (val !== undefined) {
-                const { param_a: a, param_b: b, param_c: c } = set;
-                if (val >= a && val <= b && b > a) degree = (val - a) / (b - a);
-                else if (val >= b && val <= c && c > b) degree = (c - val) / (c - b);
-                else if (val === b) degree = 1;
+                const a = Number(set.param_a);
+                const b = Number(set.param_b);
+                const c = Number(set.param_c);
+                const numVal = Number(val);
+                if (numVal >= a && numVal <= b && b > a) degree = (numVal - a) / (b - a);
+                else if (numVal >= b && numVal <= c && c > b) degree = (c - numVal) / (c - b);
+                else if (numVal === b) degree = 1;
             }
             setMemberships[`${varName}:${set.set_name.toLowerCase()}`] = Math.max(0, Math.min(1, degree));
         });
@@ -758,11 +772,11 @@ export const FuzzyLogic: React.FC = () => {
                             {variables.map((variable) => {
                                 const varSets = getSetsForVariable(variable.variable_id);
                                 const isIncome = variable.variable_name.toLowerCase().includes('income');
-                                const allParams = varSets.flatMap((s) => [s.param_a, s.param_b, s.param_c]);
+                                const allParams = varSets.flatMap((s) => [Number(s.param_a), Number(s.param_b), Number(s.param_c)]);
                                 const min = allParams.length > 0 ? Math.min(...allParams) : 0;
                                 const max = allParams.length > 0 ? Math.max(...allParams) : 100;
                                 const step = isIncome ? 5000 : max > 10 ? 1 : 0.05;
-                                const currentVal = simInputs[variable.variable_name] ?? min;
+                                const currentVal = Number(simInputs[variable.variable_name] ?? min);
 
                                 return (
                                     <div key={variable.variable_id} className="fz-card p-4">

@@ -138,9 +138,10 @@ const ScholarshipRecommendations: React.FC<Props> = ({ applicationId: applicatio
         }
     };
 
-    const getScoreBadgeClass = (score: number) => {
-        if (score >= 90) return 'bg-success';
-        if (score >= 70) return 'bg-warning text-dark';
+    const getScoreBadgeClass = (score: number | string) => {
+        const num = Number(score);
+        if (num >= 90) return 'bg-success';
+        if (num >= 70) return 'bg-warning text-dark';
         return 'bg-info';
     };
 
@@ -208,7 +209,7 @@ const ScholarshipRecommendations: React.FC<Props> = ({ applicationId: applicatio
                             {evaluation.score !== undefined && (
                                 <div className="col-sm-3">
                                     <div className="text-muted small">Score</div>
-                                    <div className="fw-bold fs-5">{evaluation.score?.toFixed(1)}</div>
+                                    <div className="fw-bold fs-5">{Number(evaluation.score).toFixed(1)}</div>
                                 </div>
                             )}
                             {evaluation.classification && (
@@ -251,7 +252,7 @@ const ScholarshipRecommendations: React.FC<Props> = ({ applicationId: applicatio
                                         <div className="d-flex justify-content-between align-items-start mb-2">
                                             <h6 className="card-title fw-bold mb-0 me-2">{rec.name}</h6>
                                             <span className={`badge ${getScoreBadgeClass(rec.score)} rounded-pill`}>
-                                                {rec.score.toFixed(0)}%
+                                                {Number(rec.score).toFixed(0)}%
                                             </span>
                                         </div>
 
@@ -274,12 +275,12 @@ const ScholarshipRecommendations: React.FC<Props> = ({ applicationId: applicatio
                                         <div className="mb-3">
                                             <div className="d-flex justify-content-between mb-1">
                                                 <small className="text-muted">Eligibility Score</small>
-                                                <small className="text-muted">{rec.score.toFixed(1)}%</small>
+                                                <small className="text-muted">{Number(rec.score).toFixed(1)}%</small>
                                             </div>
                                             <div className="progress" style={{ height: '6px' }}>
                                                 <div
                                                     className={`progress-bar ${getScoreBadgeClass(rec.score)}`}
-                                                    style={{ width: `${rec.score}%` }}
+                                                    style={{ width: `${Number(rec.score)}%` }}
                                                 />
                                             </div>
                                         </div>

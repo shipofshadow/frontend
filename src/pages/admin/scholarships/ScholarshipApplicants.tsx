@@ -471,7 +471,7 @@ const ScholarshipApplicants: React.FC = () => {
                 {
                     scholarship_id: selectedScholarshipId,
                     awarded_amount: amount,
-                    selection_reason: selectionReason || `Selected based on evaluation score: ${selectedRec.score.toFixed(3)} - ${selectedRec.classification}`
+                    selection_reason: selectionReason || `Selected based on evaluation score: ${Number(selectedRec.score).toFixed(3)} - ${selectedRec.classification}`
                 },
                 { headers: { Authorization: `Bearer ${token}` } }
             );
@@ -1113,7 +1113,7 @@ const ScholarshipApplicants: React.FC = () => {
                                                         </div>
                                                         <div className="d-flex gap-2 mb-3">
                                                             <span className="badge bg-primary">
-                                                                Score: {(rec.score).toFixed(1)}%
+                                                                Score: {Number(rec.score).toFixed(1)}%
                                                             </span>
                                                             {getClassificationBadge(rec.classification)}
                                                         </div>
@@ -1248,7 +1248,7 @@ const ScholarshipApplicants: React.FC = () => {
                                                                             <div className="fw-bold text-success">{formatCurrency(rec.amount)}</div>
                                                                             <div className="small">
                                                                                 <span className="badge bg-primary bg-opacity-10 text-primary me-1">
-                                                                                    {(rec.score).toFixed(1)}%
+                                                                                    {Number(rec.score).toFixed(1)}%
                                                                                 </span>
                                                                                 {getClassificationBadge(rec.classification)}
                                                                                 {rec.selection_status === 'selected' && (
