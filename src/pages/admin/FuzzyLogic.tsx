@@ -628,15 +628,7 @@ export const FuzzyLogic: React.FC = () => {
             <div className="fz-hero-banner mb-4">
                 <div className="row align-items-center g-3">
                     <div className="col-lg-7">
-                        <div className="d-flex align-items-center gap-2 mb-2">
-                            <span className="fz-hero-badge">
-                                <span className="fz-status-dot" />
-                                Mamdani Engine Active
-                            </span>
-                            <span className="badge bg-white bg-opacity-10 text-white rounded-pill px-3 py-1 font-monospace" style={{ fontSize: '0.72rem' }}>
-                                Centroid Defuzzification
-                            </span>
-                        </div>
+
                         <h2 className="h3 fw-bold mb-1 text-white">Fuzzy Logic Decision Studio</h2>
                         <p className="text-slate-300 small mb-3 opacity-85">
                             Interactive visual modeling and real-time simulation of scholarship eligibility rules using multi-variable fuzzy inference.
@@ -845,7 +837,7 @@ export const FuzzyLogic: React.FC = () => {
                                                 const color = getSetColor(idx);
                                                 const deg =
                                                     simResults.setMemberships[
-                                                        `${variable.variable_name}:${set.set_name.toLowerCase()}`
+                                                    `${variable.variable_name}:${set.set_name.toLowerCase()}`
                                                     ] || 0;
                                                 return (
                                                     <div key={set.set_id} className="col-sm-4">
@@ -1014,13 +1006,12 @@ export const FuzzyLogic: React.FC = () => {
                                                         ))}
                                                         <ArrowRight size={13} className="text-muted" />
                                                         <span
-                                                            className={`badge ${
-                                                                rule.then >= 0.8
-                                                                    ? 'bg-success text-white'
-                                                                    : rule.then >= 0.6
+                                                            className={`badge ${rule.then >= 0.8
+                                                                ? 'bg-success text-white'
+                                                                : rule.then >= 0.6
                                                                     ? 'bg-warning text-dark'
                                                                     : 'bg-primary text-white'
-                                                            }`}
+                                                                }`}
                                                         >
                                                             {(rule.then * 100).toFixed(0)}% Eligible
                                                         </span>
@@ -1127,10 +1118,10 @@ export const FuzzyLogic: React.FC = () => {
                                                         score >= 80
                                                             ? 'fz-cell-score-high'
                                                             : score >= 60
-                                                            ? 'fz-cell-score-medium'
-                                                            : score >= 40
-                                                            ? 'fz-cell-score-low'
-                                                            : 'fz-cell-score-danger';
+                                                                ? 'fz-cell-score-medium'
+                                                                : score >= 40
+                                                                    ? 'fz-cell-score-low'
+                                                                    : 'fz-cell-score-danger';
 
                                                     return (
                                                         <td
@@ -1235,13 +1226,12 @@ export const FuzzyLogic: React.FC = () => {
                                                 <ArrowRight size={14} className="text-muted" />
                                                 <span className="badge bg-secondary-subtle text-secondary fw-bold">THEN</span>
                                                 <span
-                                                    className={`badge px-3 py-1 fs-6 ${
-                                                        rule.then >= 0.8
-                                                            ? 'bg-success text-white'
-                                                            : rule.then >= 0.6
+                                                    className={`badge px-3 py-1 fs-6 ${rule.then >= 0.8
+                                                        ? 'bg-success text-white'
+                                                        : rule.then >= 0.6
                                                             ? 'bg-warning text-dark'
                                                             : 'bg-primary text-white'
-                                                    }`}
+                                                        }`}
                                                 >
                                                     {(rule.then * 100).toFixed(0)}% Eligible
                                                 </span>

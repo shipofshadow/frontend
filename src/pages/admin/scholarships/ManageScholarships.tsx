@@ -1,10 +1,8 @@
-import { useRef, useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useAuth } from "../../../context/AuthContext.tsx";
 import axios from "axios";
 import { API_BASE_URL } from "../../../config.ts";
 import Swal from "sweetalert2";
-import { DataTable } from "simple-datatables";
-import "simple-datatables/dist/style.css";
 
 interface ScholarshipPriorities {
     must_be_ofw: boolean;
@@ -66,10 +64,14 @@ interface ScholarshipForm {
 
 const ManageScholarships = () => {
     const { token } = useAuth();
-    const tableRef = useRef<HTMLTableElement>(null);
     const [scholarships, setScholarships] = useState<Scholarship[]>([]);
-    const [datatable, setDatatable] = useState<DataTable | null>(null);
     const [viewScholarship, setViewScholarship] = useState<Scholarship | null>(null);
+    const [searchTerm, setSearchTerm] = useState("");
+    const [statusFilter, setStatusFilter] = useState("all");
+    const [sortColumn, setSortColumn] = useState<string>("name");
+    const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+    const [currentPage, setCurrentPage] = useState(1);
+    const [itemsPerPage, setItemsPerPage] = useState(10);
 
     const [newScholarship, setNewScholarship] = useState<ScholarshipForm>({
         id: null,
@@ -107,11 +109,6 @@ const ManageScholarships = () => {
             });
 
             setScholarships(response.data);
-
-            if (datatable) {
-                datatable.destroy();
-                setDatatable(null);
-            }
         } catch (error) {
             console.error("Error fetching scholarships:", error);
             await Swal.fire("Error", "Failed to load scholarships.", "error");
@@ -271,20 +268,66 @@ const ManageScholarships = () => {
         );
     }, []);
 
-    useEffect(() => {
-        if (tableRef.current && scholarships.length > 0 && !datatable) {
-            const dt = new DataTable(tableRef.current, {
-                searchable: true,
-                perPageSelect: [5, 10, 25, 50],
-                perPage: 10,
-                labels: {
-                    placeholder: "Search scholarships...",
-                    noRows: "No scholarships found",
-                }
-            });
-            setDatatable(dt);
+    const handleSort = (column: string) => {
+        if (sortColumn === column) {
+            setSortDirection(prev => prev === "asc" ? "desc" : "asc");
+        } else {
+            setSortColumn(column);
+            setSortDirection("asc");
         }
-    }, [scholarships, datatable]);
+    };
+
+    const filteredScholarships = useMemo(() => {
+        let result = [...scholarships];
+
+        if (statusFilter !== "all") {
+            const isActive = statusFilter === "active";
+            result = result.filter(s => s.is_active === isActive);
+        }
+
+        if (searchTerm.trim()) {
+            const term = searchTerm.toLowerCase();
+            result = result.filter(s =>
+                s.name.toLowerCase().includes(term) ||
+                (s.description && s.description.toLowerCase().includes(term))
+            );
+        }
+
+        result.sort((a, b) => {
+            let valA: any = a[sortColumn as keyof Scholarship];
+            let valB: any = b[sortColumn as keyof Scholarship];
+
+            if (sortColumn === "grant_amount") {
+                valA = a.grant_amount || 0;
+                valB = b.grant_amount || 0;
+            } else if (sortColumn === "slots") {
+                valA = a.total_slots ?? 999999;
+                valB = b.total_slots ?? 999999;
+            } else if (sortColumn === "name") {
+                valA = (a.name || "").toLowerCase();
+                valB = (b.name || "").toLowerCase();
+            } else if (sortColumn === "status") {
+                valA = a.is_active ? 1 : 0;
+                valB = b.is_active ? 1 : 0;
+            }
+
+            if (valA < valB) return sortDirection === "asc" ? -1 : 1;
+            if (valA > valB) return sortDirection === "asc" ? 1 : -1;
+            return 0;
+        });
+
+        return result;
+    }, [scholarships, searchTerm, statusFilter, sortColumn, sortDirection]);
+
+    const totalPages = Math.ceil(filteredScholarships.length / itemsPerPage) || 1;
+    const paginatedScholarships = useMemo(() => {
+        const start = (currentPage - 1) * itemsPerPage;
+        return filteredScholarships.slice(start, start + itemsPerPage);
+    }, [filteredScholarships, currentPage, itemsPerPage]);
+
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchTerm, statusFilter]);
 
     return (
         <>
@@ -423,31 +466,88 @@ const ManageScholarships = () => {
                 {/* Table Card */}
                 <div className="card border-0 shadow-sm">
                     <div className="card-header bg-white border-bottom py-3">
-                        <h5 className="mb-0 fw-semibold">
-                            <i className="fas fa-list me-2 text-primary"></i>
-                            Scholarship Programs
-                        </h5>
+                        <div className="d-flex flex-wrap align-items-center justify-content-between gap-3">
+                            <h5 className="mb-0 fw-semibold">
+                                <i className="fas fa-list me-2 text-primary"></i>
+                                Scholarship Programs
+                            </h5>
+                            <div className="d-flex flex-wrap align-items-center gap-2">
+                                <div className="input-group input-group-sm" style={{ width: '220px' }}>
+                                    <span className="input-group-text bg-light border-end-0">
+                                        <i className="fas fa-search text-muted"></i>
+                                    </span>
+                                    <input
+                                        type="text"
+                                        className="form-control border-start-0"
+                                        placeholder="Search scholarships..."
+                                        value={searchTerm}
+                                        onChange={(e) => setSearchTerm(e.target.value)}
+                                    />
+                                    {searchTerm && (
+                                        <button
+                                            className="btn btn-outline-secondary border-start-0"
+                                            type="button"
+                                            onClick={() => setSearchTerm("")}
+                                        >
+                                            <i className="fas fa-times"></i>
+                                        </button>
+                                    )}
+                                </div>
+                                <select
+                                    className="form-select form-select-sm"
+                                    style={{ width: '130px' }}
+                                    value={statusFilter}
+                                    onChange={(e) => setStatusFilter(e.target.value)}
+                                >
+                                    <option value="all">All Status</option>
+                                    <option value="active">Active</option>
+                                    <option value="inactive">Inactive</option>
+                                </select>
+                                <select
+                                    className="form-select form-select-sm"
+                                    style={{ width: '110px' }}
+                                    value={itemsPerPage}
+                                    onChange={(e) => {
+                                        setItemsPerPage(Number(e.target.value));
+                                        setCurrentPage(1);
+                                    }}
+                                >
+                                    <option value={5}>5 / page</option>
+                                    <option value={10}>10 / page</option>
+                                    <option value={25}>25 / page</option>
+                                    <option value={50}>50 / page</option>
+                                </select>
+                            </div>
+                        </div>
                     </div>
 
                     <div className="card-body p-0">
-                        {scholarships.length > 0 ? (
+                        {paginatedScholarships.length > 0 ? (
                             <div className="table-responsive">
-                                <table ref={tableRef} className="table table-hover mb-0 align-middle">
+                                <table className="table table-hover mb-0 align-middle">
                                     <thead>
                                     <tr>
-                                        <th className="border-0">Name</th>
+                                        <th className="border-0 cursor-pointer" onClick={() => handleSort("name")} style={{ cursor: 'pointer' }}>
+                                            Name {sortColumn === "name" ? (sortDirection === "asc" ? <i className="fas fa-sort-up ms-1 text-primary"></i> : <i className="fas fa-sort-down ms-1 text-primary"></i>) : <i className="fas fa-sort ms-1 text-muted opacity-50"></i>}
+                                        </th>
                                         <th className="border-0">Description</th>
-                                        <th className="border-0 text-end">Grant Amount</th>
-                                        <th className="border-0 text-center">Slots</th>
+                                        <th className="border-0 text-end cursor-pointer" onClick={() => handleSort("grant_amount")} style={{ cursor: 'pointer' }}>
+                                            Grant Amount {sortColumn === "grant_amount" ? (sortDirection === "asc" ? <i className="fas fa-sort-up ms-1 text-primary"></i> : <i className="fas fa-sort-down ms-1 text-primary"></i>) : <i className="fas fa-sort ms-1 text-muted opacity-50"></i>}
+                                        </th>
+                                        <th className="border-0 text-center cursor-pointer" onClick={() => handleSort("slots")} style={{ cursor: 'pointer' }}>
+                                            Slots {sortColumn === "slots" ? (sortDirection === "asc" ? <i className="fas fa-sort-up ms-1 text-primary"></i> : <i className="fas fa-sort-down ms-1 text-primary"></i>) : <i className="fas fa-sort ms-1 text-muted opacity-50"></i>}
+                                        </th>
                                         <th className="border-0 text-center">GWA Range</th>
                                         <th className="border-0 text-end">Income Limit</th>
                                         <th className="border-0 text-center">Priorities</th>
-                                        <th className="border-0 text-center">Status</th>
+                                        <th className="border-0 text-center cursor-pointer" onClick={() => handleSort("status")} style={{ cursor: 'pointer' }}>
+                                            Status {sortColumn === "status" ? (sortDirection === "asc" ? <i className="fas fa-sort-up ms-1 text-primary"></i> : <i className="fas fa-sort-down ms-1 text-primary"></i>) : <i className="fas fa-sort ms-1 text-muted opacity-50"></i>}
+                                        </th>
                                         <th className="border-0 text-center">Actions</th>
                                     </tr>
                                     </thead>
                                     <tbody>
-                                    {scholarships.map((scholarship) => (
+                                    {paginatedScholarships.map((scholarship) => (
                                         <tr key={scholarship.id}>
                                             <td>
                                                 <div className="d-flex align-items-center">
@@ -556,7 +656,9 @@ const ManageScholarships = () => {
                             <div className="text-center py-5">
                                 <i className="fas fa-inbox fa-3x text-muted mb-3 opacity-25"></i>
                                 <h5 className="text-muted">No scholarships found</h5>
-                                <p className="text-muted small mb-3">Create your first scholarship program to get started</p>
+                                <p className="text-muted small mb-3">
+                                    {searchTerm || statusFilter !== "all" ? "No scholarship matching your filter/search criteria" : "Create your first scholarship program to get started"}
+                                </p>
                                 <button className="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addModal">
                                     <i className="fas fa-plus me-1"></i>
                                     Add Scholarship
@@ -564,6 +666,37 @@ const ManageScholarships = () => {
                             </div>
                         )}
                     </div>
+
+                    {filteredScholarships.length > 0 && (
+                        <div className="card-footer bg-white border-top py-3 d-flex flex-wrap align-items-center justify-content-between gap-2">
+                            <div className="small text-muted">
+                                Showing {((currentPage - 1) * itemsPerPage) + 1} to {Math.min(currentPage * itemsPerPage, filteredScholarships.length)} of {filteredScholarships.length} scholarships
+                            </div>
+                            {totalPages > 1 && (
+                                <nav aria-label="Scholarship pagination">
+                                    <ul className="pagination pagination-sm mb-0">
+                                        <li className={`page-item ${currentPage === 1 ? 'disabled' : ''}`}>
+                                            <button className="page-link" onClick={() => setCurrentPage(p => Math.max(1, p - 1))}>
+                                                Previous
+                                            </button>
+                                        </li>
+                                        {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
+                                            <li key={pageNum} className={`page-item ${currentPage === pageNum ? 'active' : ''}`}>
+                                                <button className="page-link" onClick={() => setCurrentPage(pageNum)}>
+                                                    {pageNum}
+                                                </button>
+                                            </li>
+                                        ))}
+                                        <li className={`page-item ${currentPage === totalPages ? 'disabled' : ''}`}>
+                                            <button className="page-link" onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}>
+                                                Next
+                                            </button>
+                                        </li>
+                                    </ul>
+                                </nav>
+                            )}
+                        </div>
+                    )}
                 </div>
             </div>
 

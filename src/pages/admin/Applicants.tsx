@@ -1,6 +1,4 @@
-import { useEffect, useRef, useState, type SetStateAction} from 'react';
-import {DataTable} from 'simple-datatables';
-import "simple-datatables/dist/style.css";
+import { useEffect, useState, useMemo } from 'react';
 import Swal from 'sweetalert2';
 import 'sweetalert2/dist/sweetalert2.min.css';
 import axios from 'axios';
@@ -10,12 +8,13 @@ import ViewApplicantReadOnlyForm from '../../components/admin/modals/ViewApplica
 import type {Applicant} from "../../interfaces/applicant.ts";
 
 const ApplicantsTable = () => {
-    const tableRef = useRef(null);
     const [applicants, setApplicants] = useState<Applicant[]>([]);
-    const [filteredApplicants, setFilteredApplicants] = useState<Applicant[]>([]);
     const [selectedApplicant, setSelectedApplicant] = useState<Applicant | null>(null);
     const [statusFilter, setStatusFilter] = useState('all');
+    const [searchTerm, setSearchTerm] = useState('');
     const [sortBy, setSortBy] = useState('newest');
+    const [currentPage, setCurrentPage] = useState(1);
+    const [itemsPerPage, setItemsPerPage] = useState(10);
     const {token, isFaculty, userCampusId} = useAuth();
 
     const fetchApplicants = async () => {
@@ -31,7 +30,6 @@ const ApplicantsTable = () => {
                 data = data.filter(applicant => applicant.campus_id === userCampusId);
             }
             setApplicants(data);
-            setFilteredApplicants(data);
         } catch (error) {
             console.error('Error fetching applicants:', error);
             await Swal.fire('Error', 'Failed to load applicants.', 'error');
@@ -39,13 +37,30 @@ const ApplicantsTable = () => {
     };
 
     useEffect(() => {
-        let filtered = [...applicants];
+        fetchApplicants().catch((err) =>
+            console.error("Promise rejection in fetchApplicants:", err)
+        );
+    },[]);
+
+    const filteredApplicants = useMemo(() => {
+        let result = [...applicants];
 
         if (statusFilter !== 'all') {
-            filtered = filtered.filter(applicant => applicant.status === statusFilter);
+            result = result.filter(applicant => applicant.status === statusFilter);
         }
 
-        filtered.sort((a, b) => {
+        if (searchTerm.trim()) {
+            const term = searchTerm.toLowerCase();
+            result = result.filter(applicant =>
+                (applicant.uid && applicant.uid.toLowerCase().includes(term)) ||
+                (applicant.first_name && applicant.first_name.toLowerCase().includes(term)) ||
+                (applicant.last_name && applicant.last_name.toLowerCase().includes(term)) ||
+                (applicant.campus && applicant.campus.toLowerCase().includes(term)) ||
+                (applicant.course && applicant.course.toLowerCase().includes(term))
+            );
+        }
+
+        result.sort((a, b) => {
             switch (sortBy) {
                 case 'newest':
                     return new Date(b.created_at || b.updated_at || 0).getTime() - new Date(a.created_at || a.updated_at || 0).getTime();
@@ -55,43 +70,33 @@ const ApplicantsTable = () => {
                     return (a.last_name || '').localeCompare(b.last_name || '');
                 case 'name_desc':
                     return (b.last_name || '').localeCompare(a.last_name || '');
-
+                case 'status_asc':
+                    return (a.status || '').localeCompare(b.status || '');
+                case 'status_desc':
+                    return (b.status || '').localeCompare(a.status || '');
                 default:
                     return 0;
             }
         });
 
-        setFilteredApplicants(filtered);
-    }, [applicants, statusFilter, sortBy]);
+        return result;
+    }, [applicants, statusFilter, searchTerm, sortBy]);
+
+    const totalPages = Math.ceil(filteredApplicants.length / itemsPerPage) || 1;
+    const paginatedApplicants = useMemo(() => {
+        const start = (currentPage - 1) * itemsPerPage;
+        return filteredApplicants.slice(start, start + itemsPerPage);
+    }, [filteredApplicants, currentPage, itemsPerPage]);
 
     useEffect(() => {
-        fetchApplicants().catch((err) =>
-            console.error("Promise rejection in fetchApplicants:", err)
-        );
-    },[]);
+        setCurrentPage(1);
+    }, [statusFilter, searchTerm]);
 
-    useEffect(() => {
-        if (tableRef.current && filteredApplicants.length > 0) {
-
-
-            new DataTable(tableRef.current, {
-                perPage: 10,
-                searchable: true,
-                sortable: true,
-                labels: {
-                    placeholder: "Search applicants...",
-                    noRows: "No applicants found matching your criteria",
-                    info: "Showing {start} to {end} of {rows} applicants"
-                }
-            });
-        }
-    }, [filteredApplicants]);
-
-    const handleStatusFilterChange = (e: { target: { value: SetStateAction<string>; }; }) => {
+    const handleStatusFilterChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
         setStatusFilter(e.target.value);
     };
 
-    const handleSortChange = (e: { target: { value: SetStateAction<string>; }; }) => {
+    const handleSortChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
         setSortBy(e.target.value);
     };
 
@@ -233,7 +238,31 @@ const ApplicantsTable = () => {
                     <div className="card-body">
                         {/* Filter and Sort Controls */}
                         <div className="row g-3 mb-4 align-items-end">
-                            <div className="col-md-4">
+                            <div className="col-md-3">
+                                <label className="form-label fw-bold">
+                                    <i className="fas fa-search me-1"></i>
+                                    Search
+                                </label>
+                                <div className="input-group">
+                                    <input
+                                        type="text"
+                                        className="form-control"
+                                        placeholder="Search by name, ID, course..."
+                                        value={searchTerm}
+                                        onChange={(e) => setSearchTerm(e.target.value)}
+                                    />
+                                    {searchTerm && (
+                                        <button
+                                            className="btn btn-outline-secondary"
+                                            type="button"
+                                            onClick={() => setSearchTerm('')}
+                                        >
+                                            <i className="fas fa-times"></i>
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+                            <div className="col-md-3">
                                 <label className="form-label fw-bold">
                                     <i className="fas fa-filter me-1"></i>
                                     Filter by Status
@@ -249,7 +278,7 @@ const ApplicantsTable = () => {
                                     <option value="denied">Denied ({getStatusCount('denied')})</option>
                                 </select>
                             </div>
-                            <div className="col-md-4">
+                            <div className="col-md-3">
                                 <label className="form-label fw-bold">
                                     <i className="fas fa-sort me-1"></i>
                                     Sort by
@@ -267,24 +296,39 @@ const ApplicantsTable = () => {
                                     <option value="status_desc">Status (Denied First)</option>
                                 </select>
                             </div>
-                            <div className="col-md-4">
+                            <div className="col-md-3">
                                 <div className="d-flex gap-2">
+                                    <select
+                                        className="form-select"
+                                        style={{ width: '110px' }}
+                                        value={itemsPerPage}
+                                        onChange={(e) => {
+                                            setItemsPerPage(Number(e.target.value));
+                                            setCurrentPage(1);
+                                        }}
+                                    >
+                                        <option value={10}>10 / page</option>
+                                        <option value={25}>25 / page</option>
+                                        <option value={50}>50 / page</option>
+                                        <option value={100}>100 / page</option>
+                                    </select>
                                     <button
                                         className="btn btn-outline-secondary"
+                                        title="Reset filters"
                                         onClick={() => {
                                             setStatusFilter('all');
+                                            setSearchTerm('');
                                             setSortBy('newest');
                                         }}
                                     >
-                                        <i className="fas fa-undo me-1"></i>
-                                        Reset Filters
+                                        <i className="fas fa-undo"></i>
                                     </button>
                                     <button
                                         className="btn btn-outline-primary"
+                                        title="Refresh"
                                         onClick={fetchApplicants}
                                     >
-                                        <i className="fas fa-sync me-1"></i>
-                                        Refresh
+                                        <i className="fas fa-sync"></i>
                                     </button>
                                 </div>
                             </div>
@@ -302,7 +346,7 @@ const ApplicantsTable = () => {
                         </div>
 
                         <div className="table-responsive">
-                            <table ref={tableRef} className="table table-striped table-bordered table-hover">
+                            <table className="table table-striped table-bordered table-hover align-middle mb-0">
                                 <thead className="table-dark">
                                 <tr>
                                     <th>Student ID</th>
@@ -319,8 +363,8 @@ const ApplicantsTable = () => {
                                 </tr>
                                 </thead>
                                 <tbody>
-                                {filteredApplicants.length > 0 ? (
-                                    filteredApplicants.map((applicant) => (
+                                {paginatedApplicants.length > 0 ? (
+                                    paginatedApplicants.map((applicant) => (
                                         <tr key={applicant.student_id}>
                                             <td>
                                                 <span className="fw-bold text-primary">{applicant.uid}</span>
@@ -344,7 +388,7 @@ const ApplicantsTable = () => {
                                                 <span className="badge bg-light text-dark">{applicant.year_level}</span>
                                             </td>
                                             <td>
-                                                <small>{new Date(applicant.birth_date).toLocaleDateString()}</small>
+                                                <small>{applicant.birth_date ? new Date(applicant.birth_date).toLocaleDateString() : '—'}</small>
                                             </td>
                                             <td>
                                                 <div className={`badge rounded-pill text-capitalize fw-bold ${
@@ -371,7 +415,6 @@ const ApplicantsTable = () => {
                                                         <i className="fa-regular fa-eye"></i>
                                                     </button>
 
-
                                                     <button
                                                         className="btn btn-outline-danger btn-sm"
                                                         title="Archive Application"
@@ -397,6 +440,37 @@ const ApplicantsTable = () => {
                                 </tbody>
                             </table>
                         </div>
+
+                        {filteredApplicants.length > 0 && (
+                            <div className="py-3 d-flex flex-wrap align-items-center justify-content-between gap-2 border-top">
+                                <div className="small text-muted">
+                                    Showing {((currentPage - 1) * itemsPerPage) + 1} to {Math.min(currentPage * itemsPerPage, filteredApplicants.length)} of {filteredApplicants.length} applicants
+                                </div>
+                                {totalPages > 1 && (
+                                    <nav aria-label="Applicants pagination">
+                                        <ul className="pagination pagination-sm mb-0">
+                                            <li className={`page-item ${currentPage === 1 ? 'disabled' : ''}`}>
+                                                <button className="page-link" onClick={() => setCurrentPage(p => Math.max(1, p - 1))}>
+                                                    Previous
+                                                </button>
+                                            </li>
+                                            {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
+                                                <li key={pageNum} className={`page-item ${currentPage === pageNum ? 'active' : ''}`}>
+                                                    <button className="page-link" onClick={() => setCurrentPage(pageNum)}>
+                                                        {pageNum}
+                                                    </button>
+                                                </li>
+                                            ))}
+                                            <li className={`page-item ${currentPage === totalPages ? 'disabled' : ''}`}>
+                                                <button className="page-link" onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}>
+                                                    Next
+                                                </button>
+                                            </li>
+                                        </ul>
+                                    </nav>
+                                )}
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>

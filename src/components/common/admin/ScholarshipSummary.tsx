@@ -64,14 +64,16 @@ const ScholarshipSummary: React.FC<ScholarshipSummaryProps> = ({ studentId }) =>
         }
     };
 
-    const formatCurrency = (amount: number): string => {
+    const formatCurrency = (amount: number | null | undefined): string => {
+        const val = typeof amount === 'number' && !isNaN(amount) ? amount : 0;
         return new Intl.NumberFormat('en-PH', {
             style: 'currency',
             currency: 'PHP',
-        }).format(amount);
+        }).format(val);
     };
 
-    const getStatusBadgeClass = (status: string): string => {
+    const getStatusBadgeClass = (status: string | null | undefined): string => {
+        if (!status) return 'badge bg-light text-dark';
         switch (status.toLowerCase()) {
             case 'approved': return 'badge bg-success';
             case 'pending': return 'badge bg-warning text-dark';
@@ -83,9 +85,11 @@ const ScholarshipSummary: React.FC<ScholarshipSummaryProps> = ({ studentId }) =>
         }
     };
 
-    const getClassificationBadgeClass = (classification: string): string => {
+    const getClassificationBadgeClass = (classification: string | null | undefined): string => {
+        if (!classification) return 'badge bg-light text-dark';
         switch (classification.toLowerCase()) {
-            case 'eligible': return 'badge bg-success';
+            case 'eligible':
+            case 'highly eligible': return 'badge bg-success';
             case 'somewhat eligible': return 'badge bg-warning text-dark';
             case 'barely eligible': return 'badge bg-info';
             case 'not eligible': return 'badge bg-danger';
@@ -301,7 +305,7 @@ const ScholarshipSummary: React.FC<ScholarshipSummaryProps> = ({ studentId }) =>
                                                                         <div className="card bg-primary text-white text-center">
                                                                             <div className="card-body">
                                                                                 <i className="fas fa-star mb-2" style={{ fontSize: '1.5rem' }}></i>
-                                                                                <h3 className="mb-0">{appData.evaluation.gwa.toFixed(2)}</h3>
+                                                                                <h3 className="mb-0">{appData.evaluation.gwa != null ? Number(appData.evaluation.gwa).toFixed(2) : 'N/A'}</h3>
                                                                                 <small>GWA</small>
                                                                             </div>
                                                                         </div>
@@ -310,7 +314,7 @@ const ScholarshipSummary: React.FC<ScholarshipSummaryProps> = ({ studentId }) =>
                                                                         <div className="card bg-info text-white text-center">
                                                                             <div className="card-body">
                                                                                 <i className="fas fa-book-open mb-2" style={{ fontSize: '1.5rem' }}></i>
-                                                                                <h3 className="mb-0">{appData.evaluation.total_units}</h3>
+                                                                                <h3 className="mb-0">{appData.evaluation.total_units ?? '—'}</h3>
                                                                                 <small>Total Units</small>
                                                                             </div>
                                                                         </div>
@@ -332,11 +336,11 @@ const ScholarshipSummary: React.FC<ScholarshipSummaryProps> = ({ studentId }) =>
                                                                         <h6 className="fw-bold mb-3">Evaluation Score</h6>
                                                                         <div className="mb-3">
                                                                             <div className="display-4 fw-bold text-primary">
-                                                                                {(appData.evaluation.score * 100).toFixed(0)}%
+                                                                                {appData.evaluation.score != null ? (Number(appData.evaluation.score) * 100).toFixed(0) : '0'}%
                                                                             </div>
                                                                         </div>
                                                                         <span className={getClassificationBadgeClass(appData.evaluation.classification)}>
-                                                                            {appData.evaluation.classification}
+                                                                            {appData.evaluation.classification || 'Not Eligible'}
                                                                         </span>
                                                                     </div>
                                                                 </div>
@@ -435,11 +439,13 @@ const ScholarshipSummary: React.FC<ScholarshipSummaryProps> = ({ studentId }) =>
                                                                         </td>
                                                                         <td className="d-none d-sm-table-cell">{formatCurrency(scholarship.grant_amount)}</td>
                                                                         <td className="text-center">
-                                                                            <span className="badge bg-primary">{scholarship.score.toFixed(1)}%</span>
+                                                                            <span className="badge bg-primary">
+                                                                                {scholarship.score != null ? Number(scholarship.score).toFixed(1) : '0'}%
+                                                                            </span>
                                                                         </td>
                                                                         <td className="text-center d-none d-md-table-cell">
                                                                                 <span className={getClassificationBadgeClass(scholarship.classification)}>
-                                                                                    {scholarship.classification}
+                                                                                    {scholarship.classification || 'Not Eligible'}
                                                                                 </span>
                                                                         </td>
                                                                     </tr>
