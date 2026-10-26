@@ -24,6 +24,21 @@ interface FuzzyVariable {
     variable_id: number;
     variable_name: string;
     description: string;
+    mapping_id?: number | null;
+    source_table?: string | null;
+    source_column?: string | null;
+    field_label?: string | null;
+    mapping_active?: number | boolean | null;
+}
+
+interface AvailableField {
+    source_column: string;
+    source_table: string;
+    field_label: string;
+    category: string;
+    suggested_min: number;
+    suggested_max: number;
+    description: string;
 }
 
 interface FuzzySet {
@@ -312,6 +327,7 @@ const MultiVariableCurveCanvas: React.FC<MultiCurveProps> = ({
 export const FuzzyLogic: React.FC = () => {
     // State
     const [variables, setVariables] = useState<FuzzyVariable[]>([]);
+    const [availableFields, setAvailableFields] = useState<AvailableField[]>([]);
     const [sets, setSets] = useState<FuzzySet[]>([]);
     const [rules, setRules] = useState<FuzzyRule[]>([]);
     const [loading, setLoading] = useState(true);
@@ -360,12 +376,24 @@ export const FuzzyLogic: React.FC = () => {
         setLoading(true);
         setError(null);
         try {
-            await Promise.all([loadVariables(), loadSets(), loadRules()]);
+            await Promise.all([loadVariables(), loadSets(), loadRules(), loadAvailableFields()]);
         } catch (err) {
             setError('Failed to load fuzzy logic configuration');
             console.error(err);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const loadAvailableFields = async () => {
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/fuzzy/available-fields`);
+            if (response.ok) {
+                const data = await response.json();
+                setAvailableFields(data || []);
+            }
+        } catch (err) {
+            console.error('Failed to load available fields:', err);
         }
     };
 
@@ -553,7 +581,13 @@ export const FuzzyLogic: React.FC = () => {
         setModalType(type);
         setEditMode(false);
         if (type === 'variable') {
-            setCurrentItem({ variable_name: '', description: '' });
+            setCurrentItem({
+                variable_name: '',
+                description: '',
+                source_column: '',
+                source_table: 'applications',
+                field_label: ''
+            });
         } else if (type === 'set') {
             setCurrentItem({
                 variable_id: initialData?.variable_id || variables[0]?.variable_id || 0,
@@ -578,7 +612,16 @@ export const FuzzyLogic: React.FC = () => {
     const openEditModal = (type: 'variable' | 'set' | 'rule', item: any) => {
         setModalType(type);
         setEditMode(true);
-        setCurrentItem({ ...item });
+        if (type === 'variable') {
+            setCurrentItem({
+                ...item,
+                source_column: item.source_column || '',
+                source_table: item.source_table || 'applications',
+                field_label: item.field_label || ''
+            });
+        } else {
+            setCurrentItem({ ...item });
+        }
         setShowModal(true);
     };
 
@@ -1277,9 +1320,20 @@ export const FuzzyLogic: React.FC = () => {
                                             <div className="p-2 bg-primary bg-opacity-10 text-primary rounded-3">
                                                 <BookOpen size={18} />
                                             </div>
-                                            <div>
-                                                <h5 className="fw-bold text-dark mb-0 font-monospace">{variable.variable_name}</h5>
-                                                <small className="text-muted">{variable.description || 'No description'}</small>
+                                            <div className="flex-grow-1">
+                                                <div className="d-flex align-items-center gap-2 flex-wrap">
+                                                    <h5 className="fw-bold text-dark mb-0 font-monospace">{variable.variable_name}</h5>
+                                                    {variable.source_column ? (
+                                                        <span className="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-2 py-0 small">
+                                                            🔗 Mapped: {variable.field_label || variable.source_column}
+                                                        </span>
+                                                    ) : (
+                                                        <span className="badge bg-secondary-subtle text-secondary border border-secondary-subtle rounded-pill px-2 py-0 small">
+                                                            Unmapped
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <small className="text-muted d-block mt-1">{variable.description || 'No description'}</small>
                                             </div>
                                         </div>
 
@@ -1393,6 +1447,47 @@ export const FuzzyLogic: React.FC = () => {
                                 {modalType === 'variable' && currentItem && (
                                     <div className="vstack gap-3">
                                         <div>
+                                            <label className="form-label fw-semibold small">
+                                                Mapped Student Field <span className="text-muted fw-normal">(Connect to student profile data)</span>
+                                            </label>
+                                            <select
+                                                className="form-select rounded-3"
+                                                value={currentItem.source_column || ''}
+                                                onChange={(e) => {
+                                                    const chosenCol = e.target.value;
+                                                    const chosen = availableFields.find((f) => f.source_column === chosenCol);
+                                                    if (chosen) {
+                                                        setCurrentItem({
+                                                            ...currentItem,
+                                                            source_column: chosen.source_column,
+                                                            source_table: chosen.source_table,
+                                                            field_label: chosen.field_label,
+                                                            variable_name: currentItem.variable_name || chosen.source_column,
+                                                            description: currentItem.description || chosen.description
+                                                        });
+                                                    } else {
+                                                        setCurrentItem({
+                                                            ...currentItem,
+                                                            source_column: '',
+                                                            source_table: 'applications',
+                                                            field_label: ''
+                                                        });
+                                                    }
+                                                }}
+                                            >
+                                                <option value="">-- No Student Field Mapping (Custom / Manual Input) --</option>
+                                                {availableFields.map((f) => (
+                                                    <option key={f.source_column} value={f.source_column}>
+                                                        [{f.category}] {f.field_label} ({f.source_column})
+                                                    </option>
+                                                ))}
+                                            </select>
+                                            <small className="text-muted d-block mt-1">
+                                                Linking to a student field allows the inference engine to automatically read applicant data during evaluation.
+                                            </small>
+                                        </div>
+
+                                        <div>
                                             <label className="form-label fw-semibold small">Variable Name</label>
                                             <input
                                                 type="text"
@@ -1401,9 +1496,10 @@ export const FuzzyLogic: React.FC = () => {
                                                 onChange={(e) =>
                                                     setCurrentItem({ ...currentItem, variable_name: e.target.value })
                                                 }
-                                                placeholder="e.g., gwa, household_income"
+                                                placeholder="e.g., gwa, total_units, family_income"
                                             />
                                         </div>
+
                                         <div>
                                             <label className="form-label fw-semibold small">Description</label>
                                             <textarea

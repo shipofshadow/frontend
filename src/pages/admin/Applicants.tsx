@@ -274,6 +274,7 @@ const ApplicantsTable = () => {
                                 >
                                     <option value="all">All Status ({getStatusCount('all')})</option>
                                     <option value="pending">Pending ({getStatusCount('pending')})</option>
+                                    <option value="evaluated">Evaluated ({getStatusCount('evaluated')})</option>
                                     <option value="approved">Approved ({getStatusCount('approved')})</option>
                                     <option value="denied">Denied ({getStatusCount('denied')})</option>
                                 </select>

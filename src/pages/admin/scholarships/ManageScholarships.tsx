@@ -102,10 +102,35 @@ const ManageScholarships = () => {
 
     const [editScholarship, setEditScholarship] = useState<ScholarshipForm | null>(null);
 
+    const closeBootstrapModal = (modalId: string) => {
+        const modalEl = document.getElementById(modalId);
+        if (modalEl) {
+            const modal = (window as any).bootstrap?.Modal?.getInstance(modalEl);
+            if (modal) {
+                modal.hide();
+            } else {
+                (document.getElementById(`${modalId}Close`) as HTMLButtonElement)?.click();
+            }
+        }
+        // Safety cleanup for backdrop & body scroll lock
+        setTimeout(() => {
+            const activeBackdrops = document.querySelectorAll('.modal-backdrop');
+            if (activeBackdrops.length === 0) {
+                document.body.classList.remove('modal-open');
+                document.body.style.removeProperty('overflow');
+                document.body.style.removeProperty('padding-right');
+            }
+        }, 350);
+    };
+
     const fetchScholarships = async () => {
         try {
-            const response = await axios.get<Scholarship[]>(`${API_BASE_URL}/api/scholarships/`, {
-                headers: { Authorization: `Bearer ${token}` }
+            const response = await axios.get<Scholarship[]>(`${API_BASE_URL}/api/scholarships/?_t=${Date.now()}`, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    'Cache-Control': 'no-cache',
+                    'Pragma': 'no-cache'
+                }
             });
 
             setScholarships(response.data);
@@ -146,7 +171,7 @@ const ManageScholarships = () => {
                 headers: { Authorization: `Bearer ${token}` }
             });
 
-            await fetchScholarships();
+            closeBootstrapModal("addModal");
 
             setNewScholarship({
                 id: null,
@@ -175,7 +200,7 @@ const ManageScholarships = () => {
                 }
             });
 
-            (document.getElementById("addModalClose") as HTMLButtonElement)?.click();
+            await fetchScholarships();
             await Swal.fire("Success", "Scholarship created successfully!", "success");
         } catch (error) {
             console.error("Add error:", error);
@@ -196,8 +221,10 @@ const ManageScholarships = () => {
                 headers: { Authorization: `Bearer ${token}` }
             });
 
+            closeBootstrapModal("editModal");
+            setEditScholarship(null);
+
             await fetchScholarships();
-            (document.getElementById("editModalClose") as HTMLButtonElement)?.click();
             await Swal.fire("Success", "Scholarship updated successfully!", "success");
         } catch (error) {
             console.error("Edit error:", error);
@@ -217,6 +244,8 @@ const ManageScholarships = () => {
 
         if (result.isConfirmed) {
             try {
+                // Optimistic UI update so table updates immediately
+                setScholarships(prev => prev.filter(s => s.id !== id));
                 await axios.delete(`${API_BASE_URL}/api/scholarships/${id}`, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
@@ -224,6 +253,7 @@ const ManageScholarships = () => {
                 await Swal.fire("Deleted!", "Scholarship has been deleted.", "success");
             } catch (error) {
                 console.error("Delete error:", error);
+                await fetchScholarships();
                 await Swal.fire("Error", "Could not delete scholarship.", "error");
             }
         }
@@ -256,16 +286,51 @@ const ManageScholarships = () => {
                 max_units_enrolled: scholarship.rules?.max_units_enrolled || "",
             }
         });
+
+        // Programmatically show the edit modal to prevent Bootstrap stale-DOM race conditions
+        setTimeout(() => {
+            const modalEl = document.getElementById("editModal");
+            if (modalEl) {
+                const modal = (window as any).bootstrap?.Modal?.getOrCreateInstance(modalEl);
+                modal?.show();
+            }
+        }, 10);
     };
 
     const handleViewClick = (scholarship: Scholarship) => {
         setViewScholarship(scholarship);
+        setTimeout(() => {
+            const modalEl = document.getElementById("viewModal");
+            if (modalEl) {
+                const modal = (window as any).bootstrap?.Modal?.getOrCreateInstance(modalEl);
+                modal?.show();
+            }
+        }, 10);
     };
 
     useEffect(() => {
         fetchScholarships().catch((err) =>
             console.error("Promise rejection in fetchScholarships:", err)
         );
+
+        // Listen for modal hide events to clear state
+        const editModalEl = document.getElementById("editModal");
+        const viewModalEl = document.getElementById("viewModal");
+
+        const handleEditHidden = () => {
+            setEditScholarship(null);
+        };
+        const handleViewHidden = () => {
+            setViewScholarship(null);
+        };
+
+        editModalEl?.addEventListener("hidden.bs.modal", handleEditHidden);
+        viewModalEl?.addEventListener("hidden.bs.modal", handleViewHidden);
+
+        return () => {
+            editModalEl?.removeEventListener("hidden.bs.modal", handleEditHidden);
+            viewModalEl?.removeEventListener("hidden.bs.modal", handleViewHidden);
+        };
     }, []);
 
     const handleSort = (column: string) => {
@@ -623,8 +688,6 @@ const ManageScholarships = () => {
                                                     <button
                                                         className="btn btn-sm btn-outline-info"
                                                         title="View Details"
-                                                        data-bs-toggle="modal"
-                                                        data-bs-target="#viewModal"
                                                         onClick={() => handleViewClick(scholarship)}
                                                     >
                                                         <i className="fas fa-eye"></i>
@@ -632,8 +695,6 @@ const ManageScholarships = () => {
                                                     <button
                                                         className="btn btn-sm btn-outline-primary"
                                                         title="Edit"
-                                                        data-bs-toggle="modal"
-                                                        data-bs-target="#editModal"
                                                         onClick={() => handleEditClick(scholarship)}
                                                     >
                                                         <i className="fas fa-edit"></i>
@@ -701,28 +762,29 @@ const ManageScholarships = () => {
             </div>
 
             {/* View Scholarship Modal */}
-            {viewScholarship && (
-                <div className="modal fade" id="viewModal" tabIndex={-1} aria-labelledby="viewModalLabel" aria-hidden="true">
-                    <div className="modal-dialog modal-lg modal-dialog-scrollable">
-                        <div className="modal-content">
-                            <div className="modal-header border-0 bg-light">
-                                <div>
-                                    <h5 className="modal-title fw-bold" id="viewModalLabel">
-                                        <i className="fas fa-trophy text-primary me-2"></i>
-                                        {viewScholarship.name}
-                                    </h5>
-                                    <p className="text-muted small mb-0">Scholarship Details</p>
+            <div className="modal fade" id="viewModal" tabIndex={-1} aria-labelledby="viewModalLabel" aria-hidden="true">
+                <div className="modal-dialog modal-lg modal-dialog-scrollable">
+                    <div className="modal-content">
+                        {viewScholarship && (
+                            <>
+                                <div className="modal-header border-0 bg-light">
+                                    <div>
+                                        <h5 className="modal-title fw-bold" id="viewModalLabel">
+                                            <i className="fas fa-trophy text-primary me-2"></i>
+                                            {viewScholarship.name}
+                                        </h5>
+                                        <p className="text-muted small mb-0">Scholarship Details</p>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        className="btn-close"
+                                        data-bs-dismiss="modal"
+                                        aria-label="Close"
+                                    ></button>
                                 </div>
-                                <button
-                                    type="button"
-                                    className="btn-close"
-                                    data-bs-dismiss="modal"
-                                    aria-label="Close"
-                                ></button>
-                            </div>
-                            <div className="modal-body">
-                                <div className="scholarship-card card border mb-3">
-                                    <div className="card-body">
+                                <div className="modal-body">
+                                    <div className="scholarship-card card border mb-3">
+                                        <div className="card-body">
                                         <h6 className="modal-section-title">
                                             <i className="fas fa-info-circle me-2"></i>
                                             Basic Information
@@ -837,28 +899,32 @@ const ManageScholarships = () => {
                                             </span>
                                         </div>
                                     </div>
+                                    </div>
                                 </div>
-                            </div>
-                            <div className="modal-footer border-0 bg-light">
-                                <button type="button" className="btn btn-secondary" data-bs-dismiss="modal">
-                                    Close
-                                </button>
-                                <button
-                                    type="button"
-                                    className="btn btn-primary"
-                                    data-bs-dismiss="modal"
-                                    data-bs-toggle="modal"
-                                    data-bs-target="#editModal"
-                                    onClick={() => handleEditClick(viewScholarship)}
-                                >
-                                    <i className="fas fa-edit me-1"></i>
-                                    Edit Scholarship
-                                </button>
-                            </div>
-                        </div>
+                                <div className="modal-footer border-0 bg-light">
+                                    <button type="button" className="btn btn-secondary" data-bs-dismiss="modal">
+                                        Close
+                                    </button>
+                                    <button
+                                        type="button"
+                                        className="btn btn-primary"
+                                        data-bs-dismiss="modal"
+                                        onClick={() => {
+                                            closeBootstrapModal("viewModal");
+                                            if (viewScholarship) {
+                                                handleEditClick(viewScholarship);
+                                            }
+                                        }}
+                                    >
+                                        <i className="fas fa-edit me-1"></i>
+                                        Edit Scholarship
+                                    </button>
+                                </div>
+                            </>
+                        )}
                     </div>
                 </div>
-            )}
+            </div>
 
             {/* Add Scholarship Modal */}
             <div className="modal fade" id="addModal" tabIndex={-1} aria-labelledby="addModalLabel" aria-hidden="true">
@@ -1220,29 +1286,30 @@ const ManageScholarships = () => {
             </div>
 
             {/* Edit Scholarship Modal */}
-            {editScholarship && (
-                <div className="modal fade" id="editModal" tabIndex={-1} aria-labelledby="editModalLabel" aria-hidden="true">
-                    <div className="modal-dialog modal-xl modal-dialog-scrollable">
-                        <div className="modal-content">
-                            <div className="modal-header border-0 bg-warning">
-                                <h5 className="modal-title text-dark" id="editModalLabel">
-                                    <i className="fas fa-edit me-2"></i>
-                                    Edit: {editScholarship.name}
-                                </h5>
-                                <button
-                                    type="button"
-                                    className="btn-close"
-                                    data-bs-dismiss="modal"
-                                    aria-label="Close"
-                                    id="editModalClose"
-                                ></button>
-                            </div>
-                            <div className="modal-body">
-                                <form>
-                                    <div className="row g-4">
-                                        <div className="col-12">
-                                            <h6 className="modal-section-title">
-                                                <i className="fas fa-info-circle me-2"></i>
+            <div className="modal fade" id="editModal" tabIndex={-1} aria-labelledby="editModalLabel" aria-hidden="true">
+                <div className="modal-dialog modal-xl modal-dialog-scrollable">
+                    <div className="modal-content">
+                        {editScholarship && (
+                            <>
+                                <div className="modal-header border-0 bg-warning">
+                                    <h5 className="modal-title text-dark" id="editModalLabel">
+                                        <i className="fas fa-edit me-2"></i>
+                                        Edit: {editScholarship.name}
+                                    </h5>
+                                    <button
+                                        type="button"
+                                        className="btn-close"
+                                        data-bs-dismiss="modal"
+                                        aria-label="Close"
+                                        id="editModalClose"
+                                    ></button>
+                                </div>
+                                <div className="modal-body">
+                                    <form>
+                                        <div className="row g-4">
+                                            <div className="col-12">
+                                                <h6 className="modal-section-title">
+                                                    <i className="fas fa-info-circle me-2"></i>
                                                 Basic Information
                                             </h6>
                                         </div>
@@ -1574,29 +1641,30 @@ const ManageScholarships = () => {
                                     </div>
                                 </form>
                             </div>
-                            <div className="modal-footer border-0 bg-light">
-                                <button
-                                    type="button"
-                                    className="btn btn-secondary"
-                                    data-bs-dismiss="modal"
-                                >
-                                    <i className="fas fa-times me-1"></i>
-                                    Cancel
-                                </button>
-                                <button
-                                    type="button"
-                                    className="btn btn-warning"
-                                    onClick={handleEditScholarship}
-                                    disabled={!editScholarship.name?.trim()}
-                                >
-                                    <i className="fas fa-save me-1"></i>
-                                    Save Changes
-                                </button>
-                            </div>
-                        </div>
+                                <div className="modal-footer border-0 bg-light">
+                                    <button
+                                        type="button"
+                                        className="btn btn-secondary"
+                                        data-bs-dismiss="modal"
+                                    >
+                                        <i className="fas fa-times me-1"></i>
+                                        Cancel
+                                    </button>
+                                    <button
+                                        type="button"
+                                        className="btn btn-warning"
+                                        onClick={handleEditScholarship}
+                                        disabled={!editScholarship.name?.trim()}
+                                    >
+                                        <i className="fas fa-save me-1"></i>
+                                        Save Changes
+                                    </button>
+                                </div>
+                            </>
+                        )}
                     </div>
                 </div>
-            )}
+            </div>
         </>
     );
 };

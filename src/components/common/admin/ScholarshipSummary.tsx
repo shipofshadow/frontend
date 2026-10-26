@@ -266,7 +266,7 @@ const ScholarshipSummary: React.FC<ScholarshipSummaryProps> = ({ studentId }) =>
                                                 </div>
                                                 <div className="d-flex align-items-center gap-2">
                                                     <span className={getStatusBadgeClass(appData.application.status)}>
-                                                        {appData.application.status.charAt(0).toUpperCase() + appData.application.status.slice(1)}
+                                                        {appData.application.status ? (appData.application.status.charAt(0).toUpperCase() + appData.application.status.slice(1)) : 'Unknown'}
                                                     </span>
                                                     <button
                                                         className="btn btn-sm btn-outline-primary"
@@ -383,7 +383,7 @@ const ScholarshipSummary: React.FC<ScholarshipSummaryProps> = ({ studentId }) =>
                                                                         </td>
                                                                         <td className="text-center">
                                                                                 <span className={getStatusBadgeClass(scholarship.status)}>
-                                                                                    {scholarship.status.charAt(0).toUpperCase() + scholarship.status.slice(1)}
+                                                                                    {scholarship.status ? (scholarship.status.charAt(0).toUpperCase() + scholarship.status.slice(1)) : 'Pending'}
                                                                                 </span>
                                                                         </td>
                                                                         <td className="d-none d-sm-table-cell">{formatCurrency(scholarship.grant_amount)}</td>
