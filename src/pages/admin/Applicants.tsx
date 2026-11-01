@@ -90,7 +90,7 @@ const ApplicantsTable = () => {
 
     useEffect(() => {
         setCurrentPage(1);
-    }, [statusFilter, searchTerm]);
+    }, [statusFilter, searchTerm, sortBy, itemsPerPage]);
 
     const handleStatusFilterChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
         setStatusFilter(e.target.value);
@@ -293,8 +293,8 @@ const ApplicantsTable = () => {
                                     <option value="oldest">Oldest First</option>
                                     <option value="name_asc">Name (A-Z)</option>
                                     <option value="name_desc">Name (Z-A)</option>
-                                    <option value="status_asc">Status (Pending First)</option>
-                                    <option value="status_desc">Status (Denied First)</option>
+                                    <option value="status_asc">Status (A-Z)</option>
+                                    <option value="status_desc">Status (Z-A)</option>
                                 </select>
                             </div>
                             <div className="col-md-3">
@@ -395,11 +395,13 @@ const ApplicantsTable = () => {
                                                 <div className={`badge rounded-pill text-capitalize fw-bold ${
                                                     applicant.status === 'pending' ? 'bg-warning text-dark' :
                                                         applicant.status === 'approved' ? 'bg-success' :
-                                                            'bg-danger'
+                                                            applicant.status === 'evaluated' ? 'bg-info text-dark' :
+                                                                'bg-danger'
                                                 }`}>
                                                     <i className={`fas ${
                                                         applicant.status === 'pending' ? 'fa-clock' :
-                                                            applicant.status === 'approved' ? 'fa-check' : 'fa-times'
+                                                            applicant.status === 'approved' ? 'fa-check' :
+                                                                applicant.status === 'evaluated' ? 'fa-chart-bar' : 'fa-times'
                                                     } me-1`}></i>
                                                     {applicant.status}
                                                 </div>

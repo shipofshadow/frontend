@@ -15,6 +15,18 @@ interface ScholarshipSummaryProps {
     studentId: number | string | undefined;
 }
 
+const EMPTY_STATS: SummaryStatistics = {
+    total_applications: 0,
+    approved_applications: 0,
+    total_recommendations: 0,
+    total_awards: 0,
+    total_awarded_amount: 0,
+    average_gwa: null,
+    average_score: null,
+    approval_rate: 0,
+    award_rate: 0,
+};
+
 const ScholarshipSummary: React.FC<ScholarshipSummaryProps> = ({ studentId }) => {
     const { token } = useAuth();
     const [data, setData] = useState<ScholarshipSummaryResponse | null>(null);
@@ -43,7 +55,19 @@ const ScholarshipSummary: React.FC<ScholarshipSummaryProps> = ({ studentId }) =>
             }
 
             const result: ScholarshipSummaryResponse = await response.json();
-            setData(result);
+            // Normalize so a sparse payload (e.g. 0% eligible applicant) can never crash rendering
+            setData({
+                ...result,
+                summary_statistics: {
+                    ...EMPTY_STATS,
+                    ...(result.summary_statistics ?? {}),
+                },
+                applications: (result.applications ?? []).map((a) => ({
+                    ...a,
+                    recommended_scholarships: a.recommended_scholarships ?? [],
+                    selected_scholarships: a.selected_scholarships ?? [],
+                })),
+            });
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Failed to fetch scholarship summary');
             console.error('Error fetching scholarship summary:', err);
@@ -52,7 +76,8 @@ const ScholarshipSummary: React.FC<ScholarshipSummaryProps> = ({ studentId }) =>
         }
     };
 
-    const formatDate = (dateString: string): string => {
+    const formatDate = (dateString: string | null | undefined): string => {
+        if (!dateString) return '—';
         try {
             return new Date(dateString).toLocaleDateString('en-US', {
                 year: 'numeric',
@@ -81,6 +106,7 @@ const ScholarshipSummary: React.FC<ScholarshipSummaryProps> = ({ studentId }) =>
             case 'awarded': return 'badge bg-primary';
             case 'selected': return 'badge bg-info';
             case 'cancelled': return 'badge bg-secondary';
+            case 'evaluated': return 'badge bg-info';
             default: return 'badge bg-light text-dark';
         }
     };

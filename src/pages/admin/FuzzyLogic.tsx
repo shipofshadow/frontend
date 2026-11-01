@@ -4,17 +4,9 @@ import {
     Edit3,
     Trash2,
     BookOpen,
-    RefreshCw,
     AlertTriangle,
     Search,
-    Sliders,
-    Layers,
-    CheckCircle,
-    ArrowRight,
-    Sparkles,
-    Grid,
-    Info,
-    Award
+    ArrowRight
 } from 'lucide-react';
 import { API_BASE_URL } from '../../config';
 import './FuzzyLogic.css';
@@ -61,7 +53,7 @@ interface FuzzyRule {
 const SET_COLORS = [
     { name: 'emerald', hex: '#10b981', bg: 'rgba(16, 185, 129, 0.12)', border: '#10b981' },
     { name: 'amber', hex: '#f59e0b', bg: 'rgba(245, 158, 11, 0.12)', border: '#f59e0b' },
-    { name: 'indigo', hex: '#6366f1', bg: 'rgba(99, 102, 241, 0.12)', border: '#6366f1' },
+    { name: 'indigo', hex: '#1f4e8c', bg: 'rgba(99, 102, 241, 0.12)', border: '#1f4e8c' },
     { name: 'cyan', hex: '#06b6d4', bg: 'rgba(6, 182, 212, 0.12)', border: '#06b6d4' },
     { name: 'rose', hex: '#f43f5e', bg: 'rgba(244, 63, 94, 0.12)', border: '#f43f5e' },
     { name: 'purple', hex: '#a855f7', bg: 'rgba(168, 85, 247, 0.12)', border: '#a855f7' }
@@ -311,7 +303,7 @@ const MultiVariableCurveCanvas: React.FC<MultiCurveProps> = ({
                                 [{set.param_a}, {set.param_b}, {set.param_c}]
                             </span>
                             {currentVal !== undefined && deg > 0 && (
-                                <span className="badge rounded-pill" style={{ backgroundColor: color.bg, color: color.hex }}>
+                                <span className="badge" style={{ backgroundColor: color.bg, color: color.hex }}>
                                     μ = {(deg * 100).toFixed(0)}%
                                 </span>
                             )}
@@ -658,8 +650,8 @@ export const FuzzyLogic: React.FC = () => {
             <div className="d-flex justify-content-center align-items-center min-vh-100 fuzzy-studio">
                 <div className="text-center p-5 fz-card">
                     <div className="spinner-border text-primary mb-3" style={{ width: '3rem', height: '3rem' }} />
-                    <h5 className="fw-bold text-dark">Initializing Fuzzy Logic Studio...</h5>
-                    <p className="text-muted small mb-0">Loading variables, membership sets, and Mamdani rule base.</p>
+                    <h5 className="fw-bold text-dark">Loading fuzzy logic settings...</h5>
+                    <p className="text-muted small mb-0">Loading variables, sets and rules.</p>
                 </div>
             </div>
         );
@@ -667,97 +659,36 @@ export const FuzzyLogic: React.FC = () => {
 
     return (
         <div className="container-fluid px-4 py-4 fuzzy-studio">
-            {/* ── Studio Hero Header ─────────────────────────────────────────── */}
-            <div className="fz-hero-banner mb-4">
-                <div className="row align-items-center g-3">
-                    <div className="col-lg-7">
-
-                        <h2 className="h3 fw-bold mb-1 text-white">Fuzzy Logic Decision Studio</h2>
-                        <p className="text-slate-300 small mb-3 opacity-85">
-                            Interactive visual modeling and real-time simulation of scholarship eligibility rules using multi-variable fuzzy inference.
+            <div className="fz-page-header mb-4">
+                <div className="d-flex justify-content-between align-items-start flex-wrap gap-3">
+                    <div>
+                        <h1 className="h4 fw-semibold mb-1">Fuzzy Logic Settings</h1>
+                        <p className="text-muted small mb-2">
+                            Variables, membership sets and rules used to compute the eligibility score (Mamdani inference).
                         </p>
-
-                        {/* Scenario Presets */}
-                        <div className="d-flex align-items-center gap-2 flex-wrap">
-                            <span className="text-slate-400 small fw-semibold me-1">
-                                <Sparkles size={14} className="me-1 text-warning" />
-                                Test Scenarios:
-                            </span>
-                            <button
-                                className="fz-preset-pill"
-                                onClick={() => applyPreset({ gwa: 1.15, income: 30000 })}
-                            >
-                                🌟 Top Honors (High Need)
-                            </button>
-                            <button
-                                className="fz-preset-pill"
-                                onClick={() => applyPreset({ gwa: 1.5, income: 65000 })}
-                            >
-                                🎓 Dean's Lister (Mid Income)
-                            </button>
-                            <button
-                                className="fz-preset-pill"
-                                onClick={() => applyPreset({ gwa: 2.2, income: 45000 })}
-                            >
-                                💼 Average (High Need)
-                            </button>
-                            <button
-                                className="fz-preset-pill"
-                                onClick={() => applyPreset({ gwa: 2.8, income: 110000 })}
-                            >
-                                ⚠️ Borderline
-                            </button>
+                        <div className="fz-stats">
+                            <span><strong>{variables.length}</strong>variables</span>
+                            <span><strong>{sets.length}</strong>sets</span>
+                            <span><strong>{rules.length}</strong>rules</span>
                         </div>
                     </div>
-
-                    <div className="col-lg-5 text-lg-end">
-                        <div className="d-inline-flex align-items-center gap-2 flex-wrap justify-content-lg-end">
-                            <button
-                                onClick={loadAllData}
-                                className="btn btn-outline-light btn-sm rounded-pill px-3 d-flex align-items-center gap-1"
-                            >
-                                <RefreshCw size={13} />
-                                Reload
-                            </button>
-                            <button
-                                onClick={() => openAddModal('variable')}
-                                className="btn btn-outline-light btn-sm rounded-pill px-3 d-flex align-items-center gap-1"
-                            >
-                                <Plus size={13} />
-                                New Variable
-                            </button>
-                            <button
-                                onClick={() => openAddModal('rule')}
-                                className="btn btn-primary btn-sm rounded-pill px-3 d-flex align-items-center gap-1 fw-bold shadow-sm"
-                                style={{ backgroundColor: '#6366f1', borderColor: '#6366f1' }}
-                            >
-                                <Plus size={13} />
-                                New Rule
-                            </button>
-                        </div>
-
-                        {/* Live Studio Metrics */}
-                        <div className="d-flex justify-content-lg-end gap-3 mt-3 pt-3 border-top border-white border-opacity-10 text-slate-300 small">
-                            <div>
-                                <span className="fw-bold text-white fs-6">{variables.length}</span>
-                                <span className="opacity-75 ms-1">Variables</span>
-                            </div>
-                            <div className="border-start border-white border-opacity-20 ps-3">
-                                <span className="fw-bold text-white fs-6">{sets.length}</span>
-                                <span className="opacity-75 ms-1">Sets</span>
-                            </div>
-                            <div className="border-start border-white border-opacity-20 ps-3">
-                                <span className="fw-bold text-white fs-6">{rules.length}</span>
-                                <span className="opacity-75 ms-1">Inference Rules</span>
-                            </div>
-                        </div>
+                    <div className="d-flex gap-2 flex-wrap">
+                        <button onClick={loadAllData} className="btn btn-outline-secondary btn-sm">
+                            Reload
+                        </button>
+                        <button onClick={() => openAddModal('variable')} className="btn btn-outline-secondary btn-sm">
+                            New variable
+                        </button>
+                        <button onClick={() => openAddModal('rule')} className="btn btn-primary btn-sm">
+                            New rule
+                        </button>
                     </div>
                 </div>
             </div>
 
             {/* Error Message */}
             {error && (
-                <div className="alert alert-danger rounded-4 border-0 shadow-sm mb-4 d-flex align-items-center gap-2">
+                <div className="alert alert-danger border-0 mb-4 d-flex align-items-center gap-2">
                     <AlertTriangle size={18} className="flex-shrink-0" />
                     <span className="flex-grow-1">{error}</span>
                     <button type="button" className="btn-close" onClick={() => setError(null)} />
@@ -771,29 +702,39 @@ export const FuzzyLogic: React.FC = () => {
                         className={`fz-nav-btn ${activeTab === 'simulator' ? 'active' : ''}`}
                         onClick={() => setActiveTab('simulator')}
                     >
-                        <Sliders size={16} />
-                        Live Playground &amp; Curves
+                        Simulator
                     </button>
                     <button
                         className={`fz-nav-btn ${activeTab === 'matrix' ? 'active' : ''}`}
                         onClick={() => setActiveTab('matrix')}
                     >
-                        <Grid size={16} />
-                        2D Decision Matrix
+                        Decision matrix
                     </button>
                     <button
                         className={`fz-nav-btn ${activeTab === 'variables' ? 'active' : ''}`}
                         onClick={() => setActiveTab('variables')}
                     >
-                        <Layers size={16} />
-                        Variable &amp; Set Modeler
+                        Variables &amp; sets
                     </button>
                 </div>
 
-                <div className="text-muted small">
-                    <Info size={14} className="me-1 text-primary" />
-                    Drag sliders or select presets to test real-time Mamdani evaluation.
-                </div>
+                {activeTab === 'simulator' && (
+                    <div className="d-flex align-items-center gap-2 flex-wrap small">
+                        <span className="text-muted">Try a sample:</span>
+                        <button className="btn btn-outline-secondary btn-sm" onClick={() => applyPreset({ gwa: 1.15, income: 30000 })}>
+                            High grades, low income
+                        </button>
+                        <button className="btn btn-outline-secondary btn-sm" onClick={() => applyPreset({ gwa: 1.5, income: 65000 })}>
+                            High grades, mid income
+                        </button>
+                        <button className="btn btn-outline-secondary btn-sm" onClick={() => applyPreset({ gwa: 2.2, income: 45000 })}>
+                            Average grades, low income
+                        </button>
+                        <button className="btn btn-outline-secondary btn-sm" onClick={() => applyPreset({ gwa: 2.8, income: 110000 })}>
+                            Borderline
+                        </button>
+                    </div>
+                )}
             </div>
 
             {/* ══════════════════════════════════════════════════════════════════
@@ -821,7 +762,7 @@ export const FuzzyLogic: React.FC = () => {
                                                     <h5 className="fw-bold text-dark mb-0 font-monospace">
                                                         {variable.variable_name}
                                                     </h5>
-                                                    <span className="badge bg-light text-muted border rounded-pill">
+                                                    <span className="badge bg-light text-muted border">
                                                         {varSets.length} sets
                                                     </span>
                                                 </div>
@@ -831,7 +772,7 @@ export const FuzzyLogic: React.FC = () => {
                                             {/* Crisp Value Badge */}
                                             <div className="text-end">
                                                 <span
-                                                    className="badge px-3 py-2 fs-6 font-monospace shadow-xs"
+                                                    className="badge px-3 py-2 fs-6 font-monospace"
                                                     style={{ backgroundColor: '#4338ca', color: '#ffffff' }}
                                                 >
                                                     {formatScalar(currentVal, isIncome)}
@@ -885,7 +826,7 @@ export const FuzzyLogic: React.FC = () => {
                                                 return (
                                                     <div key={set.set_id} className="col-sm-4">
                                                         <div
-                                                            className="p-2 rounded-3 border"
+                                                            className="p-2 border"
                                                             style={{
                                                                 backgroundColor: deg > 0 ? color.bg : '#f8fafc',
                                                                 borderColor: deg > 0 ? color.border : '#e2e8f0'
@@ -926,31 +867,22 @@ export const FuzzyLogic: React.FC = () => {
                             <div className="fz-card p-4 text-center position-relative overflow-hidden">
                                 <div className="d-flex justify-content-between align-items-center mb-3">
                                     <div className="d-flex align-items-center gap-2">
-                                        <Award size={18} className="text-primary" />
-                                        <h6 className="fw-bold text-dark mb-0">Defuzzified Eligibility</h6>
+                                        <h6 className="fw-semibold text-dark mb-0">Eligibility score</h6>
                                     </div>
-                                    <span className="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-2 py-1 small">
-                                        Centroid Index
-                                    </span>
+                                    <span className="text-muted small">Centroid method</span>
                                 </div>
 
                                 {/* Circular Radial Progress Gauge */}
                                 <div className="my-3 d-inline-flex justify-content-center align-items-center position-relative">
                                     <svg width="200" height="200" viewBox="0 0 200 200">
-                                        <defs>
-                                            <linearGradient id="scoreGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                                                <stop offset="0%" stopColor="#6366f1" />
-                                                <stop offset="100%" stopColor="#10b981" />
-                                            </linearGradient>
-                                        </defs>
                                         {/* Background Ring */}
                                         <circle
                                             cx="100"
                                             cy="100"
                                             r="80"
                                             fill="none"
-                                            stroke="#e2e8f0"
-                                            strokeWidth="16"
+                                            stroke="#e9ecef"
+                                            strokeWidth="12"
                                         />
                                         {/* Animated Progress Arc */}
                                         <circle
@@ -958,13 +890,12 @@ export const FuzzyLogic: React.FC = () => {
                                             cy="100"
                                             r="80"
                                             fill="none"
-                                            stroke="url(#scoreGrad)"
-                                            strokeWidth="16"
+                                            stroke="#1f4e8c"
+                                            strokeWidth="12"
                                             strokeDasharray={2 * Math.PI * 80}
                                             strokeDashoffset={
                                                 2 * Math.PI * 80 * (1 - simResults.defuzzifiedScore / 100)
                                             }
-                                            strokeLinecap="round"
                                             transform="rotate(-90 100 100)"
                                             style={{ transition: 'stroke-dashoffset 0.5s ease-out' }}
                                         />
@@ -989,20 +920,20 @@ export const FuzzyLogic: React.FC = () => {
                                 {/* Dynamic Classification Badge */}
                                 <div className="mt-1">
                                     {simResults.defuzzifiedScore >= 80 ? (
-                                        <span className="badge bg-success text-white px-3 py-2 rounded-pill fs-6">
-                                            ⭐ Highly Eligible (First Priority)
+                                        <span className="badge bg-success px-3 py-2 fs-6">
+                                            Highly eligible (first priority)
                                         </span>
                                     ) : simResults.defuzzifiedScore >= 60 ? (
-                                        <span className="badge bg-warning text-dark px-3 py-2 rounded-pill fs-6">
-                                            ✓ Moderately Eligible (Regular Award)
+                                        <span className="badge bg-warning text-dark px-3 py-2 fs-6">
+                                            Moderately eligible (regular award)
                                         </span>
                                     ) : simResults.defuzzifiedScore >= 40 ? (
-                                        <span className="badge bg-info text-white px-3 py-2 rounded-pill fs-6">
-                                            ℹ️ Conditionally Eligible (Waitlist)
+                                        <span className="badge bg-secondary px-3 py-2 fs-6">
+                                            Conditionally eligible (waitlist)
                                         </span>
                                     ) : (
-                                        <span className="badge bg-danger text-white px-3 py-2 rounded-pill fs-6">
-                                            ✕ Low Priority / Ineligible
+                                        <span className="badge bg-danger px-3 py-2 fs-6">
+                                            Low priority / ineligible
                                         </span>
                                     )}
                                 </div>
@@ -1016,10 +947,9 @@ export const FuzzyLogic: React.FC = () => {
                             <div className="fz-card p-4">
                                 <div className="d-flex justify-content-between align-items-center mb-3">
                                     <div className="d-flex align-items-center gap-2">
-                                        <CheckCircle size={18} className="text-success" />
-                                        <h6 className="fw-bold text-dark mb-0">Active Fired Rules</h6>
+                                        <h6 className="fw-semibold text-dark mb-0">Rules fired</h6>
                                     </div>
-                                    <span className="badge bg-light text-muted border rounded-pill small">
+                                    <span className="badge bg-light text-muted border small">
                                         Mamdani Min Operator
                                     </span>
                                 </div>
@@ -1037,7 +967,7 @@ export const FuzzyLogic: React.FC = () => {
                                             >
                                                 <div>
                                                     <div className="d-flex align-items-center gap-1 flex-wrap small">
-                                                        <span className="badge rounded-pill bg-primary text-white">
+                                                        <span className="badge bg-primary text-white">
                                                             {(strength * 100).toFixed(0)}% weight
                                                         </span>
                                                         <span className="text-muted fw-bold">IF</span>
@@ -1086,8 +1016,7 @@ export const FuzzyLogic: React.FC = () => {
                             <div className="d-flex justify-content-between align-items-center mb-3">
                                 <div>
                                     <h5 className="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
-                                        <Grid size={20} className="text-primary" />
-                                        2D Decision Matrix Heatmap
+                                        Decision matrix
                                     </h5>
                                     <p className="text-muted small mb-0">
                                         Cross-tabulation of <strong>{variables[0].variable_name}</strong> vs{' '}
@@ -1096,7 +1025,7 @@ export const FuzzyLogic: React.FC = () => {
                                 </div>
                                 <button
                                     onClick={() => openAddModal('rule')}
-                                    className="btn btn-outline-primary btn-sm rounded-pill px-3 d-flex align-items-center gap-1"
+                                    className="btn btn-outline-primary btn-sm px-3 d-flex align-items-center gap-1"
                                 >
                                     <Plus size={14} />
                                     Add Rule
@@ -1249,7 +1178,7 @@ export const FuzzyLogic: React.FC = () => {
                             <div className="row g-3">
                                 {filteredRules.map((rule, idx) => (
                                     <div key={rule.rule_id} className="col-12">
-                                        <div className="p-3 bg-light rounded-4 border d-flex justify-content-between align-items-center flex-wrap gap-2">
+                                        <div className="p-3 bg-light border d-flex justify-content-between align-items-center flex-wrap gap-2">
                                             <div className="d-flex align-items-center flex-wrap gap-2">
                                                 <span
                                                     className="badge bg-white text-dark border rounded-circle d-flex align-items-center justify-content-center"
@@ -1288,7 +1217,7 @@ export const FuzzyLogic: React.FC = () => {
                                             <div className="btn-group btn-group-sm">
                                                 <button
                                                     onClick={() => handleDelete('rule', rule.rule_id, `Rule #${rule.rule_id}`)}
-                                                    className="btn btn-outline-danger btn-sm rounded-pill px-3"
+                                                    className="btn btn-outline-danger btn-sm px-3"
                                                 >
                                                     <Trash2 size={13} className="me-1" />
                                                     Delete
@@ -1317,18 +1246,18 @@ export const FuzzyLogic: React.FC = () => {
                                 <div className="fz-card h-100 p-4">
                                     <div className="d-flex justify-content-between align-items-center mb-3">
                                         <div className="d-flex align-items-center gap-2">
-                                            <div className="p-2 bg-primary bg-opacity-10 text-primary rounded-3">
+                                            <div className="p-2 bg-primary bg-opacity-10 text-primary">
                                                 <BookOpen size={18} />
                                             </div>
                                             <div className="flex-grow-1">
                                                 <div className="d-flex align-items-center gap-2 flex-wrap">
                                                     <h5 className="fw-bold text-dark mb-0 font-monospace">{variable.variable_name}</h5>
                                                     {variable.source_column ? (
-                                                        <span className="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-2 py-0 small">
+                                                        <span className="badge bg-primary-subtle text-primary border border-primary-subtle px-2 py-0 small">
                                                             🔗 Mapped: {variable.field_label || variable.source_column}
                                                         </span>
                                                     ) : (
-                                                        <span className="badge bg-secondary-subtle text-secondary border border-secondary-subtle rounded-pill px-2 py-0 small">
+                                                        <span className="badge bg-secondary-subtle text-secondary border border-secondary-subtle px-2 py-0 small">
                                                             Unmapped
                                                         </span>
                                                     )}
@@ -1371,7 +1300,7 @@ export const FuzzyLogic: React.FC = () => {
                                             <span className="small text-muted fw-bold text-uppercase">Membership Sets</span>
                                             <button
                                                 onClick={() => openAddModal('set', { variable_id: variable.variable_id })}
-                                                className="btn btn-outline-primary btn-sm rounded-pill px-2 py-0 small"
+                                                className="btn btn-outline-primary btn-sm px-2 py-0 small"
                                             >
                                                 <Plus size={12} className="me-1" />
                                                 Add Set
@@ -1384,7 +1313,7 @@ export const FuzzyLogic: React.FC = () => {
                                                 return (
                                                     <div
                                                         key={set.set_id}
-                                                        className="p-2 bg-light rounded-3 border d-flex justify-content-between align-items-center"
+                                                        className="p-2 bg-light border d-flex justify-content-between align-items-center"
                                                     >
                                                         <div className="d-flex align-items-center gap-2">
                                                             <span
@@ -1431,7 +1360,7 @@ export const FuzzyLogic: React.FC = () => {
             {showModal && (
                 <div className="modal d-block" style={{ backgroundColor: 'rgba(0,0,0,0.55)', zIndex: 1060 }}>
                     <div className="modal-dialog modal-dialog-centered">
-                        <div className="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+                        <div className="modal-content border-0 overflow-hidden">
                             <div className="modal-header bg-white border-bottom p-4">
                                 <h5 className="modal-title fw-bold text-dark mb-0">
                                     {editMode ? 'Edit' : 'Add New'}{' '}
@@ -1451,7 +1380,7 @@ export const FuzzyLogic: React.FC = () => {
                                                 Mapped Student Field <span className="text-muted fw-normal">(Connect to student profile data)</span>
                                             </label>
                                             <select
-                                                className="form-select rounded-3"
+                                                className="form-select"
                                                 value={currentItem.source_column || ''}
                                                 onChange={(e) => {
                                                     const chosenCol = e.target.value;
@@ -1491,7 +1420,7 @@ export const FuzzyLogic: React.FC = () => {
                                             <label className="form-label fw-semibold small">Variable Name</label>
                                             <input
                                                 type="text"
-                                                className="form-control rounded-3"
+                                                className="form-control"
                                                 value={currentItem.variable_name}
                                                 onChange={(e) =>
                                                     setCurrentItem({ ...currentItem, variable_name: e.target.value })
@@ -1503,7 +1432,7 @@ export const FuzzyLogic: React.FC = () => {
                                         <div>
                                             <label className="form-label fw-semibold small">Description</label>
                                             <textarea
-                                                className="form-control rounded-3"
+                                                className="form-control"
                                                 value={currentItem.description}
                                                 onChange={(e) =>
                                                     setCurrentItem({ ...currentItem, description: e.target.value })
@@ -1521,7 +1450,7 @@ export const FuzzyLogic: React.FC = () => {
                                         <div>
                                             <label className="form-label fw-semibold small">Associated Variable</label>
                                             <select
-                                                className="form-select rounded-3"
+                                                className="form-select"
                                                 value={currentItem.variable_id}
                                                 onChange={(e) =>
                                                     setCurrentItem({
@@ -1542,7 +1471,7 @@ export const FuzzyLogic: React.FC = () => {
                                             <label className="form-label fw-semibold small">Set Name</label>
                                             <input
                                                 type="text"
-                                                className="form-control rounded-3"
+                                                className="form-control"
                                                 value={currentItem.set_name}
                                                 onChange={(e) => setCurrentItem({ ...currentItem, set_name: e.target.value })}
                                                 placeholder="e.g., High, Medium, Low"
@@ -1559,7 +1488,7 @@ export const FuzzyLogic: React.FC = () => {
                                                     <input
                                                         type="number"
                                                         step="any"
-                                                        className="form-control rounded-3 font-monospace"
+                                                        className="form-control font-monospace"
                                                         value={currentItem.param_a}
                                                         onChange={(e) =>
                                                             setCurrentItem({
@@ -1574,7 +1503,7 @@ export const FuzzyLogic: React.FC = () => {
                                                     <input
                                                         type="number"
                                                         step="any"
-                                                        className="form-control rounded-3 font-monospace"
+                                                        className="form-control font-monospace"
                                                         value={currentItem.param_b}
                                                         onChange={(e) =>
                                                             setCurrentItem({
@@ -1589,7 +1518,7 @@ export const FuzzyLogic: React.FC = () => {
                                                     <input
                                                         type="number"
                                                         step="any"
-                                                        className="form-control rounded-3 font-monospace"
+                                                        className="form-control font-monospace"
                                                         value={currentItem.param_c}
                                                         onChange={(e) =>
                                                             setCurrentItem({
@@ -1618,13 +1547,13 @@ export const FuzzyLogic: React.FC = () => {
                                                     return (
                                                         <div
                                                             key={variable.variable_id}
-                                                            className="p-2 bg-light rounded-3 d-flex align-items-center justify-content-between gap-3"
+                                                            className="p-2 bg-light d-flex align-items-center justify-content-between gap-3"
                                                         >
                                                             <span className="fw-bold font-monospace small">
                                                                 {variable.variable_name} =
                                                             </span>
                                                             <select
-                                                                className="form-select form-select-sm rounded-3 w-auto flex-grow-1"
+                                                                className="form-select form-select-sm w-auto flex-grow-1"
                                                                 value={condition?.set_id || ''}
                                                                 onChange={(e) => {
                                                                     const newConditions = (
@@ -1679,7 +1608,7 @@ export const FuzzyLogic: React.FC = () => {
                                             <label className="form-label fw-semibold small">Description</label>
                                             <input
                                                 type="text"
-                                                className="form-control rounded-3"
+                                                className="form-control"
                                                 value={currentItem.description || ''}
                                                 onChange={(e) =>
                                                     setCurrentItem({ ...currentItem, description: e.target.value })
@@ -1692,12 +1621,12 @@ export const FuzzyLogic: React.FC = () => {
                             </div>
 
                             <div className="modal-footer bg-light border-top p-3">
-                                <button type="button" className="btn btn-light rounded-pill px-4" onClick={closeModal}>
+                                <button type="button" className="btn btn-light px-4" onClick={closeModal}>
                                     Cancel
                                 </button>
                                 <button
                                     type="button"
-                                    className="btn btn-primary rounded-pill px-4 fw-bold"
+                                    className="btn btn-primary px-4 fw-bold"
                                     onClick={handleSave}
                                     disabled={saving}
                                 >

@@ -6,6 +6,7 @@ import axios from "axios";
 import {API_BASE_URL} from "../../../config.ts";
 import {useAuth} from "../../../context/AuthContext.tsx";
 import ScholarshipSummary from "../../common/admin/ScholarshipSummary.tsx";
+import ErrorBoundary from "../../ErrorBoundary.tsx";
 
 interface Props {
     applicant: Applicant;
@@ -756,7 +757,7 @@ const ViewApplicantReadOnlyForm: React.FC<Props> = ({ applicant }) => {
 
                         {/* Scholarship History Tab */}
                         <div className="tab-pane fade" id="pane-history" role="tabpanel">
-                            <ScholarshipSummary studentId={applicant.student_id}/>
+                            <ErrorBoundary><ScholarshipSummary studentId={applicant.student_id}/></ErrorBoundary>
                         </div>
                     </div>
                 </div>

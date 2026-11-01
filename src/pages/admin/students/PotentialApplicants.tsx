@@ -1,6 +1,4 @@
-import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
-import { DataTable } from 'simple-datatables';
-import "simple-datatables/dist/style.css";
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import Swal from 'sweetalert2';
 import 'sweetalert2/dist/sweetalert2.min.css';
 import axios from 'axios';
@@ -52,9 +50,9 @@ interface BulkReminderResponse {
     };
 }
 
+type SortKey = 'student_id' | 'name' | 'email' | 'registered_at' | 'reminder_status';
+
 const PotentialApplicants = () => {
-    const tableRef = useRef<HTMLTableElement>(null);
-    const dataTableRef = useRef<DataTable | null>(null);
     const [applicants, setApplicants] = useState<PotentialApplicant[]>([]);
     const [activeSemester, setActiveSemester] = useState<ActiveSemester | null>(null);
     const [loading, setLoading] = useState(true);
@@ -63,6 +61,11 @@ const PotentialApplicants = () => {
     const [isBulkSending, setIsBulkSending] = useState(false);
     const [bulkProgress, setBulkProgress] = useState({ sent: 0, total: 0 });
     const [statusFilter, setStatusFilter] = useState<'all' | 'sent' | 'not_sent'>('all');
+    const [search, setSearch] = useState('');
+    const [sortKey, setSortKey] = useState<SortKey>('registered_at');
+    const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
+    const [page, setPage] = useState(1);
+    const [perPage, setPerPage] = useState(10);
     const { token, user, isAdmin, isFaculty, userCampusId } = useAuth();
 
     // Computed stats
@@ -73,12 +76,60 @@ const PotentialApplicants = () => {
         return { total, sent, pending };
     }, [applicants]);
 
-    // Filtered applicants based on status filter
+    // Filter by status and search term, then sort
     const filteredApplicants = useMemo(() => {
-        if (statusFilter === 'all') return applicants;
-        if (statusFilter === 'sent') return applicants.filter(a => a.reminder_sent);
-        return applicants.filter(a => !a.reminder_sent);
-    }, [applicants, statusFilter]);
+        let rows = applicants;
+        if (statusFilter === 'sent') rows = rows.filter(a => a.reminder_sent);
+        else if (statusFilter === 'not_sent') rows = rows.filter(a => !a.reminder_sent);
+
+        const term = search.trim().toLowerCase();
+        if (term) {
+            rows = rows.filter(a =>
+                `${a.first_name} ${a.last_name}`.toLowerCase().includes(term) ||
+                (a.student_id || '').toLowerCase().includes(term) ||
+                (a.email || '').toLowerCase().includes(term)
+            );
+        }
+
+        const dir = sortDir === 'asc' ? 1 : -1;
+        return [...rows].sort((a, b) => {
+            switch (sortKey) {
+                case 'student_id':
+                    return dir * (a.student_id || '').localeCompare(b.student_id || '');
+                case 'name':
+                    return dir * `${a.last_name} ${a.first_name}`.localeCompare(`${b.last_name} ${b.first_name}`);
+                case 'email':
+                    return dir * (a.email || '').localeCompare(b.email || '');
+                case 'reminder_status':
+                    return dir * (Number(a.reminder_sent) - Number(b.reminder_sent));
+                default:
+                    return dir * (new Date(a.registered_at).getTime() - new Date(b.registered_at).getTime());
+            }
+        });
+    }, [applicants, statusFilter, search, sortKey, sortDir]);
+
+    const totalPages = Math.max(1, Math.ceil(filteredApplicants.length / perPage));
+    const currentPage = Math.min(page, totalPages);
+    const pagedApplicants = useMemo(
+        () => filteredApplicants.slice((currentPage - 1) * perPage, currentPage * perPage),
+        [filteredApplicants, currentPage, perPage]
+    );
+
+    useEffect(() => {
+        setPage(1);
+    }, [statusFilter, search, sortKey, sortDir, perPage]);
+
+    const toggleSort = (key: SortKey) => {
+        if (sortKey === key) {
+            setSortDir(d => (d === 'asc' ? 'desc' : 'asc'));
+        } else {
+            setSortKey(key);
+            setSortDir('asc');
+        }
+    };
+
+    const sortIcon = (key: SortKey) =>
+        sortKey !== key ? 'fa-sort text-muted' : sortDir === 'asc' ? 'fa-sort-up text-primary' : 'fa-sort-down text-primary';
 
     const fetchApplicants = useCallback(async () => {
         if (!isAdmin) return;
@@ -184,23 +235,6 @@ const PotentialApplicants = () => {
     }, [token]);
 
 
-    useEffect(() => {
-        const clickHandler = (e: any) => {
-            const btn = e.target.closest("[data-reminder-id]");
-            if (!btn) return;
-
-            const id = Number(btn.getAttribute("data-reminder-id"));
-            const student = applicants.find(a => a.user_id === id);
-
-            if (student) {
-                handleSendReminder(student);
-            }
-        };
-
-        document.addEventListener("click", clickHandler);
-        return () => document.removeEventListener("click", clickHandler);
-    }, [applicants, handleSendReminder]);
-
     const handleBulkSend = useCallback(async () => {
         const pendingStudents = applicants.filter(a => !a.reminder_sent);
         const pendingCount = pendingStudents.length;
@@ -299,36 +333,6 @@ const PotentialApplicants = () => {
 
         fetchApplicants();
     }, [isAdmin, user, fetchApplicants]);
-
-    // Initialize DataTable
-    useEffect(() => {
-        if (tableRef.current && filteredApplicants.length > 0 && !loading) {
-            if (dataTableRef.current) {
-                dataTableRef.current.destroy();
-            }
-
-            dataTableRef.current = new DataTable(tableRef.current, {
-                perPage: 10,
-                perPageSelect: [5, 10, 15, 20, 25],
-                searchable: true,
-                sortable: true,
-                fixedHeight: false,
-                labels: {
-                    placeholder: "Search by name, student ID, email...",
-                    perPage: "Students per page",
-                    noRows: "No students found",
-                    info: "Showing {start} to {end} of {rows} students"
-                }
-            });
-        }
-
-        return () => {
-            if (dataTableRef.current) {
-                dataTableRef.current.destroy();
-                dataTableRef.current = null;
-            }
-        };
-    }, [filteredApplicants, loading]);
 
     const formatDate = useCallback((dateString: string | null) => {
         if (!dateString) return '';
@@ -507,6 +511,23 @@ const PotentialApplicants = () => {
                                     <option value="sent">Sent ({stats.sent})</option>
                                 </select>
 
+                                <input
+                                    type="search"
+                                    className="form-control form-control-sm"
+                                    style={{ width: '240px' }}
+                                    placeholder="Search by name, student ID, email..."
+                                    value={search}
+                                    onChange={(e) => setSearch(e.target.value)}
+                                />
+                                <button
+                                    className="btn btn-outline-primary btn-sm"
+                                    title="Refresh"
+                                    onClick={fetchApplicants}
+                                    disabled={loading}
+                                >
+                                    <i className="fas fa-sync"></i>
+                                </button>
+
                                 {/* Bulk Send Button */}
                                 <button
                                     className="btn btn-success d-flex align-items-center gap-2"
@@ -571,32 +592,29 @@ const PotentialApplicants = () => {
                             </div>
                         ) : (
                             <div className="table-responsive">
-                                <table
-                                    ref={tableRef}
-                                    className="table table-hover align-middle mb-0"
-                                >
+                                <table className="table table-hover align-middle mb-0">
                                     <thead>
                                     <tr>
                                         <th className="border-0">#</th>
-                                        <th className="border-0">
+                                        <th className="border-0" role="button" onClick={() => toggleSort('student_id')}>
                                             <i className="fas fa-id-card me-2 text-primary"></i>
-                                            Student ID
+                                            Student ID <i className={`fas ${sortIcon('student_id')} ms-1`}></i>
                                         </th>
-                                        <th className="border-0">
+                                        <th className="border-0" role="button" onClick={() => toggleSort('name')}>
                                             <i className="fas fa-user me-2 text-primary"></i>
-                                            Name
+                                            Name <i className={`fas ${sortIcon('name')} ms-1`}></i>
                                         </th>
-                                        <th className="border-0">
+                                        <th className="border-0" role="button" onClick={() => toggleSort('email')}>
                                             <i className="fas fa-envelope me-2 text-primary"></i>
-                                            Email
+                                            Email <i className={`fas ${sortIcon('email')} ms-1`}></i>
                                         </th>
-                                        <th className="border-0">
+                                        <th className="border-0" role="button" onClick={() => toggleSort('registered_at')}>
                                             <i className="fas fa-calendar me-2 text-primary"></i>
-                                            Registered
+                                            Registered <i className={`fas ${sortIcon('registered_at')} ms-1`}></i>
                                         </th>
-                                        <th className="border-0 text-center">
+                                        <th className="border-0 text-center" role="button" onClick={() => toggleSort('reminder_status')}>
                                             <i className="fas fa-bell me-2 text-primary"></i>
-                                            Reminder Status
+                                            Reminder Status <i className={`fas ${sortIcon('reminder_status')} ms-1`}></i>
                                         </th>
                                         <th className="border-0 text-center">
                                             <i className="fas fa-cog me-2 text-muted"></i>
@@ -605,9 +623,9 @@ const PotentialApplicants = () => {
                                     </tr>
                                     </thead>
                                     <tbody>
-                                    {filteredApplicants.map((student, index) => (
+                                    {pagedApplicants.map((student, index) => (
                                         <tr key={student.user_id} className="fade-in">
-                                            <td>{index + 1}</td>
+                                            <td>{(currentPage - 1) * perPage + index + 1}</td>
                                             <td>
                                                 <span className="badge student-badge bg-light text-dark border fw-semibold">
                                                     {student.student_id}
@@ -646,7 +664,8 @@ const PotentialApplicants = () => {
                                                     {!student.reminder_sent && (
                                                         <button
                                                             className="btn btn-primary btn-sm d-flex align-items-center gap-2"
-                                                            data-reminder-id={student.user_id}                                                            disabled={sendingId === student.user_id}
+                                                            onClick={() => handleSendReminder(student)}
+                                                            disabled={sendingId === student.user_id}
                                                         >
                                                             {sendingId === student.user_id ? (
                                                                 <>
@@ -676,12 +695,29 @@ const PotentialApplicants = () => {
 
                     {filteredApplicants.length > 0 && (
                         <div className="card-footer bg-white border-top py-3">
-                            <div className="d-flex justify-content-between align-items-center text-muted small">
+                            <div className="d-flex justify-content-between align-items-center flex-wrap gap-2 text-muted small">
                                 <span>
-                                    <i className="fas fa-info-circle me-1"></i>
-                                    {filteredApplicants.length} {filteredApplicants.length === 1 ? 'student' : 'students'} displayed
+                                    Showing {(currentPage - 1) * perPage + 1} to {Math.min(currentPage * perPage, filteredApplicants.length)} of {filteredApplicants.length} students
                                 </span>
-                                <span>Last updated: {new Date().toLocaleDateString()}</span>
+                                <div className="d-flex align-items-center gap-2">
+                                    <select
+                                        className="form-select form-select-sm"
+                                        style={{ width: 'auto' }}
+                                        value={perPage}
+                                        onChange={(e) => setPerPage(Number(e.target.value))}
+                                    >
+                                        {[5, 10, 15, 20, 25].map(n => (
+                                            <option key={n} value={n}>{n} / page</option>
+                                        ))}
+                                    </select>
+                                    <button className="btn btn-outline-secondary btn-sm" disabled={currentPage === 1} onClick={() => setPage(currentPage - 1)}>
+                                        Previous
+                                    </button>
+                                    <span>Page {currentPage} of {totalPages}</span>
+                                    <button className="btn btn-outline-secondary btn-sm" disabled={currentPage === totalPages} onClick={() => setPage(currentPage + 1)}>
+                                        Next
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     )}
