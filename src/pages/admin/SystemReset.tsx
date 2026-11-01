@@ -94,7 +94,7 @@ const SystemReset = () => {
         }
 
         const firstConfirm = await Swal.fire({
-            title: '⚠️ Final Warning',
+            title: 'Final Warning',
             html: `
                 <div class="text-start">
                     <p class="text-danger fw-bold">You are about to reset the entire system!</p>
@@ -217,7 +217,7 @@ const SystemReset = () => {
                     <div className="d-flex align-items-start gap-3">
                         <AlertTriangle size={24} className="flex-shrink-0 mt-1" />
                         <div>
-                            <h5 className="alert-heading mb-2">⚠️ Danger Zone</h5>
+                            <h5 className="alert-heading mb-2">Danger Zone</h5>
                             <p className="mb-0">
                                 This page allows you to completely reset the system database. 
                                 <strong> All data will be permanently deleted.</strong> This action cannot be undone.

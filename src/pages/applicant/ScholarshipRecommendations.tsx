@@ -178,7 +178,7 @@ const ScholarshipRecommendations: React.FC<Props> = ({ applicationId: applicatio
             {selection?.status === 'accepted' && (
                 <div className="alert alert-success d-flex align-items-center gap-2 mb-4">
                     <CheckCircle size={18} />
-                    <span>🎉 Your scholarship (<strong>{selection.scholarship_name}</strong>) has been approved!</span>
+                    <span>Your scholarship (<strong>{selection.scholarship_name}</strong>) has been approved!</span>
                 </div>
             )}
             {selection?.status === 'rejected' && (

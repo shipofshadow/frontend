@@ -425,7 +425,7 @@ export const FuzzyLogic: React.FC = () => {
         return variable ? variable.variable_name : 'Unknown';
     };
 
-    // Calculate Real-time Membership & Mamdani Inference
+    // Calculate Real-time Membership & Sugeno Inference
     const simResults = useMemo(() => {
         if (variables.length === 0 || sets.length === 0 || rules.length === 0) {
             return { firedRules: [], defuzzifiedScore: 0, setMemberships: {} };
@@ -664,7 +664,7 @@ export const FuzzyLogic: React.FC = () => {
                     <div>
                         <h1 className="h4 fw-semibold mb-1">Fuzzy Logic Settings</h1>
                         <p className="text-muted small mb-2">
-                            Variables, membership sets and rules used to compute the eligibility score (Mamdani inference).
+                            Variables, membership sets and rules used to compute the eligibility score (Sugeno-style inference).
                         </p>
                         <div className="fz-stats">
                             <span><strong>{variables.length}</strong>variables</span>
@@ -869,7 +869,7 @@ export const FuzzyLogic: React.FC = () => {
                                     <div className="d-flex align-items-center gap-2">
                                         <h6 className="fw-semibold text-dark mb-0">Eligibility score</h6>
                                     </div>
-                                    <span className="text-muted small">Centroid method</span>
+                                    <span className="text-muted small">Weighted average</span>
                                 </div>
 
                                 {/* Circular Radial Progress Gauge */}
@@ -950,7 +950,7 @@ export const FuzzyLogic: React.FC = () => {
                                         <h6 className="fw-semibold text-dark mb-0">Rules fired</h6>
                                     </div>
                                     <span className="badge bg-light text-muted border small">
-                                        Mamdani Min Operator
+                                        Min operator (AND)
                                     </span>
                                 </div>
 
@@ -1254,7 +1254,7 @@ export const FuzzyLogic: React.FC = () => {
                                                     <h5 className="fw-bold text-dark mb-0 font-monospace">{variable.variable_name}</h5>
                                                     {variable.source_column ? (
                                                         <span className="badge bg-primary-subtle text-primary border border-primary-subtle px-2 py-0 small">
-                                                            🔗 Mapped: {variable.field_label || variable.source_column}
+                                                            Mapped: {variable.field_label || variable.source_column}
                                                         </span>
                                                     ) : (
                                                         <span className="badge bg-secondary-subtle text-secondary border border-secondary-subtle px-2 py-0 small">

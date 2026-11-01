@@ -112,7 +112,7 @@ const Scholarships: React.FC = () => {
                                 <div className="card-body p-5">
                                     <div className="rounded-circle d-inline-flex align-items-center justify-content-center mb-4"
                                          style={{ width: '100px', height: '100px', backgroundColor: '#fff3cd' }}>
-                                        <span style={{ fontSize: '3rem' }}>⚠️</span>
+                                        <span style={{ fontSize: '3rem' }}></span>
                                     </div>
                                     <h3 className="fw-bold mb-3">Unable to Load Scholarships</h3>
                                     <p className="text-muted mb-4">{error}</p>
@@ -265,22 +265,22 @@ const Scholarships: React.FC = () => {
                                             <div className="d-flex flex-wrap gap-2 mb-3">
                                                 {priorities?.must_be_ofw && (
                                                     <span className="badge border-0 px-3 py-2" style={{ backgroundColor: '#fff3cd', color: '#856404', fontSize: '0.75rem', fontWeight: 600 }}>
-                                                        🌍 OFW Dependent
+                                                        OFW Dependent
                                                     </span>
                                                 )}
                                                 {priorities?.prefer_pwd && (
                                                     <span className="badge border-0 px-3 py-2" style={{ backgroundColor: '#d1ecf1', color: '#0c5460', fontSize: '0.75rem', fontWeight: 600 }}>
-                                                        ♿ PWD Priority
+                                                        PWD Priority
                                                     </span>
                                                 )}
                                                 {priorities?.require_ip && (
                                                     <span className="badge border-0 px-3 py-2" style={{ backgroundColor: '#f8d7da', color: '#721c24', fontSize: '0.75rem', fontWeight: 600 }}>
-                                                        🪶 Indigenous
+                                                        Indigenous
                                                     </span>
                                                 )}
                                                 {priorities?.prefer_farmers_child && (
                                                     <span className="badge border-0 px-3 py-2" style={{ backgroundColor: '#d4edda', color: '#155724', fontSize: '0.75rem', fontWeight: 600 }}>
-                                                        🌾 Farmer's Child
+                                                        Farmer's Child
                                                     </span>
                                                 )}
                                             </div>

@@ -60,8 +60,8 @@ export function NotificationBell() {
                     <li className="dropdown-item text-muted small">No new notifications</li>
                 ) : (
                     notifications
-                        .filter(n => !n.read) // ✅ only unread
-                        .slice(0, 5)          // ✅ show only first 5
+                        .filter(n => !n.read) // only unread
+                        .slice(0, 5)          // show only first 5
                         .map((n) => (
                             <li key={n.id}>
                                 <button

@@ -31,8 +31,8 @@ interface Props {
 }
 
 const VAR_LABELS: Record<string, string> = {
-    gwa: '🎓 Academic Performance (GWA)',
-    income: '💰 Family Income',
+    gwa: 'Academic Performance (GWA)',
+    income: 'Family Income',
 };
 
 const barColor = (pct: number) => {
@@ -72,7 +72,7 @@ const FuzzyScoreExplanation: React.FC<Props> = ({ explanation, classification, s
         <div className="card border-0 shadow-sm mt-3">
             <div className="card-body">
                 <h6 className="fw-bold mb-3">
-                    📊 Eligibility Score Breakdown
+                    Eligibility Score Breakdown
                     <span
                         className="ms-2 badge"
                         style={{ background: classColor(classification), fontSize: '0.8rem' }}
@@ -141,7 +141,7 @@ const FuzzyScoreExplanation: React.FC<Props> = ({ explanation, classification, s
                 {/* Fired rules */}
                 {fired_rules.length > 0 && (
                     <div className="mt-3 pt-3 border-top">
-                        <div className="small fw-semibold text-muted mb-2">🔥 Active Rules</div>
+                        <div className="small fw-semibold text-muted mb-2">Active Rules</div>
                         <ul className="list-unstyled mb-0">
                             {fired_rules.map((rule) => {
                                 const condStr = Object.entries(rule.conditions)

@@ -167,7 +167,7 @@ const Footer = () => {
                         </div>
                         <div className="mt-1">
                             <small className="text-muted opacity-75">
-                                Developed with ❤️ for student success
+                                Developed with for student success
                             </small>
                         </div>
                     </div>

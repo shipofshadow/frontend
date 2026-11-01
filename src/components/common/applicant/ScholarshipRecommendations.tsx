@@ -99,9 +99,9 @@ export default function ScholarshipRecommendations({ recommendedScholarships }: 
                             {scholarship.total_slots != null && (
                                 <div className="mb-1">
                                     {scholarship.slots_remaining === 0 ? (
-                                        <span className="slot-badge-full">⚠ Full — No slots available</span>
+                                        <span className="slot-badge-full">Full — No slots available</span>
                                     ) : scholarship.slots_remaining != null && scholarship.slots_remaining <= 3 ? (
-                                        <span className="slot-badge-low">🔥 Only {scholarship.slots_remaining} slot{scholarship.slots_remaining !== 1 ? 's' : ''} left</span>
+                                        <span className="slot-badge-low">Only {scholarship.slots_remaining} slot{scholarship.slots_remaining !== 1 ? 's' : ''} left</span>
                                     ) : (
                                         <span className="slot-badge-ok">✓ {scholarship.slots_remaining} slots remaining</span>
                                     )}

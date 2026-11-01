@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext'; // Removed .tsx extension for cleaner import
 import { Link } from 'react-router-dom';
 import { API_BASE_URL } from '../config'; // Removed .ts extension for cleaner import
@@ -40,7 +40,7 @@ interface EligibilityResult {
 }
 
 const Prequalify: React.FC = () => {
-    const { token, isAuthenticated } = useAuth();
+    const { isAuthenticated } = useAuth();
 
     const initialFormData: FormData = {
         gwa: 0.0,
@@ -59,13 +59,22 @@ const Prequalify: React.FC = () => {
     const [eligibilityResult, setEligibilityResult] = useState<EligibilityResult | null>(null);
     const [isCalculating, setIsCalculating] = useState<boolean>(false);
     const [error, setError] = useState<string | null>(null);
-    const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-    // --- Logic Effects (Kept identical) ---
     useEffect(() => {
-        const calculateEligibility = async (): Promise<void> => {
-            if (!formData.gwa || !formData.income) return;
+        const gwa = Number(formData.gwa);
+        const hasIncome = String(formData.income ?? '').trim() !== '';
+        const income = Number(formData.income);
 
+        // Wait until the required inputs are usable; an income of 0 is valid.
+        if (!gwa || gwa < 1 || gwa > 5 || !hasIncome || isNaN(income) || income < 0) {
+            setEligibilityResult(null);
+            setError(null);
+            return;
+        }
+
+        const controller = new AbortController();
+
+        const calculateEligibility = async (): Promise<void> => {
             setIsCalculating(true);
             setError(null);
 
@@ -73,32 +82,40 @@ const Prequalify: React.FC = () => {
                 const response = await fetch(`${API_BASE_URL}/api/prequalify/calculate`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(formData),
+                    signal: controller.signal,
+                    body: JSON.stringify({
+                        ...formData,
+                        gwa,
+                        income,
+                        total_units: Number(formData.total_units) || 0,
+                        siblings_in_college: Number(formData.siblings_in_college) || 0,
+                    }),
                 });
 
-                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                const result: EligibilityResult = await response.json().catch(() => ({ success: false } as EligibilityResult));
 
-                const result: EligibilityResult = await response.json();
-                if (result.success) setEligibilityResult(result);
-                else setError(result.error || 'Calculation failed');
-            } catch (err) {
-                // Only show error if we have data entered, otherwise it's annoying on load
-                if (formData.gwa > 0) {
-                    setError('Network error. Please check your connection.');
+                if (result.success) {
+                    setEligibilityResult(result);
+                } else {
+                    setEligibilityResult(null);
+                    setError(result.error || 'Calculation failed. Please check your inputs.');
                 }
+            } catch (err) {
+                if ((err as Error).name === 'AbortError') return;
+                setError('Network error. Please check your connection.');
                 console.error('Prequalification error:', err);
             } finally {
-                setIsCalculating(false);
+                if (!controller.signal.aborted) setIsCalculating(false);
             }
         };
 
-        if (debounceTimeoutRef.current) clearTimeout(debounceTimeoutRef.current);
-        debounceTimeoutRef.current = setTimeout(calculateEligibility, 800);
+        const timeout = setTimeout(calculateEligibility, 600);
 
         return () => {
-            if (debounceTimeoutRef.current) clearTimeout(debounceTimeoutRef.current);
+            clearTimeout(timeout);
+            controller.abort();
         };
-    }, [formData, token]);
+    }, [formData]);
 
     const handleInputChange = <K extends keyof FormData>(field: string, value: FormData[K]): void => {
         setFormData((prev) => ({ ...prev, [field]: value }));

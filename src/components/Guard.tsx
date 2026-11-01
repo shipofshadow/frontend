@@ -33,12 +33,12 @@ const Guard: React.FC<ApiStatusGuardProps> = ({
     const [clickCount, setClickCount] = useState(0);
 
     const scholarshipPapers = [
-        { type: 'scholarship', emoji: '🏆', points: 10, name: 'Academic Excellence' },
-        { type: 'scholarship', emoji: '💰', points: 15, name: 'Need-Based Aid' },
-        { type: 'scholarship', emoji: '🎓', points: 12, name: 'Merit Scholarship' },
-        { type: 'scholarship', emoji: '📚', points: 8, name: 'Study Grant' },
-        { type: 'bomb', emoji: '💣', points: -20, name: 'Rejection Letter' },
-        { type: 'bonus', emoji: '⭐', points: 25, name: 'Full Ride!' }
+        { type: 'scholarship', emoji: 'A+', points: 10, name: 'Academic Excellence' },
+        { type: 'scholarship', emoji: 'PHP', points: 15, name: 'Need-Based Aid' },
+        { type: 'scholarship', emoji: 'MERIT', points: 12, name: 'Merit Scholarship' },
+        { type: 'scholarship', emoji: 'STUDY', points: 8, name: 'Study Grant' },
+        { type: 'bomb', emoji: 'X', points: -20, name: 'Rejection Letter' },
+        { type: 'bonus', emoji: 'FULL', points: 25, name: 'Full Ride!' }
     ];
 
     const checkApi = useCallback(async (): Promise<boolean> => {
@@ -233,7 +233,7 @@ const Guard: React.FC<ApiStatusGuardProps> = ({
                                         </div>
                                     </div>
                                     <div className="mt-2">
-                                        <small>Catch scholarships! Avoid rejections! 🏆💰📚⭐ (avoid 💣)</small>
+                                        <small>Catch scholarships! Avoid rejections! (avoid )</small>
                                     </div>
                                 </div>
                             )}
@@ -253,7 +253,7 @@ const Guard: React.FC<ApiStatusGuardProps> = ({
                                 </div>
 
                                 <h2 className="card-title text-danger mb-3">
-                                    🚫 iScholar Server Unavailable
+                                    iScholar Server Unavailable
                                 </h2>
 
                                 {!gameActive && (
@@ -282,7 +282,7 @@ const Guard: React.FC<ApiStatusGuardProps> = ({
 
                                         {showEasterEgg && (
                                             <div className="alert alert-success mb-4">
-                                                <h5>🎮 Easter Egg Unlocked!</h5>
+                                                <h5>Easter Egg Unlocked!</h5>
                                                 <p className="mb-0">Play "Scholarship Hunter" while waiting!</p>
                                             </div>
                                         )}
@@ -327,7 +327,7 @@ const Guard: React.FC<ApiStatusGuardProps> = ({
                                         {highScore > 0 && showEasterEgg && (
                                             <div className="mt-4 p-3 bg-light rounded">
                                                 <small className="text-muted">
-                                                    🏆 Your High Score: <strong>{highScore}</strong> points
+                                                    Your High Score: <strong>{highScore}</strong> points
                                                 </small>
                                             </div>
                                         )}
@@ -338,7 +338,7 @@ const Guard: React.FC<ApiStatusGuardProps> = ({
                                                     Connection attempts: {retryCount}
                                                     {!showEasterEgg && clickCount > 0 && (
                                                         <span className="ms-2 text-primary">
-                                                            (Click server {5 - clickCount} more times 🤫)
+                                                            (Click server {5 - clickCount} more times )
                                                         </span>
                                                     )}
                                                 </small>

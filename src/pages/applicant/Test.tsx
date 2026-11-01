@@ -650,7 +650,7 @@ const Home = () => {
                                     <i className="fa fa-trophy fa-3x text-white" aria-hidden="true"></i>
                                 </div>
                                 <h1 className="display-4 fw-bold text-dark mb-4">
-                                    🎉 Congratulations!
+                                    Congratulations!
                                 </h1>
                                 <p className="lead text-muted mb-5">
                                     Your scholarship application has been <span className="fw-bold text-success">successfully approved!</span><br/>

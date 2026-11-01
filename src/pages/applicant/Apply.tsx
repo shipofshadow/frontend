@@ -19,6 +19,7 @@ import { useApplicationDraft } from "../../hooks/useApplicationDraft.ts";
 
 const Apply = () => {
     const [step, setStep] = useState("step1");
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const { term } = useAcademicTerm();
     const { user, token } = useAuth();
     const {settings} = useSettings();
@@ -347,7 +348,35 @@ const Apply = () => {
         draft.scheduleSave(saveable as Record<string, unknown>);
     }, [formData]);
 
+    const validateBeforeSubmit = (): string | null => {
+        const filled = grades.filter(g => g.subject.trim() || String(g.grade).trim() || String(g.units).trim());
+        if (filled.length === 0) return 'Please enter at least one subject with its grade and units.';
+        for (const g of filled) {
+            const label = g.subject.trim() || 'a subject';
+            if (!g.subject.trim()) return 'Every grade row needs a subject name.';
+            const grade = Number(g.grade);
+            const units = Number(g.units);
+            if (String(g.grade).trim() === '' || isNaN(grade) || grade < 1 || grade > 5) {
+                return `Grade for ${label} must be between 1.00 and 5.00.`;
+            }
+            if (String(g.units).trim() === '' || isNaN(units) || units <= 0) {
+                return `Units for ${label} must be greater than 0.`;
+            }
+        }
+        if (itrFiles.length === 0) return 'Please upload your Income Tax Return or proof of income.';
+        return null;
+    };
+
     const handleSubmit = async () => {
+        if (isSubmitting) return;
+
+        const problem = validateBeforeSubmit();
+        if (problem) {
+            await Swal.fire({ icon: 'warning', title: 'Please check your application', text: problem });
+            return;
+        }
+
+        setIsSubmitting(true);
         const data = new FormData();
 
         // Append all simple fields
@@ -375,8 +404,9 @@ const Apply = () => {
 
         if (formData.grades) data.append('grades', formData.grades);
 
-        if (grades && grades.length > 0) {
-            data.append('gradesList', JSON.stringify(grades));
+        const filledGrades = grades.filter(g => g.subject.trim() && String(g.grade).trim());
+        if (filledGrades.length > 0) {
+            data.append('gradesList', JSON.stringify(filledGrades));
         }
 
 
@@ -414,6 +444,8 @@ const Apply = () => {
                 title: 'Submission Failed',
                 text: error instanceof Error ? error.message : 'There was an error submitting your application. Please try again later.',
             });
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -1466,8 +1498,8 @@ const Apply = () => {
                                 >
                                     Previous
                                 </button>
-                                <button className="btn btn-primary" type="submit" onClick={handleSubmit}>
-                                    Submit Application
+                                <button className="btn btn-primary" type="button" onClick={handleSubmit} disabled={isSubmitting}>
+                                    {isSubmitting ? 'Submitting...' : 'Submit Application'}
                                 </button>
                             </div>
                         </div>

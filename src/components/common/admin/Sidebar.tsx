@@ -9,13 +9,13 @@ import {useAuth} from "../../../context/AuthContext.tsx";
 const getRoleDisplayInfo = (role: string | undefined, campusName?: string) => {
     switch (role) {
         case 'bitress':
-            return { icon: '⚡', label: 'Bitress', color: 'text-warning', campus: null };
+            return { icon: '', label: 'Bitress', color: 'text-warning', campus: null };
         case 'admin':
-            return { icon: '🔧', label: 'Admin', color: 'text-info', campus: null };
+            return { icon: '', label: 'Admin', color: 'text-info', campus: null };
         case 'faculty':
-            return { icon: '👨‍🏫', label: 'Faculty', color: 'text-primary', campus: campusName };
+            return { icon: '', label: 'Faculty', color: 'text-primary', campus: campusName };
         default:
-            return { icon: '👤', label: 'Admin', color: 'text-secondary', campus: null };
+            return { icon: '', label: 'Admin', color: 'text-secondary', campus: null };
     }
 };
 
@@ -248,7 +248,7 @@ const Sidebar: React.FC = () => {
                         >
                             <div className="nav-link-icon"><i data-feather="trash-2"></i></div>
                             System Reset
-                            <span className="badge bg-danger ms-auto">⚡</span>
+                            <span className="badge bg-danger ms-auto">Danger</span>
                         </NavLink>
                     </>
                 )}
@@ -265,7 +265,7 @@ const Sidebar: React.FC = () => {
                   : user?.username || 'User'}
               </div>
               <div className={`sidenav-footer-role small ${roleInfo.color}`}>
-                {roleInfo.icon} {roleInfo.label}
+                {roleInfo.label}
               </div>
               {roleInfo.campus && (
                 <div className="sidenav-footer-campus small text-muted mt-1">
